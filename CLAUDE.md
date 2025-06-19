@@ -76,3 +76,18 @@ Currently, the project has Jest configured but no tests implemented. When adding
 2. **Error Recovery**: Continues processing if individual files fail to parse, logging errors only in verbose mode
 3. **Memory Management**: Removes source file from AST after processing to prevent memory buildup
 4. **Hash Generation**: Uses SHA-256 hashing truncated to 8 characters for tracking changes
+
+## PR Review Response Rules
+
+For detailed PR review response procedures, refer to: `.docs/pr-review-rules.md`
+
+This document contains:
+- Complete workflow for handling PR reviews
+- Required tools and commands
+- Forbidden patterns and best practices
+- Troubleshooting guides
+
+Key points:
+- Always use `pr-review-processor.ts` and `pr-review-tracker.ts` from ai-tools
+- Follow the structured workflow: Analyze → Track → Fix → Record → Verify
+- Never use unstructured commands like `gh pr view`

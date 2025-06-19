@@ -143,8 +143,55 @@ describe('SearchService', () => {
     });
 
     test('should filter search history by query', () => {
-      const history = searchService.getSearchHistory('test');
-      expect(history).toBeDefined();
+      // First create some search history
+      const mockFunctions: FunctionInfo[] = [
+        {
+          file: 'test.ts',
+          identifier: 'testFunc',
+          signature: 'function testFunc(): void',
+          startLine: 1,
+          endLine: 3,
+          hash_function: 'test123',
+          hash_file: 'test456',
+          exported: true,
+          async: false,
+          metrics: { linesOfCode: 3, parameterCount: 0, hasReturnType: false },
+          domain: 'test'
+        },
+        {
+          file: 'other.ts',
+          identifier: 'otherFunc',
+          signature: 'function otherFunc(): void',
+          startLine: 1,
+          endLine: 3,
+          hash_function: 'other123',
+          hash_file: 'other456',
+          exported: true,
+          async: false,
+          metrics: { linesOfCode: 3, parameterCount: 0, hasReturnType: false },
+          domain: 'other'
+        }
+      ];
+
+      const tempIndexPath = '.test-index.jsonl';
+      fs.writeFileSync(
+        tempIndexPath,
+        mockFunctions.map(f => JSON.stringify(f)).join('\n')
+      );
+      searchService.loadFunctionIndex(tempIndexPath);
+      fs.unlinkSync(tempIndexPath);
+
+      // Perform searches with different queries
+      searchService.search({ query: 'test function', saveHistory: true });
+      searchService.search({ query: 'other function', saveHistory: true });
+
+      // Test filtering
+      const testHistory = searchService.getSearchHistory('test');
+      expect(testHistory).toHaveLength(1);
+      expect(testHistory[0].query).toBe('test function');
+
+      const allHistory = searchService.getSearchHistory();
+      expect(allHistory).toHaveLength(2);
     });
   });
 });

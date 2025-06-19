@@ -159,7 +159,15 @@ program
         .trim()
         .split('\n')
         .filter(line => line)
-        .map(line => JSON.parse(line));
+        .map((line, index) => {
+          try {
+            return JSON.parse(line);
+          } catch (error) {
+            console.error(chalk.yellow(`⚠️  Warning: Invalid JSON at line ${index + 1}, skipping...`));
+            return null;
+          }
+        })
+        .filter(func => func !== null);
 
       console.log(chalk.gray(`Processing ${functions.length} functions...`));
 

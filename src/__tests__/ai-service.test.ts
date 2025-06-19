@@ -24,7 +24,7 @@ describe('AIService', () => {
 
   describe('constructor', () => {
     test('should throw error if no API key provided', () => {
-      delete process.env.OPENAI_API_KEY;
+      process.env.OPENAI_API_KEY = undefined;
       expect(() => new AIService()).toThrow('OpenAI API key is required');
     });
 

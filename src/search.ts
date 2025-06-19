@@ -49,7 +49,15 @@ export class SearchService {
         .trim()
         .split('\n')
         .filter(line => line)
-        .map(line => JSON.parse(line));
+        .map((line, index) => {
+          try {
+            return JSON.parse(line);
+          } catch (error) {
+            console.error(`Warning: Invalid JSON at line ${index + 1} in ${indexPath}, skipping...`);
+            return null;
+          }
+        })
+        .filter(func => func !== null) as FunctionInfo[];
     }
   }
 
@@ -59,18 +67,17 @@ export class SearchService {
     const keywords = this.extractKeywords(query);
     const searchCriteria = this.parseSearchCriteria(query);
     
-    let results = this.functionsIndex.filter(func => {
-      const score = this.calculateRelevance(func, keywords, searchCriteria);
-      return score > 0;
-    });
+    // Calculate scores once and store them
+    const scoredResults = this.functionsIndex
+      .map(func => ({
+        func,
+        score: this.calculateRelevance(func, keywords, searchCriteria)
+      }))
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
 
-    results.sort((a, b) => {
-      const scoreA = this.calculateRelevance(a, keywords, searchCriteria);
-      const scoreB = this.calculateRelevance(b, keywords, searchCriteria);
-      return scoreB - scoreA;
-    });
-
-    results = results.slice(0, limit);
+    const results = scoredResults.map(item => item.func);
 
     if (saveHistory && results.length > 0) {
       this.saveSearchHistory({
@@ -201,21 +208,41 @@ export class SearchService {
   }
 
   private mapRowToHistory(row: any): SearchHistory {
-    return {
-      id: row.id,
-      timestamp: row.timestamp,
-      query: row.query,
-      context: row.context,
-      resolvedFunctions: JSON.parse(row.resolved_functions),
-      searchCriteria: {
-        keywords: JSON.parse(row.keywords),
-        returnType: row.return_type,
-        async: row.is_async === 1,
-        domain: row.domain
-      },
-      confidence: row.confidence,
-      usage: row.usage
-    };
+    try {
+      return {
+        id: row.id,
+        timestamp: row.timestamp,
+        query: row.query,
+        context: row.context,
+        resolvedFunctions: JSON.parse(row.resolved_functions),
+        searchCriteria: {
+          keywords: JSON.parse(row.keywords),
+          returnType: row.return_type,
+          async: row.is_async === 1,
+          domain: row.domain
+        },
+        confidence: row.confidence,
+        usage: row.usage
+      };
+    } catch (error) {
+      console.error(`Warning: Failed to parse search history entry ${row.id}:`, error);
+      // Return a minimal valid object to prevent crashes
+      return {
+        id: row.id,
+        timestamp: row.timestamp,
+        query: row.query,
+        context: row.context || '',
+        resolvedFunctions: [],
+        searchCriteria: {
+          keywords: [],
+          returnType: row.return_type,
+          async: row.is_async === 1,
+          domain: row.domain
+        },
+        confidence: row.confidence || 0,
+        usage: row.usage || 'successful'
+      };
+    }
   }
 
   private generateId(): string {
