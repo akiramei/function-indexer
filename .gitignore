@@ -128,3 +128,9 @@ dist
 
 # Claude
 .claude/
+
+# ローカルドキュメント
+.docs/
+
+# ローカルツール
+.tools/
