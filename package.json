@@ -1,0 +1,36 @@
+{
+  "name": "function-indexer",
+  "version": "1.0.0",
+  "description": "TypeScript function indexer for AI development management",
+  "main": "dist/index.js",
+  "bin": {
+    "function-indexer": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "ts-morph": "^20.0.0",
+    "glob": "^10.3.0",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "@types/jest": "^29.0.0",
+    "jest": "^29.0.0"
+  },
+  "keywords": [
+    "typescript",
+    "ast",
+    "function-indexer",
+    "ai-development"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
