@@ -43,3 +43,33 @@ export interface IndexerError {
   line?: number;
   severity: 'warning' | 'error';
 }
+
+export interface SearchHistory {
+  id: string;
+  timestamp: string;
+  query: string;
+  context: string;
+  resolvedFunctions: string[];
+  searchCriteria: {
+    keywords: string[];
+    returnType?: string;
+    async?: boolean;
+    domain?: string;
+  };
+  confidence: number;
+  usage: 'successful' | 'rejected' | 'modified';
+}
+
+export interface EnhancedFunctionInfo extends FunctionInfo {
+  description: string;
+  tags: string[];
+  purpose: string;
+  dependencies: string[];
+}
+
+export interface SearchOptions {
+  query: string;
+  context?: string;
+  saveHistory?: boolean;
+  limit?: number;
+}
