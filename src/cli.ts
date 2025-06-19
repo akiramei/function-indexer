@@ -106,7 +106,7 @@ program
         query,
         context: options.context,
         saveHistory: options.saveHistory,
-        limit: parseInt(options.limit)
+        limit: Math.max(1, parseInt(options.limit) || 20)
       });
 
       if (results.length === 0) {
@@ -174,7 +174,7 @@ program
       const aiService = new AIService(apiKey);
       const enhanced = await aiService.generateDescriptions(
         functions, 
-        parseInt(options.batchSize)
+        Math.max(1, parseInt(options.batchSize) || 10)
       );
 
       const outputPath = path.resolve(options.output);
