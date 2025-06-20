@@ -174,6 +174,31 @@ describe('FunctionIndexer', () => {
       expect(functions.some(f => f.identifier === 'helper')).toBe(true);
       expect(functions.some(f => f.identifier === 'excluded')).toBe(false);
     });
+
+    it('should use default patterns when none specified', async () => {
+      createTestFile('default.ts', 'export function defaultFunc() {}');
+      createTestFile('default.js', 'export function jsFunc() {}');
+      createTestFile('default.py', 'def python_func(): pass');
+
+      const options: IndexerOptions = {
+        root: testSrcDir,
+        output: path.join(testDir, 'default-output.jsonl'),
+        domain: 'test',
+        verbose: false
+        // No include/exclude specified
+      };
+
+      const indexer = new FunctionIndexer(options);
+      const result = await indexer.run();
+
+      // Should process .ts files by default (and potentially .js if in default patterns)
+      expect(result.totalFunctions).toBeGreaterThanOrEqual(1);
+      
+      const content = fs.readFileSync(options.output, 'utf8');
+      const functions = content.trim().split('\n').map(line => JSON.parse(line));
+      
+      expect(functions.some(f => f.identifier === 'defaultFunc')).toBe(true);
+    });
   });
 
   describe('metadata generation', () => {

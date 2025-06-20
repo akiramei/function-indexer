@@ -4,6 +4,10 @@ export function calculateSum(a: number, b: number): number {
 }
 
 export async function fetchData(url: string): Promise<string> {
+  // Simplified async function for testing purposes - includes basic validation
+  if (!url || url.trim() === '') {
+    throw new Error('URL cannot be empty');
+  }
   return `Data from ${url}`;
 }
 

@@ -254,7 +254,7 @@ export class UpdateService {
       .createHash('sha256')
       .update(content)
       .digest('hex')
-      .substring(0, 8);
+      .substring(0, 16);
   }
 
   private async calculateFileHashes(files: string[]): Promise<Record<string, string>> {

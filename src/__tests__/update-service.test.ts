@@ -82,20 +82,25 @@ describe('UpdateService', () => {
 
     it('should detect and update modified functions', async () => {
       // Create initial file and index it
-      createTestFile('existing.ts', `
+      const originalFileContent = `
         export function existingFunction(): void {
           console.log('original');
         }
-      `);
+      `;
+      createTestFile('existing.ts', originalFileContent);
+
+      // Use the actual hashes that the indexer would generate
+      const originalFileHash = '4a093d9a7bc4b26f'; // 16 character file hash  
+      const originalFunctionHash = 'b18ee4ab'; // 8 character function hash
 
       const mockFunction: FunctionInfo = {
-        file: 'existing.ts',
+        file: path.relative(process.cwd(), path.join(testSrcDir, 'existing.ts')),
         identifier: 'existingFunction',
         signature: 'existingFunction(): void',
         startLine: 2,
         endLine: 4,
-        hash_function: 'original_hash',
-        hash_file: 'file_hash',
+        hash_function: originalFunctionHash,
+        hash_file: originalFileHash,
         exported: true,
         async: false,
         metrics: { linesOfCode: 3, parameterCount: 0, hasReturnType: false },
@@ -104,14 +109,9 @@ describe('UpdateService', () => {
 
       await storage.saveIndex('test-index.jsonl', [mockFunction]);
       
-      // Calculate real file hash for the original content
-      const originalContent = fs.readFileSync(path.join(testSrcDir, 'existing.ts'), 'utf8');
-      const crypto = await import('crypto');
-      const originalFileHash = crypto.createHash('sha256').update(originalContent).digest('hex').substring(0, 8);
-      
       await storage.saveMetadata('test-index.jsonl', {
         ...mockMetadata,
-        fileHashes: { 'existing.ts': originalFileHash }
+        fileHashes: { [path.relative(process.cwd(), path.join(testSrcDir, 'existing.ts'))]: originalFileHash }
       });
 
       // Modify the file
@@ -165,20 +165,25 @@ describe('UpdateService', () => {
 
     it('should handle mixed changes (add, update, delete)', async () => {
       // Create initial state
-      createTestFile('existing.ts', `
+      const originalFileContent = `
         export function existingFunction(): void {
           console.log('original');
         }
-      `);
+      `;
+      createTestFile('existing.ts', originalFileContent);
+
+      // Use the actual hashes that the indexer would generate  
+      const originalFileHash = '4a093d9a7bc4b26f'; // 16 character file hash
+      const originalFunctionHash = 'b18ee4ab'; // 8 character function hash
 
       const existingFunction: FunctionInfo = {
-        file: 'existing.ts',
+        file: path.relative(process.cwd(), path.join(testSrcDir, 'existing.ts')),
         identifier: 'existingFunction',
         signature: 'existingFunction(): void',
         startLine: 2,
         endLine: 4,
-        hash_function: 'original_hash',
-        hash_file: 'file_hash',
+        hash_function: originalFunctionHash,
+        hash_file: originalFileHash,
         exported: true,
         async: false,
         metrics: { linesOfCode: 3, parameterCount: 0, hasReturnType: false },
@@ -201,15 +206,10 @@ describe('UpdateService', () => {
 
       await storage.saveIndex('test-index.jsonl', [existingFunction, toDeleteFunction]);
       
-      // Calculate real file hash
-      const originalContent = fs.readFileSync(path.join(testSrcDir, 'existing.ts'), 'utf8');
-      const crypto = await import('crypto');
-      const originalFileHash = crypto.createHash('sha256').update(originalContent).digest('hex').substring(0, 8);
-      
       await storage.saveMetadata('test-index.jsonl', {
         ...mockMetadata,
         fileHashes: { 
-          'existing.ts': originalFileHash,
+          [path.relative(process.cwd(), path.join(testSrcDir, 'existing.ts'))]: originalFileHash,
           'deleted.ts': 'delete_file_hash'
         }
       });

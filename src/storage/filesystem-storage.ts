@@ -151,10 +151,11 @@ export class FileSystemStorage implements IndexStorage {
           .map(line => JSON.parse(line));
         break;
       
-      case '.json':
+      case '.json': {
         const data = JSON.parse(content);
         functions = data.functions || data;
         break;
+      }
       
       default:
         throw new Error(`Unsupported import format: ${extension}`);

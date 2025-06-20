@@ -153,7 +153,7 @@ export class FunctionIndexer {
 
   private extractFunctionInfo(
     func: FunctionDeclaration,
-    filePath: string,
+    relativePath: string,
     fileHash: string,
     sourceFile: SourceFile
   ): FunctionInfo | null {
@@ -165,7 +165,7 @@ export class FunctionIndexer {
     const functionHash = this.calculateHash(functionBody);
 
     return {
-      file: filePath,
+      file: relativePath,
       identifier: name,
       signature,
       startLine: func.getStartLineNumber(),
@@ -181,7 +181,7 @@ export class FunctionIndexer {
 
   private extractMethodInfo(
     method: MethodDeclaration,
-    filePath: string,
+    relativePath: string,
     fileHash: string,
     sourceFile: SourceFile
   ): FunctionInfo | null {
@@ -202,7 +202,7 @@ export class FunctionIndexer {
     }
 
     return {
-      file: filePath,
+      file: relativePath,
       identifier: fullName,
       signature,
       startLine: method.getStartLineNumber(),
@@ -218,7 +218,7 @@ export class FunctionIndexer {
 
   private extractVariableFunctions(
     sourceFile: SourceFile,
-    filePath: string,
+    relativePath: string,
     fileHash: string
   ): FunctionInfo[] {
     const functions: FunctionInfo[] = [];
@@ -243,7 +243,7 @@ export class FunctionIndexer {
           const functionHash = this.calculateHash(functionBody);
 
           functions.push({
-            file: filePath,
+            file: relativePath,
             identifier: name,
             signature,
             startLine: functionNode.getStartLineNumber(),

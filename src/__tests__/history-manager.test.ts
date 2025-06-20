@@ -151,4 +151,51 @@ describe('HistoryManager', () => {
       expect(differences.length).toBe(0);
     });
   });
+
+  describe('edge cases', () => {
+    it('should handle empty files in comparison', async () => {
+      fs.writeFileSync(testFile, '');
+      await historyManager.saveVersion(testFile);
+      
+      fs.writeFileSync(testFile, 'some content');
+      await historyManager.saveVersion(testFile);
+      
+      const differences = await historyManager.compareVersions(testFile, 1, 2);
+      expect(differences.length).toBeGreaterThan(0);
+    });
+
+    it('should throw error when comparing non-existent versions', async () => {
+      fs.writeFileSync(testFile, 'content');
+      await historyManager.saveVersion(testFile);
+      
+      await expect(historyManager.compareVersions(testFile, 1, 999))
+        .rejects.toThrow('One or both versions not found');
+    });
+
+    it('should handle comparison of identical content', async () => {
+      const content = 'identical content';
+      fs.writeFileSync(testFile, content);
+      await historyManager.saveVersion(testFile);
+      
+      fs.writeFileSync(testFile, content);
+      await historyManager.saveVersion(testFile);
+      
+      const differences = await historyManager.compareVersions(testFile, 1, 2);
+      expect(differences).toHaveLength(0);
+    });
+
+    it('should handle missing version files gracefully', async () => {
+      fs.writeFileSync(testFile, 'content');
+      await historyManager.saveVersion(testFile);
+      
+      // Manually delete a version file
+      const versionFile = testFile + '.v1';
+      if (fs.existsSync(versionFile)) {
+        fs.unlinkSync(versionFile);
+      }
+      
+      await expect(historyManager.compareVersions(testFile, 1, 2))
+        .rejects.toThrow();
+    });
+  });
 });

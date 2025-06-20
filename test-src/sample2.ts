@@ -4,5 +4,6 @@ export function processArray(items: string[]): string[] {
 }
 
 export function validateEmail(email: string): boolean {
+  // Simplified validation for testing purposes only - only checks for '@' character
   return email.includes('@');
 }
