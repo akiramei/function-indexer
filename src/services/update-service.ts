@@ -328,6 +328,7 @@ export class UpdateService {
       ? filePath 
       : path.join(process.cwd(), filePath);
     
-    return await indexer.processFile(absolutePath);
+    const result = await indexer.processFile(absolutePath);
+    return result.functions || result; // Handle both old and new return formats
   }
 }

@@ -9,163 +9,103 @@ export class MetricsCalculator {
       .map(line => line.trim())
       .filter(line => line.length > 0 && !line.match(/^\s*[{}]\s*$/));
     
+    // Combine all metrics calculation in a single AST traversal
+    const combinedMetrics = this.calculateAllMetricsInSinglePass(node);
+    
     return {
       linesOfCode: lines.length,
-      cyclomaticComplexity: this.calculateCyclomaticComplexity(node),
-      cognitiveComplexity: this.calculateCognitiveComplexity(node),
-      nestingDepth: this.calculateNestingDepth(node),
+      cyclomaticComplexity: combinedMetrics.cyclomaticComplexity,
+      cognitiveComplexity: combinedMetrics.cognitiveComplexity,
+      nestingDepth: combinedMetrics.nestingDepth,
       parameterCount: node.getParameters ? node.getParameters().length : 0,
       hasReturnType: !!node.getReturnTypeNode?.()
     };
   }
 
   /**
-   * サイクロマティック複雑度を計算
-   * 各判定ポイント（if, while, for, case, catch, &&, ||など）に+1
+   * Calculate all metrics in a single AST traversal for better performance
    */
-  private static calculateCyclomaticComplexity(node: Node): number {
-    let complexity = 1; // 基本パス
+  private static calculateAllMetricsInSinglePass(node: Node): {
+    cyclomaticComplexity: number;
+    cognitiveComplexity: number;
+    nestingDepth: number;
+  } {
+    let cyclomaticComplexity = 1; // Base path
+    let cognitiveComplexity = 0;
+    let maxNestingDepth = 0;
 
-    const countComplexityNodes = (currentNode: Node) => {
-      // 条件分岐
-      if (currentNode.getKind() === SyntaxKind.IfStatement) {
-        complexity++;
-      }
-      
-      // ループ
-      if ([SyntaxKind.WhileStatement, SyntaxKind.ForStatement, SyntaxKind.ForInStatement, SyntaxKind.ForOfStatement, SyntaxKind.DoStatement].includes(currentNode.getKind())) {
-        complexity++;
-      }
-      
-      // Switch case
-      if (currentNode.getKind() === SyntaxKind.CaseClause) {
-        complexity++;
-      }
-      
-      // Try-catch
-      if (currentNode.getKind() === SyntaxKind.CatchClause) {
-        complexity++;
-      }
-      
-      // 条件演算子
-      if (currentNode.getKind() === SyntaxKind.ConditionalExpression) {
-        complexity++;
-      }
-      
-      // 論理演算子 (&&, ||)
-      if (currentNode.getKind() === SyntaxKind.BinaryExpression) {
-        const binaryExpr = currentNode as any;
-        const operatorToken = binaryExpr.getOperatorToken();
-        if (operatorToken.getKind() === SyntaxKind.AmpersandAmpersandToken || 
-            operatorToken.getKind() === SyntaxKind.BarBarToken) {
-          complexity++;
-        }
-      }
-
-      // 子ノードを再帰的に処理
-      currentNode.forEachChild(countComplexityNodes);
-    };
-
-    node.forEachChild(countComplexityNodes);
-    return complexity;
-  }
-
-  /**
-   * 認知的複雑度を計算
-   * ネストレベルとコントロール構造の複雑さを考慮
-   */
-  private static calculateCognitiveComplexity(node: Node): number {
-    let complexity = 0;
-
-    const calculateRecursive = (currentNode: Node, nestingLevel: number) => {
+    const traverseNode = (currentNode: Node, nestingLevel: number) => {
       const kind = currentNode.getKind();
-      
-      // ネストレベルを増加させる構造
       let newNestingLevel = nestingLevel;
-      let addComplexity = 0;
+      let addCognitiveComplexity = 0;
 
+      // Handle control flow structures
       switch (kind) {
         case SyntaxKind.IfStatement:
-          addComplexity = 1 + nestingLevel;
+          cyclomaticComplexity++;
+          addCognitiveComplexity = 1 + nestingLevel;
           newNestingLevel++;
           break;
-          
+
         case SyntaxKind.WhileStatement:
         case SyntaxKind.ForStatement:
         case SyntaxKind.ForInStatement:
         case SyntaxKind.ForOfStatement:
         case SyntaxKind.DoStatement:
-          addComplexity = 1 + nestingLevel;
+          cyclomaticComplexity++;
+          addCognitiveComplexity = 1 + nestingLevel;
           newNestingLevel++;
           break;
-          
+
         case SyntaxKind.SwitchStatement:
-          addComplexity = 1 + nestingLevel;
+          addCognitiveComplexity = 1 + nestingLevel;
           newNestingLevel++;
           break;
-          
+
+        case SyntaxKind.CaseClause:
+          cyclomaticComplexity++;
+          break;
+
         case SyntaxKind.CatchClause:
-          addComplexity = 1 + nestingLevel;
+          cyclomaticComplexity++;
+          addCognitiveComplexity = 1 + nestingLevel;
           newNestingLevel++;
           break;
-          
+
         case SyntaxKind.ConditionalExpression:
-          addComplexity = 1 + nestingLevel;
+          cyclomaticComplexity++;
+          addCognitiveComplexity = 1 + nestingLevel;
           break;
-          
+
+        case SyntaxKind.TryStatement:
+          newNestingLevel++;
+          break;
+
         case SyntaxKind.BinaryExpression:
           const binaryExpr = currentNode as any;
           const operatorToken = binaryExpr.getOperatorToken();
           if (operatorToken.getKind() === SyntaxKind.AmpersandAmpersandToken || 
               operatorToken.getKind() === SyntaxKind.BarBarToken) {
-            addComplexity = 1;
+            cyclomaticComplexity++;
+            addCognitiveComplexity = 1;
           }
           break;
       }
 
-      complexity += addComplexity;
+      cognitiveComplexity += addCognitiveComplexity;
+      maxNestingDepth = Math.max(maxNestingDepth, newNestingLevel);
 
-      // 子ノードを再帰的に処理
-      currentNode.forEachChild(child => calculateRecursive(child, newNestingLevel));
+      // Traverse children
+      currentNode.forEachChild(child => traverseNode(child, newNestingLevel));
     };
 
-    node.forEachChild(child => calculateRecursive(child, 0));
-    return complexity;
-  }
+    node.forEachChild(child => traverseNode(child, 0));
 
-  /**
-   * ネストの深さを計算
-   * 最大のネストレベルを返す（制御構造のみカウント）
-   */
-  private static calculateNestingDepth(node: Node): number {
-    let maxDepth = 0;
-
-    const calculateDepth = (currentNode: Node, currentDepth: number) => {
-      const kind = currentNode.getKind();
-      
-      // ネストレベルを増加させる構造（制御構造のみ）
-      let newDepth = currentDepth;
-      
-      if ([
-        SyntaxKind.IfStatement,
-        SyntaxKind.WhileStatement,
-        SyntaxKind.ForStatement,
-        SyntaxKind.ForInStatement,
-        SyntaxKind.ForOfStatement,
-        SyntaxKind.DoStatement,
-        SyntaxKind.SwitchStatement,
-        SyntaxKind.TryStatement,
-        SyntaxKind.CatchClause
-      ].includes(kind)) {
-        newDepth++;
-        maxDepth = Math.max(maxDepth, newDepth);
-      }
-
-      // 子ノードを再帰的に処理
-      currentNode.forEachChild(child => calculateDepth(child, newDepth));
+    return {
+      cyclomaticComplexity,
+      cognitiveComplexity,
+      nestingDepth: maxNestingDepth
     };
-
-    node.forEachChild(child => calculateDepth(child, 0));
-    return maxDepth;
   }
+
 }

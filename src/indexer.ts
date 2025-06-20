@@ -21,7 +21,15 @@ export class FunctionIndexer {
       tsConfigFilePath: this.findTsConfig(),
       skipAddingFilesFromTsConfig: true,
       skipFileDependencyResolution: true,
-      skipLoadingLibFiles: true
+      skipLoadingLibFiles: true,
+      compilerOptions: {
+        isolatedModules: true,
+        skipLibCheck: true,
+        noResolve: true,
+        noLib: true,
+        target: 99, // ESNext
+        jsx: 4 // Preserve
+      }
     });
     this.storage = new FileSystemStorage(path.dirname(options.output));
   }
@@ -55,12 +63,11 @@ export class FunctionIndexer {
       // 各ファイルを処理
       for (const filePath of files) {
         try {
-          const fileFunctions = await this.processFile(filePath);
+          const { functions: fileFunctions, fileHash } = await this.processFile(filePath);
           functions.push(...fileFunctions);
           
           // Store file hash for metadata
-          const fileContent = await fs.promises.readFile(filePath, 'utf8');
-          this.fileHashes[path.relative(process.cwd(), filePath)] = this.calculateHash(fileContent);
+          this.fileHashes[path.relative(process.cwd(), filePath)] = fileHash;
           
           if (this.options.verbose && fileFunctions.length > 0) {
             console.log(`  ${filePath}: ${fileFunctions.length} functions`);
@@ -116,7 +123,7 @@ export class FunctionIndexer {
     });
   }
 
-  async processFile(filePath: string): Promise<FunctionInfo[]> {
+  async processFile(filePath: string): Promise<{ functions: FunctionInfo[], fileHash: string }> {
     const sourceFile = this.project.addSourceFileAtPath(filePath);
     const fileContent = sourceFile.getFullText();
     const fileHash = this.calculateHash(fileContent);
@@ -127,20 +134,20 @@ export class FunctionIndexer {
     try {
       // Function declarations
       sourceFile.getFunctions().forEach(func => {
-        const info = this.extractFunctionInfo(func, relativePath, fileHash, sourceFile);
+        const info = this.extractFunctionInfo(func, relativePath, fileHash, sourceFile, fileContent);
         if (info) functions.push(info);
       });
 
       // Method declarations (class methods)
       sourceFile.getClasses().forEach(cls => {
         cls.getMethods().forEach(method => {
-          const info = this.extractMethodInfo(method, relativePath, fileHash, sourceFile);
+          const info = this.extractMethodInfo(method, relativePath, fileHash, sourceFile, fileContent);
           if (info) functions.push(info);
         });
       });
 
       // Arrow functions and function expressions assigned to variables
-      this.extractVariableFunctions(sourceFile, relativePath, fileHash).forEach(info => {
+      this.extractVariableFunctions(sourceFile, relativePath, fileHash, fileContent).forEach(info => {
         functions.push(info);
       });
 
@@ -149,20 +156,23 @@ export class FunctionIndexer {
       this.project.removeSourceFile(sourceFile);
     }
 
-    return functions;
+    return { functions, fileHash };
   }
 
   private extractFunctionInfo(
     func: FunctionDeclaration,
     relativePath: string,
     fileHash: string,
-    sourceFile: SourceFile
+    sourceFile: SourceFile,
+    fileContent: string
   ): FunctionInfo | null {
     const name = func.getName();
     if (!name) return null;
 
     const signature = this.getFunctionSignature(func);
-    const functionBody = func.getBody()?.getFullText() || '';
+    const startPos = func.getBody()?.getStart() || func.getStart();
+    const endPos = func.getBody()?.getEnd() || func.getEnd();
+    const functionBody = fileContent.substring(startPos, endPos);
     const functionHash = this.calculateHash(functionBody);
 
     return {
@@ -184,7 +194,8 @@ export class FunctionIndexer {
     method: MethodDeclaration,
     relativePath: string,
     fileHash: string,
-    sourceFile: SourceFile
+    sourceFile: SourceFile,
+    fileContent: string
   ): FunctionInfo | null {
     const name = method.getName();
     if (!name) return null;
@@ -192,7 +203,9 @@ export class FunctionIndexer {
     const className = method.getParent()?.getSymbol()?.getName() || 'Unknown';
     const fullName = `${className}.${name}`;
     const signature = this.getMethodSignature(method, className);
-    const methodBody = method.getBody()?.getFullText() || '';
+    const startPos = method.getBody()?.getStart() || method.getStart();
+    const endPos = method.getBody()?.getEnd() || method.getEnd();
+    const methodBody = fileContent.substring(startPos, endPos);
     const functionHash = this.calculateHash(methodBody);
 
     // クラスのエクスポート状態を安全に取得
@@ -220,7 +233,8 @@ export class FunctionIndexer {
   private extractVariableFunctions(
     sourceFile: SourceFile,
     relativePath: string,
-    fileHash: string
+    fileHash: string,
+    fileContent: string
   ): FunctionInfo[] {
     const functions: FunctionInfo[] = [];
 
@@ -240,7 +254,9 @@ export class FunctionIndexer {
 
         if (functionNode) {
           const signature = this.getArrowFunctionSignature(name, functionNode);
-          const functionBody = functionNode.getBody()?.getFullText() || '';
+          const startPos = functionNode.getBody()?.getStart() || functionNode.getStart();
+          const endPos = functionNode.getBody()?.getEnd() || functionNode.getEnd();
+          const functionBody = fileContent.substring(startPos, endPos);
           const functionHash = this.calculateHash(functionBody);
 
           functions.push({
