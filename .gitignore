@@ -134,3 +134,14 @@ dist
 
 # ローカルツール
 .tools/
+
+# Function indexer specific
+.function-indexer/
+.backups/
+.history/
+*.jsonl
+*.meta.json
+!test-src/**/*.jsonl
+
+# Test directories
+.test-*

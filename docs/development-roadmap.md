@@ -105,19 +105,49 @@ function-indexer --show-history --query "image"
 
 ---
 
-### ⚡ **フェーズ3: Git統合とパフォーマンス最適化** [効率化]
-**期間**: 2-3週間  
+### ✅ **フェーズ3: インクリメンタル更新システム** [完了]
+**期間**: 実装済み  
 **目標**: 高頻度なAIコミットに対応する効率的な更新システム
 
-#### 3.1 インクリメンタル更新システム
-```typescript
-interface FileState {
-  hash: string;
-  lastModified: string;
-  functionCount: number;
-  functions: string[];              // 関数IDのリスト
-}
+#### 実装済み機能
+- **メタデータ管理**: インデックス作成時の設定を保存し、同じ条件での更新を実現
+- **差分検出アルゴリズム**: ファイルハッシュとファンクションハッシュによる2段階の変更検出
+- **効率的な更新**: 変更されたファイルのみを再解析し、追加・更新・削除を正確に検出
+- **原子的ファイル操作**: SafeFileWriterによる安全な書き込み処理
+- **履歴管理**: HistoryManagerによるバージョン管理（最大5世代）
+- **自動バックアップ**: 更新前の自動バックアップとエラー時の復元機能
+- **整合性チェック**: インデックスの検証と修復機能
 
+#### CLIコマンド
+```bash
+# 単一インデックスの更新
+function-indexer update function-index.jsonl --verbose
+
+# 全インデックスの一括更新
+function-indexer update-all
+
+# 検証と修復
+function-indexer validate function-index.jsonl
+function-indexer repair function-index.jsonl
+
+# バックアップ管理
+function-indexer backup function-index.jsonl
+function-indexer restore 2025-01-20T10-00-00
+```
+
+#### アーキテクチャ
+- **IndexStorage抽象化**: 将来のDB移行を考慮したストレージレイヤー
+- **FileSystemStorage実装**: 現在のJSONLベースの実装
+- **UpdateService**: ストレージに依存しない更新ロジック
+
+---
+
+### ⚡ **フェーズ4: Git統合とリアルタイム監視** [次期計画]
+**期間**: 2-3週間  
+**目標**: Git統合とリアルタイム監視の実装
+
+#### 4.1 Git Hook統合
+```typescript
 interface GitSyncManager {
   syncToCommit(commit: string): Promise<SyncResult>;
   handleMergeConflicts(base: string, ours: string, theirs: string): Promise<MergeResult>;
@@ -126,12 +156,11 @@ interface GitSyncManager {
 ```
 
 **実装内容**:
-- ファイル変更の差分検出（ハッシュベース）
 - Git hook連携（post-commit, post-checkout, post-rewrite）
 - コミット単位でのスナップショット管理
 - マージ競合時の自動解決アルゴリズム
 
-#### 3.2 リアルタイム監視
+#### 4.2 リアルタイム監視
 ```typescript
 interface WatchManager {
   startFileWatcher(rootDir: string): void;
@@ -146,7 +175,7 @@ interface WatchManager {
 - 並列処理による高速化
 - メモリ使用量の最適化
 
-#### 3.3 CLI拡張
+#### 4.3 CLI拡張
 ```bash
 # インクリメンタル更新
 function-indexer --incremental

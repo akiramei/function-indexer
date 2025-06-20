@@ -2,8 +2,15 @@
 
 TypeScript関数一覧化ツール - AI開発支援のためのコード管理システム
 
-## 🚀 Phase 2 Features (New!)
+## 🚀 Latest Features
 
+### Phase 3: Update System (New!)
+- 🔄 **Incremental Updates**: Efficiently update existing indexes with only changed functions
+- 💾 **Automatic Backups**: Create backups before updates with version history
+- 🔧 **Integrity Checking**: Validate and repair corrupted indexes
+- 📁 **Metadata Tracking**: Save indexing configuration for reproducible updates
+
+### Phase 2: AI Integration
 - 🔍 **Natural Language Search**: Search functions using everyday language
 - 🤖 **AI-Powered Descriptions**: Automatically generate descriptions and tags using OpenAI
 - 📊 **Search History**: Track and learn from search patterns
@@ -42,6 +49,19 @@ npm run start -- --root ./src --output function-index.jsonl --domain backend
 npm run dev -- --root ./src --output function-index.jsonl --domain backend
 ```
 
+### インデックスの更新（新機能！）
+
+```bash
+# 既存のインデックスを効率的に更新
+function-indexer update function-index.jsonl
+
+# 全てのインデックスを一括更新
+function-indexer update-all
+
+# バックアップを無効にして更新（高速だがリスクあり）
+function-indexer update function-index.jsonl --no-backup
+```
+
 ### コマンドオプション
 
 | オプション | 短縮形 | デフォルト | 説明 |
@@ -64,6 +84,14 @@ function-indexer --root ./backend --domain backend --exclude "**/node_modules/**
 
 # 特定のディレクトリのみ
 function-indexer --root ./src/services --include "**/*.ts" --domain services
+
+# インデックスの検証と修復
+function-indexer validate frontend-functions.jsonl
+function-indexer repair frontend-functions.jsonl
+
+# バックアップと復元
+function-indexer backup frontend-functions.jsonl
+function-indexer restore 2025-01-20T10-00-00
 ```
 
 ## 出力フォーマット
@@ -96,6 +124,32 @@ JSONL形式で各行に1つの関数情報が出力されます：
 - **クラスメソッド**: `class MyClass { myMethod() {} }`
 - **アロー関数**: `const myFunc = () => {}`
 - **関数式**: `const myFunc = function() {}`
+
+## メタデータファイル
+
+インデックス作成時に自動的に `.meta.json` ファイルが生成されます：
+
+```json
+{
+  "version": "1.0.0",
+  "createdAt": "2025-01-20T10:00:00Z",
+  "lastUpdated": "2025-01-20T12:00:00Z",
+  "indexFile": "function-index.jsonl",
+  "options": {
+    "root": "./src",
+    "domain": "backend",
+    "include": ["**/*.ts", "**/*.tsx"],
+    "exclude": ["**/*.test.ts"]
+  },
+  "statistics": {
+    "totalFiles": 50,
+    "totalFunctions": 250
+  },
+  "fileHashes": { ... }
+}
+```
+
+このメタデータにより、同じ条件での効率的な更新が可能になります。
 
 ## プロジェクト構造
 
@@ -203,8 +257,14 @@ function-indexer show-history --query "image"
 - [x] AI説明文生成
 - [x] 自然言語検索
 
+### ✅ 完了（Phase 3）
+- [x] インクリメンタル更新システム
+- [x] 自動バックアップとバージョン履歴
+- [x] 整合性チェックと修復機能
+- [x] メタデータ管理
+
 ### 📋 今後の予定
-- [ ] Git連携とインクリメンタル更新（Phase 3）
+- [ ] Git連携とリアルタイム監視（Phase 4）
 - [ ] 関数の複雑度計算（Phase 4）
 - [ ] 類似関数の検出（Phase 4）
 - [ ] Web UI（Phase 4）

@@ -4,11 +4,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { FunctionInfo, IndexerOptions, IndexerResult, IndexerError, FunctionMetrics } from './types';
+import { FileSystemStorage } from './storage/filesystem-storage';
+import { IndexMetadata } from './storage/index-storage.interface';
 
 export class FunctionIndexer {
   private project: Project;
   private options: IndexerOptions;
   private errors: IndexerError[] = [];
+  private storage: FileSystemStorage;
+  private fileHashes: Record<string, string> = {};
 
   constructor(options: IndexerOptions) {
     this.options = options;
@@ -18,6 +22,7 @@ export class FunctionIndexer {
       skipFileDependencyResolution: true,
       skipLoadingLibFiles: true
     });
+    this.storage = new FileSystemStorage(path.dirname(options.output));
   }
 
   private findTsConfig(): string | undefined {
@@ -52,6 +57,10 @@ export class FunctionIndexer {
           const fileFunctions = await this.processFile(filePath);
           functions.push(...fileFunctions);
           
+          // Store file hash for metadata
+          const fileContent = await fs.promises.readFile(filePath, 'utf8');
+          this.fileHashes[path.relative(process.cwd(), filePath)] = this.calculateHash(fileContent);
+          
           if (this.options.verbose && fileFunctions.length > 0) {
             console.log(`  ${filePath}: ${fileFunctions.length} functions`);
           }
@@ -66,6 +75,9 @@ export class FunctionIndexer {
 
       // JSONL形式で出力
       await this.writeOutput(functions);
+      
+      // Save metadata
+      await this.saveMetadata(files.length, functions.length);
 
       return {
         totalFiles: files.length,
@@ -103,7 +115,7 @@ export class FunctionIndexer {
     });
   }
 
-  private async processFile(filePath: string): Promise<FunctionInfo[]> {
+  async processFile(filePath: string): Promise<FunctionInfo[]> {
     const sourceFile = this.project.addSourceFileAtPath(filePath);
     const fileContent = sourceFile.getFullText();
     const fileHash = this.calculateHash(fileContent);
@@ -141,7 +153,7 @@ export class FunctionIndexer {
 
   private extractFunctionInfo(
     func: FunctionDeclaration,
-    filePath: string,
+    relativePath: string,
     fileHash: string,
     sourceFile: SourceFile
   ): FunctionInfo | null {
@@ -153,7 +165,7 @@ export class FunctionIndexer {
     const functionHash = this.calculateHash(functionBody);
 
     return {
-      file: filePath,
+      file: relativePath,
       identifier: name,
       signature,
       startLine: func.getStartLineNumber(),
@@ -169,7 +181,7 @@ export class FunctionIndexer {
 
   private extractMethodInfo(
     method: MethodDeclaration,
-    filePath: string,
+    relativePath: string,
     fileHash: string,
     sourceFile: SourceFile
   ): FunctionInfo | null {
@@ -190,7 +202,7 @@ export class FunctionIndexer {
     }
 
     return {
-      file: filePath,
+      file: relativePath,
       identifier: fullName,
       signature,
       startLine: method.getStartLineNumber(),
@@ -206,7 +218,7 @@ export class FunctionIndexer {
 
   private extractVariableFunctions(
     sourceFile: SourceFile,
-    filePath: string,
+    relativePath: string,
     fileHash: string
   ): FunctionInfo[] {
     const functions: FunctionInfo[] = [];
@@ -231,7 +243,7 @@ export class FunctionIndexer {
           const functionHash = this.calculateHash(functionBody);
 
           functions.push({
-            file: filePath,
+            file: relativePath,
             identifier: name,
             signature,
             startLine: functionNode.getStartLineNumber(),
@@ -306,5 +318,27 @@ export class FunctionIndexer {
     const content = lines.join('\n');
     
     await fs.promises.writeFile(this.options.output, content, 'utf8');
+  }
+  
+  private async saveMetadata(totalFiles: number, totalFunctions: number): Promise<void> {
+    const metadata: IndexMetadata = {
+      version: '1.0.0',
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      indexFile: path.basename(this.options.output),
+      options: {
+        root: this.options.root,
+        domain: this.options.domain,
+        include: this.options.include || ['**/*.ts', '**/*.tsx'],
+        exclude: this.options.exclude || ['**/*.test.ts', '**/*.spec.ts', '**/node_modules/**']
+      },
+      statistics: {
+        totalFiles,
+        totalFunctions
+      },
+      fileHashes: this.fileHashes
+    };
+    
+    await this.storage.saveMetadata(path.basename(this.options.output), metadata);
   }
 }
