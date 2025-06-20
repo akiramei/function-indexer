@@ -348,6 +348,12 @@ export class FunctionIndexer {
     const content = await fs.promises.readFile(this.options.output, 'utf8');
     const lines = content.trim().split('\n').filter(line => line.trim().length > 0);
     
-    return lines.map(line => JSON.parse(line) as FunctionInfo);
+    return lines.map((line, index) => {
+      try {
+        return JSON.parse(line) as FunctionInfo;
+      } catch (error) {
+        throw new Error(`Invalid JSON on line ${index + 1}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    });
   }
 }

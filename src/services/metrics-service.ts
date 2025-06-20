@@ -1,4 +1,6 @@
 import { execSync } from 'child_process';
+import * as os from 'os';
+import * as path from 'path';
 import { FunctionIndexer } from '../indexer';
 import { MetricsStorage } from '../storage/metrics-storage';
 import { FunctionMetricsHistory, MetricsCollectionOptions, MetricsThresholds, MetricsAnalysisResult, IndexerOptions } from '../types';
@@ -29,7 +31,7 @@ export class MetricsService {
     // 関数インデックスを生成
     const indexer = new FunctionIndexer({
       root: rootPath,
-      output: '/tmp/metrics-temp.jsonl',
+      output: path.join(os.tmpdir(), 'metrics-temp.jsonl'),
       domain: 'metrics',
       verbose: options.verbose
     });
@@ -48,11 +50,16 @@ export class MetricsService {
     
     for (const func of functions) {
       const functionId = `${func.file}:${func.identifier}`;
-      const changeType = await this.determineChangeType(functionId, commitHash, parentCommit);
       
       if (func.metrics.cyclomaticComplexity !== undefined && 
           func.metrics.cognitiveComplexity !== undefined &&
           func.metrics.nestingDepth !== undefined) {
+        
+        const changeType = await this.determineChangeType(functionId, {
+          cyclomaticComplexity: func.metrics.cyclomaticComplexity,
+          linesOfCode: func.metrics.linesOfCode || 0,
+          nestingDepth: func.metrics.nestingDepth
+        });
         
         metricsHistory.push({
           commitHash,
@@ -89,7 +96,7 @@ export class MetricsService {
   /**
    * トレンド分析を実行
    */
-  analyzeTrends(commitRange?: string): MetricsAnalysisResult[] {
+  analyzeTrends(): MetricsAnalysisResult[] {
     return this.storage.analyzeViolations(this.defaultThresholds);
   }
 
@@ -145,7 +152,14 @@ export class MetricsService {
   /**
    * 関数の変更タイプを判定
    */
-  private async determineChangeType(functionId: string, commitHash: string, parentCommit: string): Promise<'created' | 'modified' | 'refactored'> {
+  private async determineChangeType(
+    functionId: string,
+    currentMetrics: {
+      cyclomaticComplexity: number;
+      linesOfCode: number;
+      nestingDepth: number;
+    }
+  ): Promise<'created' | 'modified' | 'refactored'> {
     // 既存の履歴から判定
     const history = this.storage.getMetricsHistory(functionId, 2);
     
@@ -157,9 +171,9 @@ export class MetricsService {
     
     // 大幅な変更があった場合はリファクタリングとみなす
     const significantChange = 
-      Math.abs(previous.cyclomaticComplexity - (previous.cyclomaticComplexity || 0)) > 3 ||
-      Math.abs(previous.linesOfCode - (previous.linesOfCode || 0)) > 10 ||
-      Math.abs(previous.nestingDepth - (previous.nestingDepth || 0)) > 1;
+      Math.abs(currentMetrics.cyclomaticComplexity - previous.cyclomaticComplexity) > 3 ||
+      Math.abs(currentMetrics.linesOfCode - previous.linesOfCode) > 10 ||
+      Math.abs(currentMetrics.nestingDepth - previous.nestingDepth) > 1;
     
     return significantChange ? 'refactored' : 'modified';
   }

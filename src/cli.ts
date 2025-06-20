@@ -496,13 +496,12 @@ program
 program
   .command('analyze-trends')
   .description('Analyze metrics trends and violations')
-  .option('--since <commit>', 'analyze trends since specific commit')
-  .action(async (options) => {
+  .action(async () => {
     try {
       console.log(chalk.blue('📊 Analyzing metrics trends...'));
       
       const metricsService = new MetricsService();
-      const analysis = metricsService.analyzeTrends(options.since);
+      const analysis = metricsService.analyzeTrends();
       
       if (analysis.length === 0) {
         console.log(chalk.yellow('No metrics data found for analysis'));

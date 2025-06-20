@@ -27,7 +27,7 @@ npm test
 # Metrics collection commands
 function-indexer collect-metrics --root ./src --pr 123 --verbose
 function-indexer show-metrics "src/indexer.ts:FunctionIndexer.run"
-function-indexer analyze-trends --since HEAD~10
+function-indexer analyze-trends
 function-indexer pr-metrics 123
 ```
 
