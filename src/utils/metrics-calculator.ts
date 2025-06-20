@@ -10,7 +10,7 @@ export class MetricsCalculator {
       .filter(line => line.length > 0 && !line.match(/^\s*[{}]\s*$/));
     
     // Combine all metrics calculation in a single AST traversal
-    const combinedMetrics = this.calculateAllMetricsInSinglePass(node);
+    const combinedMetrics = MetricsCalculator.calculateAllMetricsInSinglePass(node);
     
     return {
       linesOfCode: lines.length,
@@ -81,7 +81,7 @@ export class MetricsCalculator {
           newNestingLevel++;
           break;
 
-        case SyntaxKind.BinaryExpression:
+        case SyntaxKind.BinaryExpression: {
           const binaryExpr = currentNode as any;
           const operatorToken = binaryExpr.getOperatorToken();
           if (operatorToken.getKind() === SyntaxKind.AmpersandAmpersandToken || 
@@ -90,6 +90,7 @@ export class MetricsCalculator {
             addCognitiveComplexity = 1;
           }
           break;
+        }
       }
 
       cognitiveComplexity += addCognitiveComplexity;
