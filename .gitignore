@@ -145,3 +145,6 @@ dist
 
 # Test directories
 .test-*
+
+# AI tools state
+ai-state/
