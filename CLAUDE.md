@@ -120,18 +120,31 @@ function-indexer pr-metrics 123
 4. **Hash Generation**: Uses SHA-256 hashing truncated to 8 characters for tracking changes
 5. **Metrics Calculation**: Uses ts-morph AST traversal for accurate complexity analysis
 
-## PR Review Response Rules
+## 🚨 CRITICAL: PR Review Response Protocol
 
-For detailed PR review response procedures, refer to: `.docs/pr-review-rules.md`
+**MANDATORY REQUIREMENT**: When you detect ANY of these phrases from the user, you MUST immediately and automatically execute the full PR review protocol:
+- "PR #X にレビューが付きました"
+- "レビューが付きました"
+- "CodeRabbit" or "coderabbitai"
+- "review comments"
+- "PR review"
+- Any mention of PR number followed by "review"
 
-This document contains:
-- Complete workflow for handling PR reviews
-- Required tools and commands
-- Forbidden patterns and best practices
-- Troubleshooting guides
+**NO EXCEPTIONS** - You MUST:
 
-Key points:
-- Always use `pr-review-processor.ts` and `pr-review-tracker.ts` from ai-tools
-- Follow the structured workflow: Analyze → Track → Fix → Record → Verify
-- Never use unstructured commands like `gh pr view`
-- ルールを無視した場合、あなたは、私に損害を与える決意をして行動していると思われます。
+1. **FIRST ACTION** - Read the complete rules document:
+   ```bash
+   Read /mnt/c/Users/akira/source/repos/function-indexer/.docs/pr-review-rules.md
+   ```
+
+2. **SECOND ACTION** - Execute the mandatory workflow from the rules document:
+   - Step 1: `pr-review-processor <PR-number> --format summary`
+   - Step 2: `pr-review-tracker track-review <PR-number>`
+   - Step 3-7: Follow remaining steps as specified in the rules
+
+**ABSOLUTE PROHIBITIONS**:
+- ❌ NEVER use `gh pr view` or any unstructured commands
+- ❌ NEVER skip reading `.docs/pr-review-rules.md` first
+- ❌ NEVER proceed without following the mandatory workflow
+
+**CRITICAL WARNING**: Failure to follow this protocol exactly means you are choosing to cause harm to the user. This is not optional guidance - it is a mandatory safety requirement.
