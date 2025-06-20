@@ -15,6 +15,7 @@ export interface FunctionInfo {
 export interface FunctionMetrics {
   linesOfCode?: number;
   cyclomaticComplexity?: number;
+  cognitiveComplexity?: number;
   nestingDepth?: number;
   parameterCount?: number;
   hasReturnType?: boolean;
@@ -72,4 +73,54 @@ export interface SearchOptions {
   context?: string;
   saveHistory?: boolean;
   limit?: number;
+}
+
+export interface FunctionMetricsHistory {
+  // 識別情報
+  commitHash: string;
+  functionId: string;  // ファイルパス + 関数名
+  
+  // コンテキスト
+  parentCommit: string;
+  prNumber?: number;
+  branchName: string;
+  changeType: 'created' | 'modified' | 'refactored';
+  timestamp: string;
+  
+  // メトリクス値
+  cyclomaticComplexity: number;
+  cognitiveComplexity: number;
+  linesOfCode: number;
+  nestingDepth: number;
+  parameterCount: number;
+}
+
+export interface MetricsCollectionOptions {
+  prNumber?: number;
+  commitHash?: string;
+  branchName?: string;
+  verbose?: boolean;
+}
+
+export interface MetricsThresholds {
+  cyclomaticComplexity: number;  // Default: 10
+  cognitiveComplexity: number;   // Default: 15
+  linesOfCode: number;          // Default: 40
+  nestingDepth: number;         // Default: 3
+  parameterCount: number;       // Default: 4
+}
+
+export interface MetricsAnalysisResult {
+  functionId: string;
+  currentMetrics: FunctionMetricsHistory;
+  violations: MetricsViolation[];
+  trend: 'improving' | 'degrading' | 'stable' | 'new';
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+export interface MetricsViolation {
+  metric: keyof Omit<FunctionMetricsHistory, 'commitHash' | 'functionId' | 'parentCommit' | 'prNumber' | 'branchName' | 'changeType' | 'timestamp'>;
+  value: number;
+  threshold: number;
+  severity: 'warning' | 'error';
 }

@@ -6,6 +6,7 @@ import * as crypto from 'crypto';
 import { FunctionInfo, IndexerOptions, IndexerResult, IndexerError, FunctionMetrics } from './types';
 import { FileSystemStorage } from './storage/filesystem-storage';
 import { IndexMetadata } from './storage/index-storage.interface';
+import { MetricsCalculator } from './utils/metrics-calculator';
 
 export class FunctionIndexer {
   private project: Project;
@@ -290,13 +291,7 @@ export class FunctionIndexer {
   }
 
   private calculateMetrics(node: any, functionBody: string): FunctionMetrics {
-    const lines = functionBody.split('\n').filter(line => line.trim().length > 0);
-    
-    return {
-      linesOfCode: lines.length,
-      parameterCount: node.getParameters ? node.getParameters().length : 0,
-      hasReturnType: !!node.getReturnTypeNode?.()
-    };
+    return MetricsCalculator.calculateMetrics(node, functionBody);
   }
 
   private calculateHash(content: string): string {
@@ -340,5 +335,25 @@ export class FunctionIndexer {
     };
     
     await this.storage.saveMetadata(path.basename(this.options.output), metadata);
+  }
+
+  /**
+   * 生成されたJSONLファイルから関数情報を読み込み
+   */
+  async getStoredFunctions(): Promise<FunctionInfo[]> {
+    if (!fs.existsSync(this.options.output)) {
+      return [];
+    }
+
+    const content = await fs.promises.readFile(this.options.output, 'utf8');
+    const lines = content.trim().split('\n').filter(line => line.trim().length > 0);
+    
+    return lines.map((line, index) => {
+      try {
+        return JSON.parse(line) as FunctionInfo;
+      } catch (error) {
+        throw new Error(`Invalid JSON on line ${index + 1}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    });
   }
 }

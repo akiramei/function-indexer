@@ -23,6 +23,12 @@ npm start -- --root ./src --output function-index.jsonl --domain backend
 
 # Run tests
 npm test
+
+# Metrics collection commands
+function-indexer collect-metrics --root ./src --pr 123 --verbose
+function-indexer show-metrics "src/indexer.ts:FunctionIndexer.run"
+function-indexer analyze-trends
+function-indexer pr-metrics 123
 ```
 
 ## Architecture
@@ -39,6 +45,8 @@ Key architectural decisions:
 - Processes files individually to handle large codebases efficiently
 - Generates deterministic hashes for change tracking
 - Outputs JSONL format for streaming processing
+- SQLite database for metrics history tracking
+- Commit-based metrics collection for AI development workflows
 
 ## Output Format
 
@@ -56,6 +64,9 @@ interface FunctionRecord {
   async: boolean;        // Is async function
   metrics: {
     linesOfCode: number;
+    cyclomaticComplexity: number;
+    cognitiveComplexity: number;
+    nestingDepth: number;
     parameterCount: number;
     hasReturnType: boolean;
   };
@@ -70,12 +81,44 @@ Currently, the project has Jest configured but no tests implemented. When adding
 - Use the test-src/ directory for sample TypeScript files to test against
 - Focus on testing the AST parsing logic in indexer.ts
 
+## Metrics Collection System
+
+The enhanced metrics system tracks code quality over time using commit-based history:
+
+### Supported Metrics
+1. **Cyclomatic Complexity** (threshold: 10) - Measures decision points in code
+2. **Cognitive Complexity** (threshold: 15) - Measures how hard code is to understand
+3. **Lines of Code** (threshold: 40) - Counts effective lines excluding braces/comments
+4. **Nesting Depth** (threshold: 3) - Maximum depth of control structures
+5. **Parameter Count** (threshold: 4) - Number of function parameters
+
+### Database Storage
+- SQLite database stored in `.function-metrics/metrics.db`
+- Tracks function metrics across commits, PRs, and branches
+- Enables trend analysis and violation detection
+
+### CLI Commands
+```bash
+# Collect metrics for current state
+function-indexer collect-metrics --root ./src --pr 123
+
+# View function history
+function-indexer show-metrics "src/file.ts:functionName" --limit 5
+
+# Analyze trends and violations
+function-indexer analyze-trends
+
+# View PR-specific metrics
+function-indexer pr-metrics 123
+```
+
 ## Important Implementation Details
 
 1. **File Pattern Handling**: Uses glob patterns with sensible defaults that exclude test files and node_modules
 2. **Error Recovery**: Continues processing if individual files fail to parse, logging errors only in verbose mode
 3. **Memory Management**: Removes source file from AST after processing to prevent memory buildup
 4. **Hash Generation**: Uses SHA-256 hashing truncated to 8 characters for tracking changes
+5. **Metrics Calculation**: Uses ts-morph AST traversal for accurate complexity analysis
 
 ## PR Review Response Rules
 
@@ -91,3 +134,4 @@ Key points:
 - Always use `pr-review-processor.ts` and `pr-review-tracker.ts` from ai-tools
 - Follow the structured workflow: Analyze → Track → Fix → Record → Verify
 - Never use unstructured commands like `gh pr view`
+- ルールを無視した場合、あなたは、私に損害を与える決意をして行動していると思われます。

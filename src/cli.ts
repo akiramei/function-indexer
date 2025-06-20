@@ -8,6 +8,7 @@ import { SearchService } from './search';
 import { AIService } from './ai-service';
 import { UpdateService } from './services/update-service';
 import { FileSystemStorage } from './storage/filesystem-storage';
+import { MetricsService } from './services/metrics-service';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
@@ -419,6 +420,163 @@ program
       console.log(chalk.green('✅ Restore completed successfully!'));
     } catch (error) {
       console.error(chalk.red('❌ Restore error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('collect-metrics')
+  .description('Collect code metrics for commit/PR tracking')
+  .option('-r, --root <path>', 'root directory to scan', './src')
+  .option('--pr <number>', 'PR number for this metrics collection')
+  .option('--commit <hash>', 'specific commit hash (defaults to current HEAD)')
+  .option('--branch <name>', 'branch name (defaults to current branch)')
+  .option('-v, --verbose', 'verbose output', false)
+  .action(async (options) => {
+    try {
+      console.log(chalk.blue('📊 Collecting function metrics...'));
+      
+      const rootPath = path.resolve(options.root);
+      if (!fs.existsSync(rootPath)) {
+        console.error(chalk.red(`❌ Root directory does not exist: ${rootPath}`));
+        process.exit(1);
+      }
+
+      const metricsService = new MetricsService();
+      
+      await metricsService.collectMetrics(rootPath, {
+        prNumber: options.pr ? parseInt(options.pr) : undefined,
+        commitHash: options.commit,
+        branchName: options.branch,
+        verbose: options.verbose
+      });
+
+      console.log(chalk.green('✅ Metrics collection completed!'));
+      metricsService.close();
+    } catch (error) {
+      console.error(chalk.red('❌ Metrics collection error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('show-metrics <functionId>')
+  .description('Show metrics history for a specific function')
+  .option('-l, --limit <number>', 'limit number of history entries', '10')
+  .action(async (functionId, options) => {
+    try {
+      console.log(chalk.blue(`📈 Metrics history for: ${functionId}`));
+      
+      const metricsService = new MetricsService();
+      const history = metricsService.showFunctionMetrics(functionId, parseInt(options.limit));
+      
+      if (history.length === 0) {
+        console.log(chalk.yellow('No metrics history found for this function'));
+      } else {
+        console.log(chalk.green(`Found ${history.length} metric entries:\n`));
+        
+        history.forEach((metric, index) => {
+          const date = new Date(metric.timestamp).toLocaleString();
+          console.log(chalk.cyan(`${index + 1}. ${date} (${metric.commitHash.substring(0, 8)})`));
+          console.log(chalk.gray(`   Branch: ${metric.branchName} | Change: ${metric.changeType}`));
+          if (metric.prNumber) console.log(chalk.gray(`   PR: #${metric.prNumber}`));
+          console.log(chalk.gray(`   Cyclomatic: ${metric.cyclomaticComplexity} | Cognitive: ${metric.cognitiveComplexity}`));
+          console.log(chalk.gray(`   LOC: ${metric.linesOfCode} | Nesting: ${metric.nestingDepth} | Params: ${metric.parameterCount}`));
+          console.log();
+        });
+      }
+      
+      metricsService.close();
+    } catch (error) {
+      console.error(chalk.red('❌ Show metrics error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('analyze-trends')
+  .description('Analyze metrics trends and violations')
+  .action(async () => {
+    try {
+      console.log(chalk.blue('📊 Analyzing metrics trends...'));
+      
+      const metricsService = new MetricsService();
+      const analysis = metricsService.analyzeTrends();
+      
+      if (analysis.length === 0) {
+        console.log(chalk.yellow('No metrics data found for analysis'));
+      } else {
+        console.log(chalk.green(`Analysis results for ${analysis.length} functions:\n`));
+        
+        const highRisk = analysis.filter(a => a.riskLevel === 'high');
+        const mediumRisk = analysis.filter(a => a.riskLevel === 'medium');
+        const lowRisk = analysis.filter(a => a.riskLevel === 'low');
+        
+        console.log(chalk.red(`🔴 High Risk: ${highRisk.length} functions`));
+        console.log(chalk.yellow(`🟡 Medium Risk: ${mediumRisk.length} functions`));
+        console.log(chalk.green(`🟢 Low Risk: ${lowRisk.length} functions\n`));
+        
+        // Show high risk functions
+        if (highRisk.length > 0) {
+          console.log(chalk.red('🔴 High Risk Functions:'));
+          highRisk.forEach(func => {
+            console.log(chalk.red(`  ❌ ${func.functionId} (${func.trend})`));
+            func.violations.forEach(v => {
+              console.log(chalk.gray(`     ${v.metric}: ${v.value} (threshold: ${v.threshold})`));
+            });
+          });
+          console.log();
+        }
+        
+        // Show medium risk functions (limited)
+        if (mediumRisk.length > 0) {
+          console.log(chalk.yellow('🟡 Medium Risk Functions (showing first 5):'));
+          mediumRisk.slice(0, 5).forEach(func => {
+            console.log(chalk.yellow(`  ⚠️  ${func.functionId} (${func.trend})`));
+            func.violations.forEach(v => {
+              console.log(chalk.gray(`     ${v.metric}: ${v.value} (threshold: ${v.threshold})`));
+            });
+          });
+          if (mediumRisk.length > 5) {
+            console.log(chalk.gray(`  ... and ${mediumRisk.length - 5} more`));
+          }
+        }
+      }
+      
+      metricsService.close();
+    } catch (error) {
+      console.error(chalk.red('❌ Trend analysis error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('pr-metrics <prNumber>')
+  .description('Show metrics for a specific PR')
+  .action(async (prNumber) => {
+    try {
+      console.log(chalk.blue(`📊 Metrics for PR #${prNumber}`));
+      
+      const metricsService = new MetricsService();
+      const prMetrics = metricsService.getPRMetrics(parseInt(prNumber));
+      
+      if (prMetrics.length === 0) {
+        console.log(chalk.yellow(`No metrics found for PR #${prNumber}`));
+      } else {
+        console.log(chalk.green(`Found metrics for ${prMetrics.length} functions:\n`));
+        
+        prMetrics.forEach((metric, index) => {
+          console.log(chalk.cyan(`${index + 1}. ${metric.functionId}`));
+          console.log(chalk.gray(`   Change: ${metric.changeType} | Commit: ${metric.commitHash.substring(0, 8)}`));
+          console.log(chalk.gray(`   Cyclomatic: ${metric.cyclomaticComplexity} | Cognitive: ${metric.cognitiveComplexity}`));
+          console.log(chalk.gray(`   LOC: ${metric.linesOfCode} | Nesting: ${metric.nestingDepth} | Params: ${metric.parameterCount}`));
+          console.log();
+        });
+      }
+      
+      metricsService.close();
+    } catch (error) {
+      console.error(chalk.red('❌ PR metrics error:'), error instanceof Error ? error.message : String(error));
       process.exit(1);
     }
   });
