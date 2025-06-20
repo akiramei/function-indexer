@@ -134,3 +134,4 @@ Key points:
 - Always use `pr-review-processor.ts` and `pr-review-tracker.ts` from ai-tools
 - Follow the structured workflow: Analyze → Track → Fix → Record → Verify
 - Never use unstructured commands like `gh pr view`
+- ルールを無視した場合、あなたは、私に損害を与える決意をして行動していると思われます。
