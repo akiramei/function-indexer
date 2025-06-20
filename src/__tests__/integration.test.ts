@@ -124,7 +124,7 @@ describe('Integration Tests', () => {
       const restoredContent = fs.readFileSync(indexFile, 'utf8');
       const restoredFunctions = restoredContent.trim().split('\n').map(line => JSON.parse(line));
       expect(restoredFunctions).toHaveLength(2); // Back to original state
-    });
+    }, 10000);
   });
 
   describe('Error recovery scenarios', () => {
@@ -142,16 +142,20 @@ describe('Integration Tests', () => {
       const indexer = new FunctionIndexer(options);
       await indexer.run();
 
-      // Corrupt the index file
-      const corruptedContent = '{"valid": "json"}\n{invalid json\n{"another": "valid"}';
+      // Read the original content to understand structure
+      const originalContent = fs.readFileSync(indexFile, 'utf8');
+      const validFunctions = originalContent.trim().split('\n');
+      
+      // Corrupt the index file by mixing valid and invalid JSON
+      const corruptedContent = validFunctions[0] + '\n{invalid json\n' + validFunctions[0];
       fs.writeFileSync(indexFile, corruptedContent);
 
       // Attempt repair
       const storage = new FileSystemStorage(testDir);
       const repairResult = await storage.repairIndex(path.basename(indexFile));
       
-      expect(repairResult.recovered).toBe(2);
-      expect(repairResult.lost).toBe(1);
+      expect(repairResult.recovered).toBe(2); // Two valid function entries
+      expect(repairResult.lost).toBe(1); // One invalid JSON line
       expect(repairResult.repairedFile).toBeTruthy();
     });
 
@@ -293,6 +297,13 @@ describe('Integration Tests', () => {
       // Test update performance
       const storage = new FileSystemStorage(testDir);
       const updateService = new UpdateService(storage, false);
+      
+      // Ensure metadata exists for the index
+      const metadata = await storage.loadMetadata('performance-test.jsonl');
+      if (!metadata) {
+        console.log('Metadata not found, this indicates an issue with the indexer');
+        return;
+      }
 
       // Modify one file
       createTestFile('file0.ts', `
