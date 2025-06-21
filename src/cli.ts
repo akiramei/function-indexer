@@ -9,6 +9,8 @@ import { AIService } from './ai-service';
 import { UpdateService } from './services/update-service';
 import { FileSystemStorage } from './storage/filesystem-storage';
 import { MetricsService } from './services/metrics-service';
+import { ConfigService } from './services/config-service';
+import { ProjectDetector } from './utils/project-detector';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
@@ -19,67 +21,162 @@ const program = new Command();
 
 program
   .name('function-indexer')
-  .description('TypeScript function indexer for AI development management')
+  .description('A modern TypeScript function analyzer that helps you understand and maintain your codebase')
   .version('1.0.0');
 
 program
-  .option('-r, --root <path>', 'root directory to scan', './src')
-  .option('-o, --output <file>', 'output JSONL file', 'function-index.jsonl')
-  .option('-d, --domain <name>', 'domain name for the functions', 'default')
-  .option('--include <patterns>', 'include patterns (comma-separated)', '**/*.ts,**/*.tsx')
-  .option('--exclude <patterns>', 'exclude patterns (comma-separated)', '**/*.test.ts,**/*.spec.ts,**/node_modules/**')
+  .option('-r, --root <path>', 'root directory to scan')
   .option('-v, --verbose', 'verbose output', false)
   .action(async (options) => {
     try {
-      console.log(chalk.blue('🔍 Function Indexer Starting...'));
-      console.log(chalk.gray(`Root: ${options.root}`));
-      console.log(chalk.gray(`Output: ${options.output}`));
-      console.log(chalk.gray(`Domain: ${options.domain}`));
+      // Project detection with error handling
+      const projectInfo = (() => {
+        try {
+          return ProjectDetector.detectProject();
+        } catch (error) {
+          console.error(chalk.red('❌ Failed to detect project structure'));
+          if (options.verbose && error instanceof Error) {
+            console.error(chalk.gray(error.stack));
+          }
+          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
+        }
+      })();
       
-      // 入力検証
-      if (!fs.existsSync(options.root)) {
-        console.error(chalk.red(`❌ Root directory does not exist: ${options.root}`));
-        process.exit(1);
-      }
-
-      // 出力ディレクトリの作成
-      const outputDir = path.dirname(options.output);
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
-
-      const indexerOptions: IndexerOptions = {
-        root: path.resolve(options.root),
-        output: path.resolve(options.output),
-        domain: options.domain,
-        include: options.include.split(',').map((p: string) => p.trim()),
-        exclude: options.exclude.split(',').map((p: string) => p.trim()),
-        verbose: options.verbose
-      };
-
-      const indexer = new FunctionIndexer(indexerOptions);
-      const result = await indexer.run();
-
-      // 結果表示
-      console.log(chalk.green('✅ Indexing completed!'));
-      console.log(chalk.cyan(`📁 Files processed: ${result.totalFiles}`));
-      console.log(chalk.cyan(`🔧 Functions found: ${result.totalFunctions}`));
-      console.log(chalk.cyan(`⏱️  Execution time: ${result.executionTime}ms`));
-
-      if (result.errors.length > 0) {
-        console.log(chalk.yellow(`⚠️  Warnings/Errors: ${result.errors.length}`));
-        if (options.verbose) {
-          result.errors.forEach(error => {
-            const icon = error.severity === 'error' ? '❌' : '⚠️';
-            console.log(chalk.gray(`  ${icon} ${error.file}: ${error.message}`));
+      // Check if initialized
+      const isInitialized = ConfigService.isInitialized(projectInfo.root);
+      
+      if (!isInitialized) {
+        // First time - Initialize
+        console.log(chalk.blue('🚀 Welcome to Function Indexer!'));
+        console.log(chalk.gray('Initializing project...'));
+        
+        // Auto-detect project
+        console.log(chalk.cyan(`✨ Detected ${projectInfo.type} project at: ${projectInfo.root}`));
+        
+        // Initialize configuration
+        const config = ConfigService.initialize(projectInfo.root);
+        console.log(chalk.green(`✅ Created configuration in ${ConfigService.getConfigDir(projectInfo.root)}`));
+        
+        // Use command line root if provided, otherwise use detected root
+        let finalConfig = config;
+        if (options.root) {
+          const updatedConfig = { ...config, root: path.resolve(options.root) };
+          ConfigService.saveConfig(updatedConfig, projectInfo.root);
+          finalConfig = updatedConfig;
+        }
+        
+        console.log(chalk.gray(`📁 Scanning: ${finalConfig.root}`));
+        console.log(chalk.gray(`📄 Output: ${finalConfig.output}`));
+        
+        // Run initial indexing
+        const indexer = new FunctionIndexer(finalConfig);
+        const result = await indexer.run();
+        
+        // Display results
+        console.log('');
+        console.log(chalk.green('✅ Indexing completed!'));
+        console.log(chalk.cyan(`📁 Files processed: ${result.totalFiles}`));
+        console.log(chalk.cyan(`🔧 Functions found: ${result.totalFunctions}`));
+        console.log(chalk.cyan(`⏱️  Execution time: ${result.executionTime}ms`));
+        
+        if (result.errors.length > 0) {
+          console.log(chalk.yellow(`⚠️  Warnings: ${result.errors.length}`));
+          if (options.verbose) {
+            result.errors.forEach(error => {
+              const icon = error.severity === 'error' ? '❌' : '⚠️';
+              console.log(chalk.gray(`  ${icon} ${error.file}: ${error.message}`));
+            });
+          }
+        }
+        
+        // Show next steps
+        console.log('');
+        console.log(chalk.blue('💡 Next steps:'));
+        console.log(chalk.gray('  • Run `function-indexer search <query>` to search functions'));
+        console.log(chalk.gray('  • Run `function-indexer metrics` to view code quality'));
+        console.log(chalk.gray('  • Run `function-indexer` again to update the index'));
+        
+      } else {
+        // Already initialized - Update
+        console.log(chalk.blue('🔄 Updating function index...'));
+        
+        let finalConfig = ConfigService.loadConfig(projectInfo.root);
+        
+        // Use command line root if provided
+        if (options.root) {
+          finalConfig = { ...finalConfig, root: path.resolve(options.root) };
+        }
+        
+        // Check if index exists
+        if (!ConfigService.indexExists(projectInfo.root)) {
+          // Index was deleted, recreate it
+          console.log(chalk.yellow('⚠️  Index file not found, creating new index...'));
+          
+          const indexer = new FunctionIndexer(finalConfig);
+          const result = await indexer.run();
+          
+          console.log(chalk.green('✅ Index recreated!'));
+          console.log(chalk.cyan(`📁 Files processed: ${result.totalFiles}`));
+          console.log(chalk.cyan(`🔧 Functions found: ${result.totalFunctions}`));
+          
+        } else {
+          // Update existing index
+          const storage = new FileSystemStorage(path.dirname(finalConfig.output));
+          const updateService = new UpdateService(storage, options.verbose);
+          
+          const result = await updateService.updateIndex(path.basename(finalConfig.output), {
+            autoBackup: true,
+            verbose: options.verbose
           });
+          
+          console.log(chalk.green('✅ Update completed!'));
+          
+          if (result.added > 0 || result.updated > 0 || result.deleted > 0) {
+            console.log(chalk.cyan(`➕ Added: ${result.added} functions`));
+            console.log(chalk.cyan(`🔄 Updated: ${result.updated} functions`));
+            console.log(chalk.cyan(`➖ Deleted: ${result.deleted} functions`));
+          } else {
+            console.log(chalk.gray('No changes detected'));
+          }
+          
+          console.log(chalk.cyan(`⏱️  Execution time: ${result.executionTime}ms`));
+          
+          if (result.errors.length > 0) {
+            console.log(chalk.yellow(`⚠️  Warnings: ${result.errors.length}`));
+            if (options.verbose) {
+              result.errors.forEach(error => {
+                console.log(chalk.gray(`  ⚠️  ${error}`));
+              });
+            }
+          }
+        }
+        
+        // Quick metrics summary
+        try {
+          const metricsService = new MetricsService();
+          const violations = metricsService.analyzeTrends()
+            .filter(f => f.riskLevel === 'high')
+            .length;
+          
+          if (violations > 0) {
+            console.log('');
+            console.log(chalk.yellow(`⚠️  ${violations} functions exceed complexity thresholds`));
+            console.log(chalk.gray('   Run `function-indexer metrics` for details'));
+          }
+          
+          metricsService.close();
+        } catch (error) {
+          if (options.verbose) {
+            console.warn(chalk.yellow('⚠️  Metrics analysis failed:'), error instanceof Error ? error.message : String(error));
+          }
         }
       }
 
-      console.log(chalk.green(`📄 Output written to: ${options.output}`));
-
     } catch (error) {
-      console.error(chalk.red('❌ Fatal error:'), error);
+      console.error(chalk.red('❌ Error:'), error instanceof Error ? error.message : error);
+      if (options.verbose && error instanceof Error) {
+        console.error(chalk.gray(error.stack));
+      }
       process.exit(1);
     }
   });
@@ -88,48 +185,90 @@ program
   .command('search <query>')
   .description('Search for functions using natural language')
   .option('-c, --context <context>', 'provide context for the search')
-  .option('--save-history', 'save search to history', true)
-  .option('-l, --limit <number>', 'limit number of results', '20')
-  .option('-i, --index <file>', 'function index file', 'function-index.jsonl')
+  .option('--no-save-history', 'do not save search to history')
+  .option('-l, --limit <number>', 'limit number of results', '10')
   .action(async (query, options) => {
     try {
-      console.log(chalk.blue(`🔍 Searching for: "${query}"`));
+      // Auto-detect project and load config with error handling
+      const projectInfo = (() => {
+        try {
+          return ProjectDetector.detectProject();
+        } catch (error) {
+          console.error(chalk.red('❌ Failed to detect project structure'));
+          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
+        }
+      })();
       
-      const indexPath = path.resolve(options.index);
-      if (!fs.existsSync(indexPath)) {
-        console.error(chalk.red(`❌ Index file not found: ${indexPath}`));
-        console.log(chalk.yellow('💡 Run function-indexer first to create the index'));
+      if (!ConfigService.isInitialized(projectInfo.root)) {
+        console.error(chalk.red('❌ Project not initialized'));
+        console.log(chalk.yellow('💡 Run `function-indexer` first to initialize the project'));
+        process.exit(1);
+      }
+      
+      const config = ConfigService.loadConfig(projectInfo.root);
+      
+      if (!fs.existsSync(config.output)) {
+        console.error(chalk.red('❌ Index file not found'));
+        console.log(chalk.yellow('💡 Run `function-indexer` to create the index'));
         process.exit(1);
       }
 
+      console.log(chalk.blue(`🔍 Searching for: "${query}"`));
+      if (options.context) {
+        console.log(chalk.gray(`   Context: ${options.context}`));
+      }
+
       const searchService = new SearchService();
-      searchService.loadFunctionIndex(indexPath);
+      searchService.loadFunctionIndex(config.output);
 
       const results = searchService.search({
         query,
         context: options.context,
-        saveHistory: options.saveHistory,
-        limit: Math.max(1, parseInt(options.limit) || 20)
+        saveHistory: options.saveHistory !== false,
+        limit: (() => {
+          const parsed = parseInt(options.limit);
+          if (isNaN(parsed) || parsed < 1) {
+            console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 10`));
+            return 10;
+          }
+          return Math.max(1, parsed);
+        })()
       });
 
       if (results.length === 0) {
-        console.log(chalk.yellow('❌ No functions found matching your query'));
+        console.log(chalk.yellow('No functions found matching your query'));
+        console.log(chalk.gray('\nTry:'));
+        console.log(chalk.gray('  • Using different keywords'));
+        console.log(chalk.gray('  • Being more specific'));
+        console.log(chalk.gray('  • Adding context with --context'));
       } else {
-        console.log(chalk.green(`✅ Found ${results.length} matching functions:\n`));
+        console.log(chalk.green(`\nFound ${results.length} matching function${results.length > 1 ? 's' : ''}:\n`));
         
         results.forEach((func, index) => {
-          console.log(chalk.cyan(`${index + 1}. ${func.identifier}`));
-          console.log(chalk.gray(`   File: ${func.file}:${func.startLine}`));
-          console.log(chalk.gray(`   Signature: ${func.signature.substring(0, 80)}...`));
-          if (func.exported) console.log(chalk.green('   ✓ Exported'));
-          if (func.async) console.log(chalk.blue('   ⚡ Async'));
+          console.log(chalk.cyan(`${index + 1}. ${func.identifier}`) + 
+                      (func.exported ? chalk.green(' ✓') : '') +
+                      (func.async ? chalk.blue(' ⚡') : ''));
+          console.log(chalk.gray(`   ${func.file}:${func.startLine}`));
+          
+          // Show truncated signature
+          const maxSigLength = 70;
+          const signature = func.signature.length > maxSigLength 
+            ? func.signature.substring(0, maxSigLength) + '...'
+            : func.signature;
+          console.log(chalk.gray(`   ${signature}`));
+          
+          // Show metrics if high complexity
+          if (func.metrics && 'cyclomaticComplexity' in func.metrics && func.metrics.cyclomaticComplexity && func.metrics.cyclomaticComplexity > 10) {
+            console.log(chalk.yellow(`   ⚠️  High complexity: ${func.metrics.cyclomaticComplexity}`));
+          }
+          
           console.log();
         });
       }
 
       searchService.close();
     } catch (error) {
-      console.error(chalk.red('❌ Search error:'), error);
+      console.error(chalk.red('❌ Search error:'), error instanceof Error ? error.message : error);
       process.exit(1);
     }
   });
@@ -420,6 +559,154 @@ program
       console.log(chalk.green('✅ Restore completed successfully!'));
     } catch (error) {
       console.error(chalk.red('❌ Restore error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('metrics')
+  .description('Show code quality metrics and complexity overview')
+  .option('-d, --details', 'show detailed function-level metrics')
+  .action(async (options) => {
+    try {
+      // Auto-detect project and load config with error handling
+      const projectInfo = (() => {
+        try {
+          return ProjectDetector.detectProject();
+        } catch (error) {
+          console.error(chalk.red('❌ Failed to detect project structure'));
+          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
+        }
+      })();
+      
+      if (!ConfigService.isInitialized(projectInfo.root)) {
+        console.error(chalk.red('❌ Project not initialized'));
+        console.log(chalk.yellow('💡 Run `function-indexer` first to initialize the project'));
+        process.exit(1);
+      }
+      
+      const config = ConfigService.loadConfig(projectInfo.root);
+      
+      if (!fs.existsSync(config.output)) {
+        console.error(chalk.red('❌ Index file not found'));
+        console.log(chalk.yellow('💡 Run `function-indexer` to create the index'));
+        process.exit(1);
+      }
+
+      console.log(chalk.blue('📊 Code Quality Metrics\n'));
+
+      // Load and analyze functions from index
+      const indexContent = fs.readFileSync(config.output, 'utf-8');
+      const functions: any[] = [];
+      
+      for (const line of indexContent.trim().split('\n').filter(line => line)) {
+        try {
+          functions.push(JSON.parse(line));
+        } catch (error) {
+          console.warn(chalk.yellow(`⚠️  Skipping malformed JSON line: ${line.substring(0, 50)}...`));
+          continue;
+        }
+      }
+
+      // Calculate summary statistics
+      const totalFunctions = functions.length;
+      const complexityDistribution = {
+        low: 0,
+        medium: 0,
+        high: 0
+      };
+
+      const defaultThresholds = {
+        cyclomaticComplexity: 10,
+        cognitiveComplexity: 15,
+        linesOfCode: 50,
+        nestingDepth: 4,
+        parameterCount: 4
+      };
+      
+      const thresholds = {
+        ...defaultThresholds,
+        ...(config.metrics?.thresholds || {})
+      };
+
+      const violations: Array<{ func: any; issues: string[] }> = [];
+
+      functions.forEach(func => {
+        const metrics = func.metrics || {};
+        const issues: string[] = [];
+        
+        // Check violations using refactored approach
+        const metricChecks = [
+          { key: 'cyclomaticComplexity', label: 'Cyclomatic complexity' },
+          { key: 'cognitiveComplexity', label: 'Cognitive complexity' },
+          { key: 'linesOfCode', label: 'Lines of code' },
+          { key: 'nestingDepth', label: 'Nesting depth' },
+          { key: 'parameterCount', label: 'Parameter count' }
+        ] as const;
+        
+        for (const { key, label } of metricChecks) {
+          if (metrics[key] > thresholds[key]) {
+            issues.push(`${label}: ${metrics[key]} (>${thresholds[key]})`);
+          }
+        }
+
+        // Categorize by risk level
+        if (issues.length >= 3) {
+          complexityDistribution.high++;
+        } else if (issues.length >= 1) {
+          complexityDistribution.medium++;
+        } else {
+          complexityDistribution.low++;
+        }
+
+        if (issues.length > 0) {
+          violations.push({ func, issues });
+        }
+      });
+
+      // Display summary
+      console.log(chalk.cyan('📈 Summary'));
+      console.log(chalk.gray(`   Total Functions: ${totalFunctions}`));
+      console.log(chalk.green(`   🟢 Low Risk: ${complexityDistribution.low} (${Math.round(complexityDistribution.low / totalFunctions * 100)}%)`));
+      console.log(chalk.yellow(`   🟡 Medium Risk: ${complexityDistribution.medium} (${Math.round(complexityDistribution.medium / totalFunctions * 100)}%)`));
+      console.log(chalk.red(`   🔴 High Risk: ${complexityDistribution.high} (${Math.round(complexityDistribution.high / totalFunctions * 100)}%)`));
+
+      if (violations.length > 0) {
+        console.log('\n' + chalk.yellow('⚠️  Functions exceeding thresholds:'));
+        
+        // Sort by number of violations
+        violations.sort((a, b) => b.issues.length - a.issues.length);
+        
+        const showCount = options.details ? violations.length : Math.min(5, violations.length);
+        
+        violations.slice(0, showCount).forEach((violation, index) => {
+          const riskIcon = violation.issues.length >= 3 ? '🔴' : '🟡';
+          console.log(`\n${riskIcon} ${index + 1}. ${chalk.cyan(violation.func.identifier)}`);
+          console.log(chalk.gray(`   ${violation.func.file}:${violation.func.startLine}`));
+          violation.issues.forEach(issue => {
+            console.log(chalk.gray(`   • ${issue}`));
+          });
+        });
+        
+        if (!options.details && violations.length > showCount) {
+          console.log(chalk.gray(`\n   ... and ${violations.length - showCount} more functions`));
+          console.log(chalk.gray('   Use --details to see all functions'));
+        }
+      } else {
+        console.log('\n' + chalk.green('✅ All functions are within quality thresholds!'));
+      }
+
+      // Suggestions
+      if (violations.length > 0) {
+        console.log('\n' + chalk.blue('💡 Suggestions:'));
+        console.log(chalk.gray('   • Consider breaking down complex functions'));
+        console.log(chalk.gray('   • Reduce nesting levels with early returns'));
+        console.log(chalk.gray('   • Extract helper functions for readability'));
+        console.log(chalk.gray('   • Use function-indexer search to find similar patterns'));
+      }
+
+    } catch (error) {
+      console.error(chalk.red('❌ Metrics error:'), error instanceof Error ? error.message : error);
       process.exit(1);
     }
   });
