@@ -26,6 +26,7 @@ program
 
 program
   .option('-r, --root <path>', 'root directory to scan')
+  .option('-o, --output <file>', 'output file for function index')
   .option('-v, --verbose', 'verbose output', false)
   .action(async (options) => {
     try {
@@ -57,10 +58,14 @@ program
         const config = ConfigService.initialize(projectInfo.root);
         console.log(chalk.green(`✅ Created configuration in ${ConfigService.getConfigDir(projectInfo.root)}`));
         
-        // Use command line root if provided, otherwise use detected root
+        // Use command line options if provided
         let finalConfig = config;
-        if (options.root) {
-          const updatedConfig = { ...config, root: path.resolve(options.root) };
+        if (options.root || options.output) {
+          const updatedConfig = { 
+            ...config, 
+            ...(options.root && { root: path.resolve(options.root) }),
+            ...(options.output && { output: path.resolve(options.output) })
+          };
           ConfigService.saveConfig(updatedConfig, projectInfo.root);
           finalConfig = updatedConfig;
         }
@@ -102,9 +107,13 @@ program
         
         let finalConfig = ConfigService.loadConfig(projectInfo.root);
         
-        // Use command line root if provided
-        if (options.root) {
-          finalConfig = { ...finalConfig, root: path.resolve(options.root) };
+        // Use command line options if provided
+        if (options.root || options.output) {
+          finalConfig = { 
+            ...finalConfig, 
+            ...(options.root && { root: path.resolve(options.root) }),
+            ...(options.output && { output: path.resolve(options.output) })
+          };
         }
         
         // Check if index exists

@@ -74,5 +74,17 @@ jobs:
     - name: Test function indexer on itself
       run: |
         npm run build
-        node dist/cli.js index --root ./src --output test-output.jsonl
+        node dist/cli.js --root ./src --output test-output.jsonl
         echo "✅ Successfully indexed $(wc -l < test-output.jsonl) functions"
+        
+    - name: Verify output quality
+      run: |
+        if [ ! -f test-output.jsonl ]; then
+          echo "❌ Output file not created"
+          exit 1
+        fi
+        if [ $(wc -l < test-output.jsonl) -lt 50 ]; then
+          echo "❌ Too few functions found (expected 50+)"
+          exit 1
+        fi
+        echo "✅ Output quality check passed"
