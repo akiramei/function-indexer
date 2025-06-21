@@ -5,6 +5,12 @@ import * as os from 'os';
 
 // Mock ProjectDetector
 jest.mock('../utils/project-detector', () => ({
+  detectProject: jest.fn(),
+  loadGitignorePatterns: jest.fn().mockReturnValue([
+    '**/node_modules/**',
+    '**/.git/**',
+    '**/dist/**'
+  ]),
   ProjectDetector: {
     detectProject: jest.fn(),
     loadGitignorePatterns: jest.fn().mockReturnValue([
@@ -15,7 +21,7 @@ jest.mock('../utils/project-detector', () => ({
   }
 }));
 
-import { ProjectDetector } from '../utils/project-detector';
+import { ProjectDetector, detectProject, loadGitignorePatterns } from '../utils/project-detector';
 
 describe('ConfigService', () => {
   let tempDir: string;
@@ -28,6 +34,14 @@ describe('ConfigService', () => {
     fs.mkdirSync(projectDir, { recursive: true });
 
     // Setup ProjectDetector mock
+    (detectProject as jest.Mock).mockReturnValue({
+      root: projectDir,
+      type: 'typescript',
+      hasPackageJson: true,
+      hasTsConfig: true,
+      srcDirs: ['src'],
+      suggestedRoot: path.join(projectDir, 'src')
+    });
     (ProjectDetector.detectProject as jest.Mock).mockReturnValue({
       root: projectDir,
       type: 'typescript',

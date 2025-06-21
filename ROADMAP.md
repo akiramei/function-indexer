@@ -152,10 +152,10 @@ $ npm run dev
 | Version | Release Date | Focus Area |
 |---------|--------------|------------|
 | v0.9.0 | Current | Legacy version |
-| **v1.0.0** | Jan 2024 | Zero-config MVP |
-| v1.1.0 | Feb 2024 | Team features |
-| v1.2.0 | Mar 2024 | Developer experience |
-| v2.0.0 | Apr 2024 | Enterprise features |
+| **v1.0.0** | Q1 2025 | Zero-config MVP |
+| v1.1.0 | Q2 2025 | Team features |
+| v1.2.0 | Q3 2025 | Developer experience |
+| v2.0.0 | Q4 2025 | Enterprise features |
 
 ## 🔄 Migration Path
 

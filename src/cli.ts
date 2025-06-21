@@ -29,8 +29,18 @@ program
   .option('-v, --verbose', 'verbose output', false)
   .action(async (options) => {
     try {
-      // Project detection
-      const projectInfo = ProjectDetector.detectProject();
+      // Project detection with error handling
+      const projectInfo = (() => {
+        try {
+          return ProjectDetector.detectProject();
+        } catch (error) {
+          console.error(chalk.red('❌ Failed to detect project structure'));
+          if (options.verbose && error instanceof Error) {
+            console.error(chalk.gray(error.stack));
+          }
+          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
+        }
+      })();
       
       // Check if initialized
       const isInitialized = ConfigService.isInitialized(projectInfo.root);
@@ -48,16 +58,18 @@ program
         console.log(chalk.green(`✅ Created configuration in ${ConfigService.getConfigDir(projectInfo.root)}`));
         
         // Use command line root if provided, otherwise use detected root
+        let finalConfig = config;
         if (options.root) {
-          config.root = path.resolve(options.root);
-          ConfigService.saveConfig(config, projectInfo.root);
+          const updatedConfig = { ...config, root: path.resolve(options.root) };
+          ConfigService.saveConfig(updatedConfig, projectInfo.root);
+          finalConfig = updatedConfig;
         }
         
-        console.log(chalk.gray(`📁 Scanning: ${config.root}`));
-        console.log(chalk.gray(`📄 Output: ${config.output}`));
+        console.log(chalk.gray(`📁 Scanning: ${finalConfig.root}`));
+        console.log(chalk.gray(`📄 Output: ${finalConfig.output}`));
         
         // Run initial indexing
-        const indexer = new FunctionIndexer(config);
+        const indexer = new FunctionIndexer(finalConfig);
         const result = await indexer.run();
         
         // Display results
@@ -88,11 +100,11 @@ program
         // Already initialized - Update
         console.log(chalk.blue('🔄 Updating function index...'));
         
-        const config = ConfigService.loadConfig(projectInfo.root);
+        let finalConfig = ConfigService.loadConfig(projectInfo.root);
         
         // Use command line root if provided
         if (options.root) {
-          config.root = path.resolve(options.root);
+          finalConfig = { ...finalConfig, root: path.resolve(options.root) };
         }
         
         // Check if index exists
@@ -100,7 +112,7 @@ program
           // Index was deleted, recreate it
           console.log(chalk.yellow('⚠️  Index file not found, creating new index...'));
           
-          const indexer = new FunctionIndexer(config);
+          const indexer = new FunctionIndexer(finalConfig);
           const result = await indexer.run();
           
           console.log(chalk.green('✅ Index recreated!'));
@@ -109,10 +121,10 @@ program
           
         } else {
           // Update existing index
-          const storage = new FileSystemStorage(path.dirname(config.output));
+          const storage = new FileSystemStorage(path.dirname(finalConfig.output));
           const updateService = new UpdateService(storage, options.verbose);
           
-          const result = await updateService.updateIndex(path.basename(config.output), {
+          const result = await updateService.updateIndex(path.basename(finalConfig.output), {
             autoBackup: true,
             verbose: options.verbose
           });
@@ -153,8 +165,10 @@ program
           }
           
           metricsService.close();
-        } catch {
-          // Metrics not available yet
+        } catch (error) {
+          if (options.verbose) {
+            console.warn(chalk.yellow('⚠️  Metrics analysis failed:'), error instanceof Error ? error.message : String(error));
+          }
         }
       }
 
@@ -175,8 +189,15 @@ program
   .option('-l, --limit <number>', 'limit number of results', '10')
   .action(async (query, options) => {
     try {
-      // Auto-detect project and load config
-      const projectInfo = ProjectDetector.detectProject();
+      // Auto-detect project and load config with error handling
+      const projectInfo = (() => {
+        try {
+          return ProjectDetector.detectProject();
+        } catch (error) {
+          console.error(chalk.red('❌ Failed to detect project structure'));
+          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
+        }
+      })();
       
       if (!ConfigService.isInitialized(projectInfo.root)) {
         console.error(chalk.red('❌ Project not initialized'));
@@ -204,7 +225,14 @@ program
         query,
         context: options.context,
         saveHistory: options.saveHistory !== false,
-        limit: Math.max(1, parseInt(options.limit) || 10)
+        limit: (() => {
+          const parsed = parseInt(options.limit);
+          if (isNaN(parsed) || parsed < 1) {
+            console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 10`));
+            return 10;
+          }
+          return Math.max(1, parsed);
+        })()
       });
 
       if (results.length === 0) {
@@ -230,8 +258,8 @@ program
           console.log(chalk.gray(`   ${signature}`));
           
           // Show metrics if high complexity
-          if (func.metrics && (func.metrics as any).cyclomaticComplexity > 10) {
-            console.log(chalk.yellow(`   ⚠️  High complexity: ${(func.metrics as any).cyclomaticComplexity}`));
+          if (func.metrics && 'cyclomaticComplexity' in func.metrics && func.metrics.cyclomaticComplexity && func.metrics.cyclomaticComplexity > 10) {
+            console.log(chalk.yellow(`   ⚠️  High complexity: ${func.metrics.cyclomaticComplexity}`));
           }
           
           console.log();
@@ -539,11 +567,17 @@ program
   .command('metrics')
   .description('Show code quality metrics and complexity overview')
   .option('-d, --details', 'show detailed function-level metrics')
-  .option('--threshold <type>', 'filter by threshold violations (high|medium|low)')
   .action(async (options) => {
     try {
-      // Auto-detect project and load config
-      const projectInfo = ProjectDetector.detectProject();
+      // Auto-detect project and load config with error handling
+      const projectInfo = (() => {
+        try {
+          return ProjectDetector.detectProject();
+        } catch (error) {
+          console.error(chalk.red('❌ Failed to detect project structure'));
+          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
+        }
+      })();
       
       if (!ConfigService.isInitialized(projectInfo.root)) {
         console.error(chalk.red('❌ Project not initialized'));
@@ -563,11 +597,16 @@ program
 
       // Load and analyze functions from index
       const indexContent = fs.readFileSync(config.output, 'utf-8');
-      const functions = indexContent
-        .trim()
-        .split('\n')
-        .filter(line => line)
-        .map(line => JSON.parse(line));
+      const functions: any[] = [];
+      
+      for (const line of indexContent.trim().split('\n').filter(line => line)) {
+        try {
+          functions.push(JSON.parse(line));
+        } catch (error) {
+          console.warn(chalk.yellow(`⚠️  Skipping malformed JSON line: ${line.substring(0, 50)}...`));
+          continue;
+        }
+      }
 
       // Calculate summary statistics
       const totalFunctions = functions.length;
@@ -596,21 +635,19 @@ program
         const metrics = func.metrics || {};
         const issues: string[] = [];
         
-        // Check violations
-        if (metrics.cyclomaticComplexity > thresholds.cyclomaticComplexity) {
-          issues.push(`Cyclomatic complexity: ${metrics.cyclomaticComplexity} (>${thresholds.cyclomaticComplexity})`);
-        }
-        if (metrics.cognitiveComplexity > thresholds.cognitiveComplexity) {
-          issues.push(`Cognitive complexity: ${metrics.cognitiveComplexity} (>${thresholds.cognitiveComplexity})`);
-        }
-        if (metrics.linesOfCode > thresholds.linesOfCode) {
-          issues.push(`Lines of code: ${metrics.linesOfCode} (>${thresholds.linesOfCode})`);
-        }
-        if (metrics.nestingDepth > thresholds.nestingDepth) {
-          issues.push(`Nesting depth: ${metrics.nestingDepth} (>${thresholds.nestingDepth})`);
-        }
-        if (metrics.parameterCount > thresholds.parameterCount) {
-          issues.push(`Parameter count: ${metrics.parameterCount} (>${thresholds.parameterCount})`);
+        // Check violations using refactored approach
+        const metricChecks = [
+          { key: 'cyclomaticComplexity', label: 'Cyclomatic complexity' },
+          { key: 'cognitiveComplexity', label: 'Cognitive complexity' },
+          { key: 'linesOfCode', label: 'Lines of code' },
+          { key: 'nestingDepth', label: 'Nesting depth' },
+          { key: 'parameterCount', label: 'Parameter count' }
+        ] as const;
+        
+        for (const { key, label } of metricChecks) {
+          if (metrics[key] > thresholds[key]) {
+            issues.push(`${label}: ${metrics[key]} (>${thresholds[key]})`);
+          }
         }
 
         // Categorize by risk level
