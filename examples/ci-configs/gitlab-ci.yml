@@ -1,0 +1,90 @@
+# GitLab CI configuration for function-indexer
+# Add this to your .gitlab-ci.yml file
+
+stages:
+  - test
+  - report
+
+variables:
+  NODE_VERSION: "18"
+
+# Cache node_modules between jobs
+.node_cache: &node_cache
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+
+# Function analysis job
+function-analysis:
+  stage: test
+  image: node:${NODE_VERSION}
+  <<: *node_cache
+  script:
+    # Install dependencies
+    - npm ci
+    
+    # Install function-indexer globally
+    - npm install -g function-indexer
+    
+    # Run CI analysis
+    - |
+      function-indexer ci \
+        --base origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-main} \
+        --format gitlab \
+        --output code-quality-report.json
+  
+  # Save artifacts for GitLab Code Quality
+  artifacts:
+    reports:
+      codequality: code-quality-report.json
+    paths:
+      - code-quality-report.json
+      - .function-indexer/
+    expire_in: 1 week
+  
+  # Only run on merge requests
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+# Weekly report job (scheduled)
+weekly-report:
+  stage: report
+  image: node:${NODE_VERSION}
+  <<: *node_cache
+  script:
+    # Install dependencies
+    - npm ci
+    
+    # Install function-indexer
+    - npm install -g function-indexer
+    
+    # Generate index
+    - function-indexer --root ./src
+    
+    # Generate report
+    - function-indexer report --format markdown --output weekly-report.md
+    
+    # Create GitLab issue (requires API token)
+    - |
+      if [ -n "$GITLAB_API_TOKEN" ]; then
+        REPORT_CONTENT=$(cat weekly-report.md | jq -Rs .)
+        TITLE="Weekly Code Quality Report - $(date +%Y-%m-%d)"
+        
+        curl --request POST \
+          --header "PRIVATE-TOKEN: $GITLAB_API_TOKEN" \
+          --header "Content-Type: application/json" \
+          --data "{\"title\": \"$TITLE\", \"description\": $REPORT_CONTENT, \"labels\": \"code-quality,report\"}" \
+          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/issues"
+      fi
+  
+  artifacts:
+    paths:
+      - weekly-report.md
+      - .function-indexer/
+    expire_in: 30 days
+  
+  # Only run on schedules
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'

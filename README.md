@@ -88,6 +88,12 @@ function-indexer search "authentication"
 
 # View code quality metrics
 function-indexer metrics
+
+# Compare functions between branches (NEW!)
+function-indexer diff main..feature
+
+# Generate comprehensive reports (NEW!)
+function-indexer report --format markdown
 ```
 
 ### Working with Specific Directories
@@ -105,12 +111,14 @@ function-indexer update  # Update all projects
 ### CI/CD Integration
 
 ```bash
-# In your CI pipeline  
-function-indexer
-function-indexer metrics
+# In your CI pipeline (NEW!)
+function-indexer ci --format github --fail-on-violation
+
+# Generate PR comments automatically
+function-indexer ci --comment --base origin/main
 
 # Pre-commit hook (with Husky)
-function-indexer && npm run quality:check
+function-indexer ci --fail-on-violation
 ```
 
 📋 **[Full Integration Guide](docs/INTEGRATIONS.md)** - GitHub Actions, GitLab CI, pre-commit hooks, and more
@@ -195,11 +203,13 @@ Your existing indexes will continue to work, and the new version maintains backw
 - Basic search and metrics
 - Incremental updates
 
-### 🚧 Coming Soon (v1.1)
-- Git diff integration
-- Markdown/HTML reports
-- CI/CD optimizations
-- Team collaboration features
+### 🎉 New Team Features (v1.1)
+- **Git Diff Integration** - Compare functions between branches/commits
+- **Report Generation** - Markdown/HTML reports with customizable templates
+- **CI/CD Commands** - One-stop command for CI pipelines with PR comments
+- **Workflow Examples** - GitHub Actions, GitLab CI, CircleCI, Jenkins
+- **Metrics Tracking** - Track complexity changes across commits and PRs
+- **Team Collaboration** - Share reports and enforce quality gates
 
 ### 🔮 Future Plans (v1.2+)
 - Real-time file watching
@@ -218,6 +228,7 @@ See our [detailed roadmap](ROADMAP.md) for more information.
 - 🔧 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 #### Advanced Usage  
+- 👥 **[Team Features Guide](docs/TEAM-FEATURES.md)** - Git diff, reports, CI/CD integration (NEW!)
 - 🔗 **[Integration Guide](docs/INTEGRATIONS.md)** - CI/CD, Git hooks, VS Code integration
 - ⚙️ **Configuration Guide** - Customize Function Indexer for your needs
 - 📊 **Metrics Guide** - Understanding code quality metrics
@@ -229,6 +240,7 @@ See our [detailed roadmap](ROADMAP.md) for more information.
 - 🔧 **[トラブルシューティング](docs/TROUBLESHOOTING-ja.md)** - よくある問題と解決方法
 
 #### 高度な使用法
+- 👥 **[チーム機能ガイド](docs/TEAM-FEATURES-ja.md)** - Git diff、レポート、CI/CD統合 (新機能！)
 - 🔗 **[統合ガイド](docs/INTEGRATIONS-ja.md)** - CI/CD、Gitフック、VS Code統合
 - ⚙️ **設定ガイド** - あなたのニーズに合わせてFunction Indexerをカスタマイズ
 - 📊 **メトリクスガイド** - コード品質メトリクスの理解
