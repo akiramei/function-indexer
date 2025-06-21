@@ -1,271 +1,200 @@
 # Function Indexer
 
-TypeScript関数一覧化ツール - AI開発支援のためのコード管理システム
+> 🚀 A modern TypeScript function analyzer that helps you understand and maintain your codebase
 
-## 🚀 Latest Features
+[![npm version](https://img.shields.io/npm/v/function-indexer.svg)](https://www.npmjs.com/package/function-indexer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-### Phase 3: Update System (New!)
-- 🔄 **Incremental Updates**: Efficiently update existing indexes with only changed functions
-- 💾 **Automatic Backups**: Create backups before updates with version history
-- 🔧 **Integrity Checking**: Validate and repair corrupted indexes
-- 📁 **Metadata Tracking**: Save indexing configuration for reproducible updates
+## ✨ What is Function Indexer?
 
-### Phase 2: AI Integration
-- 🔍 **Natural Language Search**: Search functions using everyday language
-- 🤖 **AI-Powered Descriptions**: Automatically generate descriptions and tags using OpenAI
-- 📊 **Search History**: Track and learn from search patterns
-- 🏷️ **Smart Categorization**: AI-driven function categorization and tagging
+Function Indexer scans your TypeScript/TSX codebase and creates a comprehensive index of all functions, methods, and arrow functions. It's designed to help developers and AI assistants understand code structure, track complexity, and maintain code quality.
 
-## インストール
+### Key Features
 
-```bash
-npm install
-npm run build
-```
+- 🔍 **Smart Indexing** - Automatically finds and catalogs all functions in your codebase
+- 📊 **Code Metrics** - Tracks complexity, lines of code, and other quality indicators
+- 🎯 **Zero Config** - Works out of the box with sensible defaults
+- 🔄 **Incremental Updates** - Efficiently updates only changed functions
+- 🤖 **AI-Ready** - Outputs structured data perfect for AI development workflows
 
-### AI機能の設定
-
-AI機能を使用する場合は、OpenAI APIキーが必要です：
-
-1. `.env` ファイルを作成:
-```bash
-cp .env.example .env
-```
-
-2. APIキーを設定:
-```
-OPENAI_API_KEY=your-api-key-here
-```
-
-## 使用方法
-
-### 基本的な使用（インデックス作成）
+## 🚀 Quick Start
 
 ```bash
-# srcディレクトリをスキャンして関数一覧を作成
-npm run start -- --root ./src --output function-index.jsonl --domain backend
+# Install globally
+npm install -g function-indexer
 
-# または開発時
-npm run dev -- --root ./src --output function-index.jsonl --domain backend
+# Run in your project - that's it!
+function-indexer
 ```
 
-### インデックスの更新（新機能！）
+No configuration needed! Function Indexer will:
+- Auto-detect your TypeScript/TSX files
+- Create a `.function-indexer/` directory
+- Generate an index of all your functions
+- Show code quality metrics
+
+## 📖 Common Usage Patterns
+
+### Basic Commands
 
 ```bash
-# 既存のインデックスを効率的に更新
-function-indexer update function-index.jsonl
+# Index your codebase (first time or update)
+function-indexer
 
-# 全てのインデックスを一括更新
-function-indexer update-all
+# Search for functions using natural language
+function-indexer search "authentication"
 
-# バックアップを無効にして更新（高速だがリスクあり）
-function-indexer update function-index.jsonl --no-backup
+# View code quality metrics
+function-indexer metrics
 ```
 
-### コマンドオプション
-
-| オプション | 短縮形 | デフォルト | 説明 |
-|-----------|--------|-----------|------|
-| `--root` | `-r` | `./src` | スキャン対象のルートディレクトリ |
-| `--output` | `-o` | `function-index.jsonl` | 出力ファイルパス |
-| `--domain` | `-d` | `default` | 関数のドメイン名 |
-| `--include` | - | `**/*.ts,**/*.tsx` | 含めるファイルパターン |
-| `--exclude` | - | `**/*.test.ts,**/*.spec.ts,**/node_modules/**` | 除外するファイルパターン |
-| `--verbose` | `-v` | `false` | 詳細な出力 |
-
-### 使用例
+### Working with Specific Directories
 
 ```bash
-# フロントエンド用の関数一覧
-function-indexer --root ./frontend --domain frontend --output frontend-functions.jsonl
+# Scan a specific directory
+function-indexer -r ./src/services
 
-# バックエンド用（テストファイルも含める）
-function-indexer --root ./backend --domain backend --exclude "**/node_modules/**" -v
-
-# 特定のディレクトリのみ
-function-indexer --root ./src/services --include "**/*.ts" --domain services
-
-# インデックスの検証と修復
-function-indexer validate frontend-functions.jsonl
-function-indexer repair frontend-functions.jsonl
-
-# バックアップと復元
-function-indexer backup frontend-functions.jsonl
-function-indexer restore 2025-01-20T10-00-00
+# Scan multiple projects
+function-indexer add frontend ./src/frontend
+function-indexer add backend ./src/backend
+function-indexer update  # Update all projects
 ```
 
-## 出力フォーマット
+### CI/CD Integration
 
-JSONL形式で各行に1つの関数情報が出力されます：
+```bash
+# In your CI pipeline
+function-indexer ci --pr $PR_NUMBER
+
+# Pre-commit hook
+function-indexer check --staged
+```
+
+## 📊 Output Format
+
+Function Indexer generates a JSONL file where each line contains:
 
 ```json
 {
-  "file": "src/image/processor.ts",
-  "identifier": "resizeImage",
-  "signature": "async resizeImage(buffer: Buffer, width: number, height: number): Promise<Buffer>",
-  "startLine": 15,
-  "endLine": 45,
+  "file": "src/auth/login.ts",
+  "identifier": "authenticateUser",
+  "signature": "async function authenticateUser(email: string, password: string): Promise<User>",
+  "startLine": 10,
+  "endLine": 35,
   "hash_function": "a41f22bc",
   "hash_file": "dc093e7f",
   "exported": true,
   "async": true,
   "metrics": {
-    "linesOfCode": 31,
-    "parameterCount": 3,
+    "cyclomaticComplexity": 8,
+    "cognitiveComplexity": 12,
+    "linesOfCode": 25,
+    "parameterCount": 2,
+    "nestingDepth": 3,
     "hasReturnType": true
   },
-  "domain": "backend"
+  "domain": "main"
 }
 ```
 
-## 対応する関数タイプ
+## 🎯 Metrics Explained
 
-- **関数宣言**: `function myFunction() {}`
-- **クラスメソッド**: `class MyClass { myMethod() {} }`
-- **アロー関数**: `const myFunc = () => {}`
-- **関数式**: `const myFunc = function() {}`
+Function Indexer tracks several code quality metrics:
 
-## メタデータファイル
+| Metric | Threshold | Description |
+|--------|-----------|-------------|
+| **Cyclomatic Complexity** | 10 | Number of decision points in a function |
+| **Cognitive Complexity** | 15 | How hard the function is to understand |
+| **Lines of Code** | 50 | Effective lines (excluding comments/blanks) |
+| **Nesting Depth** | 4 | Maximum depth of nested structures |
+| **Parameter Count** | 4 | Number of function parameters |
 
-インデックス作成時に自動的に `.meta.json` ファイルが生成されます：
+## 🛠️ Configuration (Optional)
 
+While Function Indexer works without configuration, you can customize it:
+
+`.function-indexer/config.json`:
 ```json
 {
-  "version": "1.0.0",
-  "createdAt": "2025-01-20T10:00:00Z",
-  "lastUpdated": "2025-01-20T12:00:00Z",
-  "indexFile": "function-index.jsonl",
-  "options": {
-    "root": "./src",
-    "domain": "backend",
-    "include": ["**/*.ts", "**/*.tsx"],
-    "exclude": ["**/*.test.ts"]
-  },
-  "statistics": {
-    "totalFiles": 50,
-    "totalFunctions": 250
-  },
-  "fileHashes": { ... }
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/*.test.ts", "**/node_modules/**"],
+  "metrics": {
+    "thresholds": {
+      "cyclomaticComplexity": 10,
+      "cognitiveComplexity": 15,
+      "linesOfCode": 50
+    }
+  }
 }
 ```
 
-このメタデータにより、同じ条件での効率的な更新が可能になります。
+## 🔄 Migration from Previous Versions
 
-## プロジェクト構造
-
-```
-function-indexer/
-├── src/
-│   ├── cli.ts          # CLIエントリーポイント
-│   ├── indexer.ts      # メインロジック
-│   ├── types.ts        # 型定義
-│   └── index.ts        # エクスポート
-├── dist/               # ビルド成果物
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
-## 開発
+If you're using an older version with manual commands:
 
 ```bash
-# 依存関係のインストール
+# Old way
+function-indexer --root ./src --output index.jsonl --domain backend
+
+# New way (automatic)
+function-indexer
+```
+
+Your existing indexes will continue to work, and the new version maintains backward compatibility.
+
+## 🚦 Roadmap
+
+### ✅ Current Features (v1.0)
+- Zero-config operation
+- Smart defaults and auto-detection
+- Basic search and metrics
+- Incremental updates
+
+### 🚧 Coming Soon (v1.1)
+- Git diff integration
+- Markdown/HTML reports
+- CI/CD optimizations
+- Team collaboration features
+
+### 🔮 Future Plans (v1.2+)
+- Real-time file watching
+- VSCode extension
+- AI-powered insights
+- Web dashboard
+
+See our [detailed roadmap](ROADMAP.md) for more information.
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+```bash
+# Clone the repository
+git clone https://github.com/akiramei/function-indexer.git
+
+# Install dependencies
 npm install
 
-# 開発モードで実行
-npm run dev -- --root ./test-src --verbose
+# Run in development mode
+npm run dev
 
-# ビルド
-npm run build
-
-# テスト実行
+# Run tests
 npm test
 ```
 
-## エラーハンドリング
+## 📄 License
 
-- 解析に失敗したファイルは警告として記録され、処理を継続します
-- `--verbose` オプションで詳細なエラー情報を確認できます
-- 致命的なエラー（存在しないディレクトリなど）の場合はプロセスが終了します
+MIT © [Akira Mei](https://github.com/akiramei)
 
-### 🔍 関数検索（Phase 2新機能）
+## 🙏 Acknowledgments
 
-```bash
-# 自然言語で関数を検索
-function-indexer search "画像をリサイズする関数"
+Built with:
+- [ts-morph](https://github.com/dsherret/ts-morph) - TypeScript AST manipulation
+- [Commander.js](https://github.com/tj/commander.js) - CLI framework
+- [Chalk](https://github.com/chalk/chalk) - Terminal styling
 
-# コンテキストを指定して検索
-function-indexer search "ファイルを読み込む" --context "ユーザーアップロード処理"
+---
 
-# 検索履歴を保存しない
-function-indexer search "async function" --no-save-history
-```
-
-### 🤖 AI説明文生成（Phase 2新機能）
-
-```bash
-# 関数の説明文とタグを自動生成
-function-indexer generate-descriptions
-
-# バッチサイズを指定
-function-indexer generate-descriptions --batch-size 20
-
-# カスタム出力ファイル
-function-indexer generate-descriptions --output enhanced-functions.jsonl
-```
-
-### 📜 検索履歴の確認（Phase 2新機能）
-
-```bash
-# 全ての検索履歴を表示
-function-indexer show-history
-
-# 特定のキーワードでフィルタ
-function-indexer show-history --query "image"
-```
-
-## 拡張された出力フォーマット（AI機能使用時）
-
-```json
-{
-  "file": "src/image/processor.ts",
-  "identifier": "resizeImage",
-  "signature": "async resizeImage(buffer: Buffer, width: number, height: number): Promise<Buffer>",
-  "startLine": 15,
-  "endLine": 45,
-  "hash_function": "a41f22bc",
-  "hash_file": "dc093e7f",
-  "exported": true,
-  "async": true,
-  "metrics": {
-    "linesOfCode": 31,
-    "parameterCount": 3,
-    "hasReturnType": true
-  },
-  "domain": "backend",
-  "description": "Resizes an image buffer to specified dimensions",
-  "tags": ["image-processing", "async", "buffer"],
-  "purpose": "image-manipulation",
-  "dependencies": ["sharp", "Buffer"]
-}
-```
-
-## 今後の拡張予定
-
-### ✅ 完了（Phase 2）
-- [x] 検索履歴システム
-- [x] AI説明文生成
-- [x] 自然言語検索
-
-### ✅ 完了（Phase 3）
-- [x] インクリメンタル更新システム
-- [x] 自動バックアップとバージョン履歴
-- [x] 整合性チェックと修復機能
-- [x] メタデータ管理
-
-### 📋 今後の予定
-- [ ] Git連携とリアルタイム監視（Phase 4）
-- [ ] 関数の複雑度計算（Phase 4）
-- [ ] 類似関数の検出（Phase 4）
-- [ ] Web UI（Phase 4）
-- [ ] VSCode拡張（Phase 5）
+<p align="center">
+  Made with ❤️ for developers who care about code quality
+</p>

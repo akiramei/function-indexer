@@ -1,7 +1,7 @@
 {
   "name": "function-indexer",
   "version": "1.0.0",
-  "description": "TypeScript function indexer for AI development management",
+  "description": "A modern TypeScript function analyzer that helps you understand and maintain your codebase",
   "main": "dist/index.js",
   "bin": {
     "function-indexer": "dist/cli.js"
@@ -32,8 +32,15 @@
   },
   "keywords": [
     "typescript",
+    "code-analysis",
     "ast",
     "function-indexer",
+    "code-quality",
+    "metrics",
+    "complexity",
+    "developer-tools",
+    "cli",
+    "zero-config",
     "ai-development"
   ],
   "author": "Your Name",
