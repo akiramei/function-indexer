@@ -20,6 +20,10 @@ Welcome to the complete documentation for Function Indexer! Whether you're just 
 
 ## 🔗 Integration & Automation
 
+### AI Assistant Integration
+- **[AI Guide](AI-GUIDE.md)** 🤖  
+  Optimized documentation for AI assistants and zero-shot usage
+
 ### Development Workflow
 - **[Integration Guide](INTEGRATIONS.md)** 🔗  
   Complete examples for CI/CD, Git hooks, and development tools
