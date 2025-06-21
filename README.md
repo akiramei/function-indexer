@@ -27,6 +27,11 @@ npm install -g function-indexer
 function-indexer
 ```
 
+**🎯 New to Function Indexer?** Check our guides:
+- 📚 **[Complete Tutorial](docs/TUTORIAL.md)** - Step-by-step guide with real examples
+- ⚡ **[Quick Start Guide](docs/QUICK-START.md)** - Get running in 60 seconds
+- 🔧 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+
 No configuration needed! Function Indexer will:
 - Auto-detect your TypeScript/TSX files
 - Create a `.function-indexer/` directory
@@ -63,12 +68,15 @@ function-indexer update  # Update all projects
 ### CI/CD Integration
 
 ```bash
-# In your CI pipeline
-function-indexer ci --pr $PR_NUMBER
+# In your CI pipeline  
+function-indexer
+function-indexer metrics
 
-# Pre-commit hook
-function-indexer check --staged
+# Pre-commit hook (with Husky)
+function-indexer && npm run quality:check
 ```
+
+📋 **[Full Integration Guide](docs/INTEGRATIONS.md)** - GitHub Actions, GitLab CI, pre-commit hooks, and more
 
 ## 📊 Output Format
 
@@ -163,6 +171,18 @@ Your existing indexes will continue to work, and the new version maintains backw
 - Web dashboard
 
 See our [detailed roadmap](ROADMAP.md) for more information.
+
+## 📚 Documentation
+
+### Getting Started
+- 📚 **[Complete Tutorial](docs/TUTORIAL.md)** - Learn Function Indexer step-by-step
+- ⚡ **[Quick Start Guide](docs/QUICK-START.md)** - Project-specific setup guides
+- 🔧 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+
+### Advanced Usage  
+- 🔗 **[Integration Guide](docs/INTEGRATIONS.md)** - CI/CD, Git hooks, VS Code integration
+- ⚙️ **Configuration Guide** - Customize Function Indexer for your needs
+- 📊 **Metrics Guide** - Understanding code quality metrics
 
 ## 🤝 Contributing
 
