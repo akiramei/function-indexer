@@ -43,7 +43,7 @@ jobs:
         run: npm ci
         
       - name: Function Indexerをインストール
-        run: npm install -g function-indexer
+        run: npm install -g github:akiramei/function-indexer
         
       - name: 関数インデックスを生成
         run: function-indexer
@@ -132,7 +132,7 @@ jobs:
           node-version: '18'
           
       - name: Function Indexerをインストール
-        run: npm install -g function-indexer
+        run: npm install -g github:akiramei/function-indexer
         
       - name: メトリクスレポートを生成
         run: |
@@ -177,7 +177,7 @@ function-indexer:analyze:
   stage: analyze
   image: node:${NODE_VERSION}
   before_script:
-    - npm install -g function-indexer
+    - npm install -g github:akiramei/function-indexer
   script:
     - function-indexer
     - function-indexer metrics > metrics-report.txt
@@ -244,7 +244,7 @@ steps:
   displayName: 'Node.jsをインストール'
 
 - script: |
-    npm install -g function-indexer
+    npm install -g github:akiramei/function-indexer
   displayName: 'Function Indexerをインストール'
 
 - script: |
@@ -503,7 +503,7 @@ help: ## このヘルプメッセージを表示
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 setup: ## Function Indexerをインストール
-	npm install -g function-indexer
+	npm install -g github:akiramei/function-indexer
 
 analyze: ## 関数解析を実行
 	@echo "🔍 コードベースを解析中..."
@@ -687,7 +687,7 @@ git checkout feature/new-auth
 FROM node:18-alpine
 
 # Function Indexerをインストール
-RUN npm install -g function-indexer
+RUN npm install -g github:akiramei/function-indexer
 
 # 作業ディレクトリを設定
 WORKDIR /app

@@ -2,7 +2,6 @@
 
 > 🚀 A modern TypeScript function analyzer that helps you understand and maintain your codebase
 
-[![npm version](https://img.shields.io/npm/v/function-indexer.svg)](https://www.npmjs.com/package/function-indexer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🌐 Documentation Languages
@@ -23,10 +22,25 @@ Function Indexer scans your TypeScript/TSX codebase and creates a comprehensive 
 
 ## 🚀 Quick Start
 
-```bash
-# Install globally
-npm install -g function-indexer
+### Installation
 
+```bash
+# Install from GitHub
+npm install -g github:akiramei/function-indexer
+
+# Or using the full URL
+npm install -g https://github.com/akiramei/function-indexer.git
+
+# Or clone and link locally for development
+git clone https://github.com/akiramei/function-indexer.git
+cd function-indexer
+npm install
+npm link
+```
+
+### First Run
+
+```bash
 # Run in your project - that's it!
 function-indexer
 ```

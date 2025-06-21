@@ -13,7 +13,10 @@
 
 ### Installation
 ```bash
-npm install -g function-indexer
+# Install from GitHub
+npm install -g github:akiramei/function-indexer
+
+# Then navigate to your project
 cd your-typescript-project
 function-indexer
 ```
@@ -49,7 +52,7 @@ function-indexer search "database"
 
 ### Installation
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-react-app
 function-indexer
 ```
@@ -91,7 +94,7 @@ function-indexer metrics --details
 
 ### Installation
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-js-project
 function-indexer
 ```
@@ -131,7 +134,7 @@ function-indexer metrics
 
 ### Installation
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-monorepo
 ```
 
@@ -177,7 +180,7 @@ function-indexer metrics | grep "High Risk"
 
 ### Installation
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-nextjs-app
 function-indexer
 ```
@@ -222,7 +225,7 @@ Utility Functions: 23
 
 ### Installation
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-express-api
 function-indexer
 ```
@@ -267,7 +270,7 @@ function-indexer metrics --details | grep "High Risk"
 
 ### Installation
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-react-native-app
 function-indexer
 ```

@@ -43,7 +43,7 @@ jobs:
         run: npm ci
         
       - name: Install Function Indexer
-        run: npm install -g function-indexer
+        run: npm install -g github:akiramei/function-indexer
         
       - name: Generate function index
         run: function-indexer
@@ -132,7 +132,7 @@ jobs:
           node-version: '18'
           
       - name: Install Function Indexer
-        run: npm install -g function-indexer
+        run: npm install -g github:akiramei/function-indexer
         
       - name: Generate metrics report
         run: |
@@ -177,7 +177,7 @@ function-indexer:analyze:
   stage: analyze
   image: node:${NODE_VERSION}
   before_script:
-    - npm install -g function-indexer
+    - npm install -g github:akiramei/function-indexer
   script:
     - function-indexer
     - function-indexer metrics > metrics-report.txt
@@ -244,7 +244,7 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
-    npm install -g function-indexer
+    npm install -g github:akiramei/function-indexer
   displayName: 'Install Function Indexer'
 
 - script: |
@@ -503,7 +503,7 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 setup: ## Install Function Indexer
-	npm install -g function-indexer
+	npm install -g github:akiramei/function-indexer
 
 analyze: ## Run function analysis
 	@echo "🔍 Analyzing codebase..."
@@ -687,7 +687,7 @@ Create `Dockerfile.analysis`:
 FROM node:18-alpine
 
 # Install Function Indexer
-RUN npm install -g function-indexer
+RUN npm install -g github:akiramei/function-indexer
 
 # Set working directory
 WORKDIR /app

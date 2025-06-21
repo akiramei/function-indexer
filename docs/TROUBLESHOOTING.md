@@ -23,7 +23,7 @@
 2. **Reinstall globally:**
    ```bash
    npm uninstall -g function-indexer
-   npm install -g function-indexer
+   npm install -g github:akiramei/function-indexer
    ```
 
 3. **Check PATH:**
@@ -57,7 +57,7 @@
    # Install nvm first
    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
    nvm install node
-   npm install -g function-indexer
+   npm install -g github:akiramei/function-indexer
    ```
 
 2. **Configure npm to use different directory:**
@@ -66,12 +66,12 @@
    npm config set prefix '~/.npm-global'
    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
    source ~/.bashrc
-   npm install -g function-indexer
+   npm install -g github:akiramei/function-indexer
    ```
 
 3. **Use sudo (not recommended):**
    ```bash
-   sudo npm install -g function-indexer
+   sudo npm install -g github:akiramei/function-indexer
    ```
 
 </details>
@@ -443,7 +443,7 @@
 2. **Install dependencies:**
    ```yaml
    - name: Install Function Indexer
-     run: npm install -g function-indexer
+     run: npm install -g github:akiramei/function-indexer
    ```
 
 3. **Check file permissions:**

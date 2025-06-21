@@ -23,7 +23,7 @@
 2. **グローバルに再インストール:**
    ```bash
    npm uninstall -g function-indexer
-   npm install -g function-indexer
+   npm install -g github:akiramei/function-indexer
    ```
 
 3. **PATHをチェック:**
@@ -57,7 +57,7 @@
    # 最初にnvmをインストール
    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
    nvm install node
-   npm install -g function-indexer
+   npm install -g github:akiramei/function-indexer
    ```
 
 2. **npmが別のディレクトリを使用するよう設定:**
@@ -66,12 +66,12 @@
    npm config set prefix '~/.npm-global'
    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
    source ~/.bashrc
-   npm install -g function-indexer
+   npm install -g github:akiramei/function-indexer
    ```
 
 3. **sudoを使用（非推奨）:**
    ```bash
-   sudo npm install -g function-indexer
+   sudo npm install -g github:akiramei/function-indexer
    ```
 
 </details>
@@ -443,7 +443,7 @@
 2. **依存関係をインストール:**
    ```yaml
    - name: Function Indexerをインストール
-     run: npm install -g function-indexer
+     run: npm install -g github:akiramei/function-indexer
    ```
 
 3. **ファイル権限をチェック:**

@@ -26,7 +26,7 @@ By the end of this tutorial, you'll know how to:
 
 ```bash
 # Install globally (recommended)
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 
 # Or install in your project
 npm install --save-dev function-indexer
@@ -302,7 +302,7 @@ jobs:
           node-version: '18'
       
       - name: Install Function Indexer
-        run: npm install -g function-indexer
+        run: npm install -g github:akiramei/function-indexer
       
       - name: Analyze Code Quality
         run: |

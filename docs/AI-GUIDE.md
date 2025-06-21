@@ -14,7 +14,7 @@ Function Indexer is a TypeScript CLI tool that scans codebases to extract all fu
 
 ```bash
 # Install globally
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 
 # Scan current directory
 function-indexer
@@ -177,7 +177,7 @@ Commands to run:
 # GitHub Actions Example
 - name: Analyze Code Quality
   run: |
-    npm install -g function-indexer
+    npm install -g github:akiramei/function-indexer
     function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
     function-indexer metrics --threshold --format markdown >> $GITHUB_STEP_SUMMARY
 ```

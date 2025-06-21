@@ -14,7 +14,7 @@ Function Indexerは、TypeScript/TSXコードベースをスキャンし、す�
 
 ```bash
 # グローバルインストール
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 
 # カレントディレクトリをスキャン
 function-indexer
@@ -177,7 +177,7 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 # GitHub Actions例
 - name: コード品質分析
   run: |
-    npm install -g function-indexer
+    npm install -g github:akiramei/function-indexer
     function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
     function-indexer metrics --threshold --format markdown >> $GITHUB_STEP_SUMMARY
 ```

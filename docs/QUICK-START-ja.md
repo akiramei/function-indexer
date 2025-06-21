@@ -13,7 +13,7 @@
 
 ### インストール
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-typescript-project
 function-indexer
 ```
@@ -49,7 +49,7 @@ function-indexer search "database"
 
 ### インストール
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-react-app
 function-indexer
 ```
@@ -91,7 +91,7 @@ function-indexer metrics --details
 
 ### インストール
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-js-project
 function-indexer
 ```
@@ -131,7 +131,7 @@ function-indexer metrics
 
 ### インストール
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-monorepo
 ```
 
@@ -177,7 +177,7 @@ function-indexer metrics | grep "High Risk"
 
 ### インストール
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-nextjs-app
 function-indexer
 ```
@@ -222,7 +222,7 @@ function-indexer search "getServerSideProps getStaticProps"
 
 ### インストール
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-express-api
 function-indexer
 ```
@@ -267,7 +267,7 @@ function-indexer metrics --details | grep "High Risk"
 
 ### インストール
 ```bash
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 cd your-react-native-app
 function-indexer
 ```

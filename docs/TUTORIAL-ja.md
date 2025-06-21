@@ -26,7 +26,7 @@
 
 ```bash
 # グローバルインストール（推奨）
-npm install -g function-indexer
+npm install -g github:akiramei/function-indexer
 
 # またはプロジェクトにインストール
 npm install --save-dev function-indexer
@@ -302,7 +302,7 @@ jobs:
           node-version: '18'
       
       - name: Function Indexerをインストール
-        run: npm install -g function-indexer
+        run: npm install -g github:akiramei/function-indexer
       
       - name: コード品質を解析
         run: |
