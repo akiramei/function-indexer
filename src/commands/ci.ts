@@ -15,6 +15,7 @@ interface CIOptions {
   thresholds?: string;
   failOnViolation: boolean;
   comment?: boolean;
+  verbose?: boolean;
 }
 
 interface CIResult {
@@ -87,6 +88,7 @@ export function createCICommand(): Command {
     )
     .option('--fail-on-violation', 'Exit with error code if violations found', true)
     .option('--comment', 'Generate PR comment (for GitHub/GitLab)', false)
+    .option('-v, --verbose', 'Enable verbose output', false)
     .hook('preAction', (thisCommand) => {
       const options = thisCommand.opts();
       
@@ -112,6 +114,10 @@ export function createCICommand(): Command {
       
       if (typeof options.comment !== 'boolean') {
         throw new Error('--comment must be a boolean');
+      }
+      
+      if (typeof options.verbose !== 'boolean') {
+        throw new Error('--verbose must be a boolean');
       }
     })
     .action(async (options: CIOptions) => {
@@ -141,24 +147,38 @@ async function executeCI(options: CIOptions) {
       throw new ValidationError('Invalid thresholds JSON format', 'thresholds');
     }
 
+    // Ensure .function-indexer directory exists
+    const indexDir = '.function-indexer';
+    const indexPath = path.join(indexDir, 'ci-index.jsonl');
+    
+    try {
+      await fs.mkdir(indexDir, { recursive: true });
+    } catch (error) {
+      // Directory already exists, continue
+    }
+
     // Create indexer
     const indexer = new FunctionIndexer({
       root: options.root,
-      output: '.function-indexer/ci-index.jsonl',
+      output: indexPath,
       domain: 'ci',
-      verbose: false
+      verbose: options.verbose || false
     });
 
     // Run indexing
     console.log(chalk.gray('Indexing functions...'));
     const indexResult = await indexer.run();
 
-    // Load the generated index
+    // Verify the file was created and load it
     let indexContent;
     try {
-      indexContent = await fs.readFile('.function-indexer/ci-index.jsonl', 'utf-8');
+      const stats = await fs.stat(indexPath);
+      if (stats.size === 0) {
+        throw new Error('Index file is empty');
+      }
+      indexContent = await fs.readFile(indexPath, 'utf-8');
     } catch (error) {
-      throw ErrorHandler.createFileError('read', '.function-indexer/ci-index.jsonl', error instanceof Error ? error : undefined);
+      throw ErrorHandler.createFileError('read', indexPath, error instanceof Error ? error : undefined);
     }
 
     const functions: any[] = [];

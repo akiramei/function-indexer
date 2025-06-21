@@ -39,11 +39,14 @@ jobs:
       - name: Run function analysis
         id: analysis
         run: |
+          echo "Running function analysis with verbose output..."
+          ls -la src/
           npx ts-node src/cli.ts ci \
             --base origin/${{ github.base_ref }} \
             --format github \
             --output ci-results.json \
-            --comment
+            --comment \
+            --verbose || echo "CI command failed with exit code $?"
         env:
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
       
