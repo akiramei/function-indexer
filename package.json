@@ -1,6 +1,6 @@
 {
   "name": "function-indexer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A modern TypeScript function analyzer that helps you understand and maintain your codebase",
   "main": "dist/index.js",
   "bin": {
@@ -14,12 +14,15 @@
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",
+    "@types/handlebars": "^4.0.40",
     "better-sqlite3": "^11.10.0",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "dotenv": "^16.5.0",
     "glob": "^10.3.0",
+    "handlebars": "^4.7.8",
     "openai": "^5.5.1",
+    "simple-git": "^3.28.0",
     "ts-morph": "^20.0.0"
   },
   "devDependencies": {

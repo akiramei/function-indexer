@@ -1,0 +1,125 @@
+// Jenkins Pipeline configuration for function-indexer
+// Save as Jenkinsfile in your repository root
+
+pipeline {
+    agent {
+        docker {
+            image 'node:18-alpine'
+        }
+    }
+    
+    environment {
+        // Set npm cache directory
+        NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+    }
+    
+    stages {
+        stage('Setup') {
+            steps {
+                echo 'Setting up environment...'
+                sh 'npm --version'
+                sh 'node --version'
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                echo 'Installing project dependencies...'
+                sh 'npm ci'
+                
+                echo 'Installing function-indexer globally...'
+                sh 'npm install -g function-indexer'
+            }
+        }
+        
+        stage('Function Analysis') {
+            when {
+                changeRequest()  // Only run on pull requests
+            }
+            steps {
+                echo 'Running function analysis...'
+                script {
+                    def baseBranch = env.CHANGE_TARGET ?: 'main'
+                    
+                    sh """
+                        function-indexer ci \\
+                            --base origin/${baseBranch} \\
+                            --format json \\
+                            --output ci-results.json \\
+                            --comment
+                    """
+                }
+            }
+            post {
+                always {
+                    // Archive artifacts
+                    archiveArtifacts artifacts: 'ci-results.json, .function-indexer/**/*', 
+                                     allowEmptyArchive: true
+                    
+                    // Publish results if using warnings-ng plugin
+                    recordIssues(
+                        enabledForFailure: true,
+                        tools: [
+                            groovyScript(
+                                parserId: 'function-indexer',
+                                pattern: 'ci-results.json',
+                                reportEncoding: 'UTF-8'
+                            )
+                        ]
+                    )
+                }
+            }
+        }
+        
+        stage('Generate Report') {
+            when {
+                branch 'main'
+                // Run weekly on Monday at 9 AM
+                triggeredBy 'TimerTrigger'
+            }
+            steps {
+                echo 'Generating weekly report...'
+                sh 'function-indexer --root ./src'
+                sh 'function-indexer report --format markdown --output weekly-report.md'
+                
+                // If using email-ext plugin
+                script {
+                    def reportContent = readFile('weekly-report.md')
+                    emailext(
+                        subject: "Weekly Code Quality Report - ${env.BUILD_ID}",
+                        body: reportContent,
+                        to: '${DEFAULT_RECIPIENTS}',
+                        mimeType: 'text/markdown'
+                    )
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'weekly-report.md, .function-indexer/**/*',
+                                     allowEmptyArchive: true
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Clean workspace
+            cleanWs()
+        }
+        failure {
+            echo 'Pipeline failed!'
+            // Send notifications if configured
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+    }
+}
+
+// Timer trigger for weekly reports
+properties([
+    pipelineTriggers([
+        cron('0 9 * * 1')  // Every Monday at 9 AM
+    ])
+])

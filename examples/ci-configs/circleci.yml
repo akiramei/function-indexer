@@ -1,0 +1,119 @@
+# CircleCI configuration for function-indexer
+# Save as .circleci/config.yml in your repository
+
+version: 2.1
+
+executors:
+  node-executor:
+    docker:
+      - image: cimg/node:18.0
+    working_directory: ~/repo
+
+jobs:
+  function-analysis:
+    executor: node-executor
+    steps:
+      - checkout
+      
+      # Restore cache
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package-lock.json" }}
+            - v1-dependencies-
+      
+      # Install dependencies
+      - run:
+          name: Install dependencies
+          command: npm ci
+      
+      # Save cache
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package-lock.json" }}
+      
+      # Install function-indexer
+      - run:
+          name: Install function-indexer
+          command: npm install -g function-indexer
+      
+      # Run analysis
+      - run:
+          name: Run function analysis
+          command: |
+            # Get base branch for PR
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              BASE_BRANCH=$(git rev-parse --abbrev-ref origin/HEAD | sed 's/origin\///')
+            else
+              BASE_BRANCH="main"
+            fi
+            
+            function-indexer ci \
+              --base origin/$BASE_BRANCH \
+              --format json \
+              --output ci-results.json
+      
+      # Store artifacts
+      - store_artifacts:
+          path: ci-results.json
+          destination: function-analysis
+      
+      - store_artifacts:
+          path: .function-indexer/
+          destination: function-index
+      
+      # Store test results (if in JUnit format)
+      - store_test_results:
+          path: test-results
+
+  weekly-report:
+    executor: node-executor
+    steps:
+      - checkout
+      
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package-lock.json" }}
+            - v1-dependencies-
+      
+      - run:
+          name: Install dependencies
+          command: npm ci
+      
+      - run:
+          name: Install function-indexer
+          command: npm install -g function-indexer
+      
+      - run:
+          name: Generate weekly report
+          command: |
+            function-indexer --root ./src
+            function-indexer report --format markdown --output weekly-report.md
+      
+      - store_artifacts:
+          path: weekly-report.md
+          destination: reports
+      
+      - store_artifacts:
+          path: .function-indexer/
+          destination: function-index
+
+workflows:
+  version: 2
+  
+  # Run on every commit
+  analyze:
+    jobs:
+      - function-analysis
+  
+  # Weekly scheduled report
+  weekly-report:
+    triggers:
+      - schedule:
+          cron: "0 9 * * 1"  # Every Monday at 9 AM UTC
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - weekly-report

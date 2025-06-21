@@ -1,0 +1,3 @@
+::error file=src/payment/processor.ts,line=45::processPayment: Cyclomatic complexity: 18 (threshold: 10), Cognitive complexity: 25 (threshold: 15), Lines of code: 85 (threshold: 40), Nesting depth: 5 (threshold: 3)
+::warning file=src/validation/validator.ts,line=12::validateUserInput: Cyclomatic complexity: 15 (threshold: 10), Cognitive complexity: 20 (threshold: 15), Parameter count: 6 (threshold: 4)
+::warning file=src/reports/generator.ts,line=78::generateReport: Lines of code: 65 (threshold: 40), Nesting depth: 4 (threshold: 3)

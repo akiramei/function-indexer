@@ -11,6 +11,9 @@ import { FileSystemStorage } from './storage/filesystem-storage';
 import { MetricsService } from './services/metrics-service';
 import { ConfigService } from './services/config-service';
 import { ProjectDetector } from './utils/project-detector';
+import { createDiffCommand } from './commands/diff';
+import { createReportCommand } from './commands/report';
+import { createCICommand } from './commands/ci';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
@@ -99,6 +102,7 @@ program
         console.log(chalk.blue('💡 Next steps:'));
         console.log(chalk.gray('  • Run `function-indexer search <query>` to search functions'));
         console.log(chalk.gray('  • Run `function-indexer metrics` to view code quality'));
+        console.log(chalk.gray('  • Run `function-indexer diff` to compare branches'));
         console.log(chalk.gray('  • Run `function-indexer` again to update the index'));
         
       } else {
@@ -281,6 +285,15 @@ program
       process.exit(1);
     }
   });
+
+// Add the diff command
+program.addCommand(createDiffCommand());
+
+// Add the report command
+program.addCommand(createReportCommand());
+
+// Add the CI command
+program.addCommand(createCICommand());
 
 program
   .command('generate-descriptions')
