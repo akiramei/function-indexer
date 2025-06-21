@@ -47,6 +47,10 @@ describe('diff command', () => {
     (fs.mkdir as jest.Mock).mockResolvedValue(undefined);
     (fs.rm as jest.Mock).mockResolvedValue(undefined);
     (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
+    (fs.stat as jest.Mock).mockResolvedValue({ 
+      isFile: () => false, 
+      isDirectory: () => true 
+    }); // Mock directory exists
 
     // Set test environment
     process.env.NODE_ENV = 'test';
@@ -74,11 +78,7 @@ describe('diff command', () => {
       
       await expect(
         command.parseAsync(['node', 'test', 'main', 'feature'])
-      ).rejects.toThrow('Process exited with code 1');
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error: Not a git repository')
-      );
+      ).rejects.toThrow('Not a git repository');
     });
 
     it('should compare two branches successfully', async () => {

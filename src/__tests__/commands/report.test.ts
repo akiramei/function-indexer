@@ -7,7 +7,33 @@ import chalk from 'chalk';
 jest.mock('../../services/config-service');
 jest.mock('../../utils/project-detector');
 jest.mock('fs/promises');
-jest.mock('handlebars');
+jest.mock('handlebars', () => ({
+  compile: jest.fn().mockImplementation((template: string) => {
+    return (data: any) => {
+      // If it's a custom template, return custom output
+      if (template.includes('# Custom Report')) {
+        return `# Custom Report\nFunctions: ${data.summary.totalFunctions}`;
+      }
+      
+      // Default template behavior
+      let result = `
+# Function Index Report
+
+Generated: ${data.generatedAt}
+
+## Summary
+- Total Functions: ${data.summary.totalFunctions}
+- High Complexity: ${data.summary.highComplexity}
+- Missing Types: ${data.summary.missingTypes}
+
+${data.violations.length > 0 ? '## Violations\n' + data.violations.map((v: any) => 
+  `### ${v.identifier}\nFile: ${v.file}:${v.startLine}\n${v.issues.map((i: string) => `- ${i}`).join('\n')}`
+).join('\n') : ''}
+`;
+      return result.trim();
+    };
+  })
+}));
 
 // Disable chalk colors for testing
 chalk.level = 0;
@@ -135,11 +161,7 @@ File: {{this.file}}:{{this.startLine}}
       
       await expect(
         command.parseAsync(['node', 'test'])
-      ).rejects.toThrow('Process exited with code 1');
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Project not initialized')
-      );
+      ).rejects.toThrow('Project not initialized. Run `function-indexer` first to initialize the project.');
     });
 
     it('should check if index file exists', async () => {
@@ -149,11 +171,7 @@ File: {{this.file}}:{{this.startLine}}
       
       await expect(
         command.parseAsync(['node', 'test'])
-      ).rejects.toThrow('Process exited with code 1');
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Index file not found')
-      );
+      ).rejects.toThrow('Index file not found. Run `function-indexer` to create the index.');
     });
 
     it('should generate report successfully', async () => {
@@ -317,6 +335,14 @@ File: {{this.file}}:{{this.startLine}}
         }
         return Promise.resolve('');
       });
+      
+      // Mock stat for custom template file to make it appear to exist
+      (fs.stat as jest.Mock).mockImplementation((path: string) => {
+        if (path.includes('custom-template.hbs')) {
+          return Promise.resolve({ isFile: () => true });
+        }
+        return Promise.resolve({});
+      });
 
       const command = createReportCommand();
       await command.parseAsync([
@@ -369,27 +395,27 @@ File: {{this.file}}:{{this.startLine}}
       
       await expect(
         command.parseAsync(['node', 'test'])
-      ).rejects.toThrow('Process exited with code 1');
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Report generation error:'),
-        expect.any(Error)
-      );
+      ).rejects.toThrow('Failed to read file: /test/project/.function-indexer/index.jsonl (Read failed)');
     });
 
     it('should handle invalid JSON in index file', async () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
       (fs.readFile as jest.Mock).mockImplementation((path: string) => {
         if (path.includes('index.jsonl')) {
-          return Promise.resolve('invalid json\n{"valid": "json"}');
+          return Promise.resolve('invalid json\n{"file": "test.ts", "identifier": "validFunction"}');
         }
         return Promise.resolve('template content');
       });
 
       const command = createReportCommand();
+      await command.parseAsync(['node', 'test']);
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('⚠️ Skipping malformed JSON at line 1')
+      );
       
-      await expect(
-        command.parseAsync(['node', 'test'])
-      ).rejects.toThrow();
+      consoleWarnSpy.mockRestore();
     });
 
     it('should handle invalid custom thresholds', async () => {

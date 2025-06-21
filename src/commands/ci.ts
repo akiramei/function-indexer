@@ -295,6 +295,12 @@ async function executeCI(options: CIOptions) {
     // Exit with appropriate code
     if (!result.success && options.failOnViolation) {
       console.error(chalk.red('\n❌ Quality gate failed!'));
+      
+      // In test environment, throw error instead of exiting
+      if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) {
+        throw new Error('Process exited with code 1');
+      }
+      
       process.exit(1);
     } else if (!result.success) {
       console.warn(chalk.yellow('\n⚠️  Quality issues detected'));
