@@ -1,5 +1,9 @@
 # 📚 Function Indexer Documentation
 
+## 🌐 Language Selection / 言語選択
+
+**English** (you are here) | [日本語](README-ja.md)
+
 Welcome to the complete documentation for Function Indexer! Whether you're just getting started or looking to integrate Function Indexer into your workflow, we've got you covered.
 
 ## 🚀 Getting Started

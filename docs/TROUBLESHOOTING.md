@@ -1,5 +1,9 @@
 # 🔧 Troubleshooting Guide
 
+## 🌐 Language Selection / 言語選択
+
+**English** (you are here) | [日本語](TROUBLESHOOTING-ja.md)
+
 > Common issues and their solutions
 
 ## 🚨 Installation Issues

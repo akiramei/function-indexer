@@ -1,5 +1,9 @@
 # 🔧 トラブルシューティングガイド
 
+## 🌐 言語選択 / Language Selection
+
+[**English**](TROUBLESHOOTING.md) | **日本語** (ここにいます)
+
 > よくある問題とその解決方法
 
 ## 🚨 インストール問題

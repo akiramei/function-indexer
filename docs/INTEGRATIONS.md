@@ -1,5 +1,9 @@
 # 🔗 Integration Examples
 
+## 🌐 Language Selection / 言語選択
+
+**English** (you are here) | [日本語](INTEGRATIONS-ja.md)
+
 > Real-world examples for integrating Function Indexer into your development workflow
 
 ## 🚀 CI/CD Integrations

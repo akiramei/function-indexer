@@ -1,5 +1,9 @@
 # 📚 Function Indexer ドキュメント
 
+## 🌐 言語選択 / Language Selection
+
+[**English**](../README.md) | **日本語** (ここにいます)
+
 Function Indexer の完全ドキュメントへようこそ！初心者からワークフローに統合したい方まで、すべてをカバーしています。
 
 ## 🚀 はじめに
@@ -105,3 +109,7 @@ Function Indexer の完全ドキュメントへようこそ！初心者からワ
 
 **⭐ Function Indexerを気に入りましたか？**  
 [GitHub](https://github.com/akiramei/function-indexer)でプロジェクトにスターを付けて、チームと共有してください！
+
+---
+
+🌐 **他の言語で読む:** [English Documentation](README.md)

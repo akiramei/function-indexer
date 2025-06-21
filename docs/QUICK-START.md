@@ -1,5 +1,9 @@
 # ⚡ Quick Start Guide
 
+## 🌐 Language Selection / 言語選択
+
+**English** (you are here) | [日本語](QUICK-START-ja.md)
+
 > Get Function Indexer running in your project in 60 seconds
 
 ## 🎯 Choose Your Project Type

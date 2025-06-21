@@ -1,5 +1,9 @@
 # 📚 Function Indexer チュートリアル
 
+## 🌐 言語選択 / Language Selection
+
+[**English**](TUTORIAL.md) | **日本語** (ここにいます)
+
 > 5分でFunction Indexerを使いこなすための完全ステップバイステップガイド
 
 ## 🎯 このチュートリアルで学ぶこと

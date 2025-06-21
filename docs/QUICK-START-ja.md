@@ -1,5 +1,9 @@
 # ⚡ クイックスタートガイド
 
+## 🌐 言語選択 / Language Selection
+
+[**English**](QUICK-START.md) | **日本語** (ここにいます)
+
 > 60秒でプロジェクトにFunction Indexerを導入
 
 ## 🎯 プロジェクトタイプを選択

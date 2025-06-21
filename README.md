@@ -5,6 +5,10 @@
 [![npm version](https://img.shields.io/npm/v/function-indexer.svg)](https://www.npmjs.com/package/function-indexer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## 🌐 Documentation Languages
+
+- **English** (you are here) | [**日本語**](docs/README-ja.md)
+
 ## ✨ What is Function Indexer?
 
 Function Indexer scans your TypeScript/TSX codebase and creates a comprehensive index of all functions, methods, and arrow functions. It's designed to help developers and AI assistants understand code structure, track complexity, and maintain code quality.
@@ -31,6 +35,11 @@ function-indexer
 - 📚 **[Complete Tutorial](docs/TUTORIAL.md)** - Step-by-step guide with real examples
 - ⚡ **[Quick Start Guide](docs/QUICK-START.md)** - Get running in 60 seconds
 - 🔧 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+
+**🇯🇵 日本語ドキュメント:**
+- 📚 **[完全チュートリアル](docs/TUTORIAL-ja.md)** - 実例付きステップバイステップガイド
+- ⚡ **[クイックスタート](docs/QUICK-START-ja.md)** - 60秒で開始
+- 🔧 **[トラブルシューティング](docs/TROUBLESHOOTING-ja.md)** - よくある問題と解決方法
 
 No configuration needed! Function Indexer will:
 - Auto-detect your TypeScript/TSX files
@@ -174,15 +183,27 @@ See our [detailed roadmap](ROADMAP.md) for more information.
 
 ## 📚 Documentation
 
-### Getting Started
+### 🇺🇸 English Documentation
+#### Getting Started
 - 📚 **[Complete Tutorial](docs/TUTORIAL.md)** - Learn Function Indexer step-by-step
 - ⚡ **[Quick Start Guide](docs/QUICK-START.md)** - Project-specific setup guides
 - 🔧 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
-### Advanced Usage  
+#### Advanced Usage  
 - 🔗 **[Integration Guide](docs/INTEGRATIONS.md)** - CI/CD, Git hooks, VS Code integration
 - ⚙️ **Configuration Guide** - Customize Function Indexer for your needs
 - 📊 **Metrics Guide** - Understanding code quality metrics
+
+### 🇯🇵 日本語ドキュメント
+#### はじめに
+- 📚 **[完全チュートリアル](docs/TUTORIAL-ja.md)** - Function Indexerをステップバイステップで学習
+- ⚡ **[クイックスタートガイド](docs/QUICK-START-ja.md)** - プロジェクト固有のセットアップガイド
+- 🔧 **[トラブルシューティング](docs/TROUBLESHOOTING-ja.md)** - よくある問題と解決方法
+
+#### 高度な使用法
+- 🔗 **[統合ガイド](docs/INTEGRATIONS-ja.md)** - CI/CD、Gitフック、VS Code統合
+- ⚙️ **設定ガイド** - あなたのニーズに合わせてFunction Indexerをカスタマイズ
+- 📊 **メトリクスガイド** - コード品質メトリクスの理解
 
 ## 🤝 Contributing
 

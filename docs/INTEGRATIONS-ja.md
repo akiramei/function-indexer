@@ -1,5 +1,9 @@
 # 🔗 統合例
 
+## 🌐 言語選択 / Language Selection
+
+[**English**](INTEGRATIONS.md) | **日本語** (ここにいます)
+
 > 開発ワークフローにFunction Indexerを統合するための実世界の例
 
 ## 🚀 CI/CD統合
