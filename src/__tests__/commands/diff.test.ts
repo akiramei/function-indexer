@@ -279,7 +279,7 @@ describe('diff command', () => {
       
       await expect(
         command.parseAsync(['node', 'test', 'main', 'feature'])
-      ).rejects.toThrow('Process exited with code 1');
+      ).rejects.toThrow('Failed to generate index for main');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Error:'),

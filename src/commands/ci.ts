@@ -14,6 +14,7 @@ interface CIOptions {
   format: 'terminal' | 'github' | 'gitlab' | 'json';
   thresholds?: string;
   failOnViolation: boolean;
+  noFailOnViolation?: boolean;
   comment?: boolean;
   verbose?: boolean;
 }
@@ -86,7 +87,8 @@ export function createCICommand(): Command {
         }
       }
     )
-    .option('--fail-on-violation', 'Exit with error code if violations found', true)
+    .option('--fail-on-violation', 'Exit with error code if violations found')
+    .option('--no-fail-on-violation', 'Do not exit with error code if violations found')
     .option('--comment', 'Generate PR comment (for GitHub/GitLab)', false)
     .option('-v, --verbose', 'Enable verbose output', false)
     .hook('preAction', (thisCommand) => {
@@ -107,9 +109,10 @@ export function createCICommand(): Command {
         throw new Error('Output path must be a string');
       }
       
-      // Validate boolean options
-      if (typeof options.failOnViolation !== 'boolean') {
-        throw new Error('--fail-on-violation must be a boolean');
+      // Commander.js automatically handles --no-fail-on-violation by setting failOnViolation = false
+      // Set default to true if not explicitly set
+      if (options.failOnViolation === undefined) {
+        options.failOnViolation = true;
       }
       
       if (typeof options.comment !== 'boolean') {
