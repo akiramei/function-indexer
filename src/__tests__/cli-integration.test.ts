@@ -15,7 +15,7 @@ describe('CLI Integration Tests', () => {
     // Build the project to ensure CLI is available
     await execAsync('npm run build', { cwd: process.cwd() });
     cliPath = path.join(process.cwd(), 'dist', 'cli.js');
-  });
+  }, 30000); // Increase timeout to 30 seconds for build operation
 
   beforeEach(() => {
     // Create temporary directory for test projects
