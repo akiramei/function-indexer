@@ -8,9 +8,21 @@
 
 - **English** (you are here) | [**日本語**](docs/README-ja.md)
 
+## 📋 Table of Contents
+
+- [What is Function Indexer?](#-what-is-function-indexer)
+- [🤖 For AI Assistants](#-for-ai-assistants) - **[AI Guide](docs/AI-GUIDE.md)**
+- [Quick Start](#-quick-start)
+- [Common Usage Patterns](#-common-usage-patterns)
+- [Output Format](#-output-format)
+- [Documentation](#-complete-documentation)
+
 ## ✨ What is Function Indexer?
 
 Function Indexer scans your TypeScript/TSX codebase and creates a comprehensive index of all functions, methods, and arrow functions. It's designed to help developers and AI assistants understand code structure, track complexity, and maintain code quality.
+
+### 🤖 For AI Assistants
+**Looking to integrate Function Indexer into your workflow?** Check out our **[AI Assistant Guide](docs/AI-GUIDE.md)** - optimized for zero-shot usage with complete command references, task templates, and integration examples.
 
 ### Key Features
 
@@ -18,7 +30,7 @@ Function Indexer scans your TypeScript/TSX codebase and creates a comprehensive 
 - 📊 **Code Metrics** - Tracks complexity, lines of code, and other quality indicators
 - 🎯 **Zero Config** - Works out of the box with sensible defaults
 - 🔄 **Incremental Updates** - Efficiently updates only changed functions
-- 🤖 **AI-Ready** - Outputs structured data perfect for AI development workflows
+- 🤖 **AI-Ready** - Structured JSONL output perfect for AI assistants and automation workflows
 
 ## 🚀 Quick Start
 
@@ -48,11 +60,13 @@ function-indexer
 **🎯 New to Function Indexer?** Check our guides:
 - 📚 **[Complete Tutorial](docs/TUTORIAL.md)** - Step-by-step guide with real examples
 - ⚡ **[Quick Start Guide](docs/QUICK-START.md)** - Get running in 60 seconds
+- 🤖 **[AI Assistant Guide](docs/AI-GUIDE.md)** - Zero-shot usage for AI assistants
 - 🔧 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 **🇯🇵 日本語ドキュメント:**
 - 📚 **[完全チュートリアル](docs/TUTORIAL-ja.md)** - 実例付きステップバイステップガイド
 - ⚡ **[クイックスタート](docs/QUICK-START-ja.md)** - 60秒で開始
+- 🤖 **[AIガイド](docs/AI-GUIDE-ja.md)** - AIアシスタント向けゼロショット利用ガイド
 - 🔧 **[トラブルシューティング](docs/TROUBLESHOOTING-ja.md)** - よくある問題と解決方法
 
 No configuration needed! Function Indexer will:
