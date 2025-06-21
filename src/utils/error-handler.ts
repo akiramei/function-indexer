@@ -59,6 +59,11 @@ export function handle(error: Error, context: ErrorContext): never {
   // Provide helpful suggestions based on command
   provideSuggestions(command, error);
 
+  // In test environment, throw error instead of exiting
+  if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) {
+    throw error;
+  }
+
   process.exit(1);
 }
 

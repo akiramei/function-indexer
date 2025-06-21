@@ -48,6 +48,9 @@ describe('diff command', () => {
     (fs.rm as jest.Mock).mockResolvedValue(undefined);
     (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
 
+    // Set test environment
+    process.env.NODE_ENV = 'test';
+    
     // Spy on console methods
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
