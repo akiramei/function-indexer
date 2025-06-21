@@ -13,6 +13,10 @@ jobs:
   analyze:
     name: Analyze Code Quality
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     
     steps:
       - name: Checkout code
@@ -29,13 +33,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Install function-indexer globally
-        run: npm install -g function-indexer
+      - name: Build function-indexer
+        run: npm run build
       
       - name: Run function analysis
         id: analysis
         run: |
-          function-indexer ci \
+          npx ts-node src/cli.ts ci \
             --base origin/${{ github.base_ref }} \
             --format github \
             --output ci-results.json \
