@@ -1,6 +1,6 @@
 # Diff Output Example
 
-This is an example of the `function-indexer diff` command output in markdown format.
+This is an example of the `function-indexer diff` command output in Markdown format.
 
 ## Function Changes Summary
 

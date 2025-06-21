@@ -6,7 +6,7 @@ import chalk from 'chalk';
 import Handlebars from 'handlebars';
 import { ConfigService } from '../services/config-service';
 import { ProjectDetector } from '../utils/project-detector';
-import { ErrorHandler, ValidationError, ConfigurationError, IndexError } from '../utils/error-handler';
+import { handle as handleError, validateInput, validatePath, validateJSON, createFileError, withErrorHandling, ValidationError, ConfigurationError, IndexError } from '../utils/error-handler';
 
 interface ReportOptions {
   template?: string;
@@ -113,12 +113,12 @@ export function createReportCommand(): Command {
 }
 
 async function executeReport(options: ReportOptions) {
-  await ErrorHandler.withErrorHandling(async () => {
+  await withErrorHandling(async () => {
     // Validate inputs
-    ErrorHandler.validateInput(options.format, 'format', (val) => ['markdown', 'html', 'json'].includes(val));
+    validateInput(options.format, 'format', (val) => ['markdown', 'html', 'json'].includes(val));
     
     if (options.template) {
-      await ErrorHandler.validatePath(options.template, 'file');
+      await validatePath(options.template, 'file');
     }
 
     // Auto-detect project
@@ -160,7 +160,7 @@ async function executeReport(options: ReportOptions) {
     try {
       indexContent = await fs.readFile(config.output, 'utf-8');
     } catch (error) {
-      throw ErrorHandler.createFileError('read', config.output, error instanceof Error ? error : undefined);
+      throw createFileError('read', config.output, error instanceof Error ? error : undefined);
     }
 
     const functions: FunctionInfo[] = [];
@@ -182,7 +182,7 @@ async function executeReport(options: ReportOptions) {
     let thresholds;
     try {
       thresholds = options.thresholds 
-        ? ErrorHandler.validateJSON(options.thresholds, 'thresholds')
+        ? validateJSON(options.thresholds, 'thresholds')
         : DEFAULT_THRESHOLDS;
     } catch (error) {
       if (error instanceof ValidationError) throw error;
@@ -220,7 +220,7 @@ async function executeReport(options: ReportOptions) {
         await fs.writeFile(options.output, output);
         console.log(chalk.green(`✅ Report saved to ${options.output}`));
       } catch (error) {
-        throw ErrorHandler.createFileError('write', options.output, error instanceof Error ? error : undefined);
+        throw createFileError('write', options.output, error instanceof Error ? error : undefined);
       }
     } else {
       console.log(output);

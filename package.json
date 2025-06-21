@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "@types/handlebars": "^4.0.40",
     "better-sqlite3": "^11.10.0",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
@@ -26,6 +25,7 @@
     "ts-morph": "^20.0.0"
   },
   "devDependencies": {
+    "@types/handlebars": "^4.0.40",
     "@types/jest": "^29.0.0",
     "@types/node": "^20.0.0",
     "jest": "^29.0.0",

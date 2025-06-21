@@ -70,12 +70,12 @@ export class GitService {
     const targetMap = new Map<string, FunctionInfo>();
 
     baseIndex.forEach(record => {
-      const key = `${record.file}:${record.identifier}:${record.startLine}`;
+      const key = `${record.file}::${record.identifier}::${record.startLine}::${record.endLine}`;
       baseMap.set(key, record);
     });
 
     targetIndex.forEach(record => {
-      const key = `${record.file}:${record.identifier}:${record.startLine}`;
+      const key = `${record.file}::${record.identifier}::${record.startLine}::${record.endLine}`;
       targetMap.set(key, record);
     });
 
@@ -155,10 +155,20 @@ export class GitService {
 
   private async readIndexFile(indexPath: string): Promise<FunctionInfo[]> {
     const content = await fs.readFile(indexPath, 'utf-8');
-    return content
+    const functions: FunctionInfo[] = [];
+    
+    content
       .split('\n')
       .filter(line => line.trim())
-      .map(line => JSON.parse(line));
+      .forEach((line, index) => {
+        try {
+          functions.push(JSON.parse(line));
+        } catch (error) {
+          console.warn(`Warning: Skipping malformed JSON at line ${index + 1} in ${indexPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      });
+      
+    return functions;
   }
 
   async isGitRepository(): Promise<boolean> {

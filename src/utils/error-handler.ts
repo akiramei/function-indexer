@@ -37,33 +37,32 @@ export class IndexError extends Error {
 /**
  * Enhanced error handler for function-indexer commands
  */
-export class ErrorHandler {
-  static handle(error: Error, context: ErrorContext): never {
-    const { command, action, verbose = false } = context;
+export function handle(error: Error, context: ErrorContext): never {
+  const { command, action, verbose = false } = context;
 
-    // Log the action that failed
-    console.error(chalk.red(`❌ ${action} failed`));
+  // Log the action that failed
+  console.error(chalk.red(`❌ ${action} failed`));
 
-    // Handle specific error types
-    if (error instanceof ValidationError) {
-      this.handleValidationError(error);
-    } else if (error instanceof ConfigurationError) {
-      this.handleConfigurationError(error);
-    } else if (error instanceof GitError) {
-      this.handleGitError(error);
-    } else if (error instanceof IndexError) {
-      this.handleIndexError(error);
-    } else {
-      this.handleGenericError(error, verbose);
-    }
-
-    // Provide helpful suggestions based on command
-    this.provideSuggestions(command, error);
-
-    process.exit(1);
+  // Handle specific error types
+  if (error instanceof ValidationError) {
+    handleValidationError(error);
+  } else if (error instanceof ConfigurationError) {
+    handleConfigurationError(error);
+  } else if (error instanceof GitError) {
+    handleGitError(error);
+  } else if (error instanceof IndexError) {
+    handleIndexError(error);
+  } else {
+    handleGenericError(error, verbose);
   }
 
-  private static handleValidationError(error: ValidationError): void {
+  // Provide helpful suggestions based on command
+  provideSuggestions(command, error);
+
+  process.exit(1);
+}
+
+function handleValidationError(error: ValidationError): void {
     console.error(chalk.yellow('📝 Input validation failed:'));
     console.error(chalk.gray(`   ${error.message}`));
     
@@ -72,7 +71,7 @@ export class ErrorHandler {
     }
   }
 
-  private static handleConfigurationError(error: ConfigurationError): void {
+function handleConfigurationError(error: ConfigurationError): void {
     console.error(chalk.yellow('⚙️ Configuration error:'));
     console.error(chalk.gray(`   ${error.message}`));
     
@@ -81,7 +80,7 @@ export class ErrorHandler {
     }
   }
 
-  private static handleGitError(error: GitError): void {
+function handleGitError(error: GitError): void {
     console.error(chalk.yellow('🔄 Git operation failed:'));
     console.error(chalk.gray(`   ${error.message}`));
     
@@ -95,7 +94,7 @@ export class ErrorHandler {
     console.error(chalk.gray('   • Fetch all branches: git fetch --all'));
   }
 
-  private static handleIndexError(error: IndexError): void {
+function handleIndexError(error: IndexError): void {
     console.error(chalk.yellow('📊 Index operation failed:'));
     console.error(chalk.gray(`   ${error.message}`));
     
@@ -109,7 +108,7 @@ export class ErrorHandler {
     console.error(chalk.gray('   • Verify the file exists and is readable'));
   }
 
-  private static handleGenericError(error: Error, verbose: boolean): void {
+function handleGenericError(error: Error, verbose: boolean): void {
     if (verbose) {
       console.error(chalk.red('\n💥 Full error details:'));
       console.error(chalk.gray(error.stack || error.message));
@@ -119,7 +118,7 @@ export class ErrorHandler {
     }
   }
 
-  private static provideSuggestions(command: string, error: Error): void {
+function provideSuggestions(command: string, error: Error): void {
     console.error(chalk.blue('\n🆘 Getting help:'));
     
     switch (command) {
@@ -149,10 +148,10 @@ export class ErrorHandler {
     console.error(chalk.gray('   • Open an issue: https://github.com/akiramei/function-indexer/issues'));
   }
 
-  /**
-   * Validate common inputs and throw ValidationError if invalid
-   */
-  static validateInput(value: any, fieldName: string, validator: (val: any) => boolean, message?: string): void {
+/**
+ * Validate common inputs and throw ValidationError if invalid
+ */
+export function validateInput(value: any, fieldName: string, validator: (val: any) => boolean, message?: string): void {
     if (!validator(value)) {
       throw new ValidationError(
         message || `Invalid value for ${fieldName}: ${value}`,
@@ -161,10 +160,10 @@ export class ErrorHandler {
     }
   }
 
-  /**
-   * Validate that a path exists and is accessible
-   */
-  static async validatePath(path: string, type: 'file' | 'directory' = 'file'): Promise<void> {
+/**
+ * Validate that a path exists and is accessible
+ */
+export async function validatePath(path: string, type: 'file' | 'directory' = 'file'): Promise<void> {
     try {
       const fs = await import('fs/promises');
       const stat = await fs.stat(path);
@@ -183,10 +182,10 @@ export class ErrorHandler {
     }
   }
 
-  /**
-   * Validate JSON string
-   */
-  static validateJSON(jsonString: string, fieldName: string): any {
+/**
+ * Validate JSON string
+ */
+export function validateJSON(jsonString: string, fieldName: string): any {
     try {
       return JSON.parse(jsonString);
     } catch (error) {
@@ -197,24 +196,24 @@ export class ErrorHandler {
     }
   }
 
-  /**
-   * Wrap async functions with error handling
-   */
-  static async withErrorHandling<T>(
-    fn: () => Promise<T>,
-    context: ErrorContext
-  ): Promise<T> {
-    try {
-      return await fn();
-    } catch (error) {
-      this.handle(error instanceof Error ? error : new Error(String(error)), context);
-    }
+/**
+ * Wrap async functions with error handling
+ */
+export async function withErrorHandling<T>(
+  fn: () => Promise<T>,
+  context: ErrorContext
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    handle(error instanceof Error ? error : new Error(String(error)), context);
   }
+}
 
-  /**
-   * Create a user-friendly error message for file operations
-   */
-  static createFileError(operation: string, filePath: string, originalError?: Error): IndexError {
+/**
+ * Create a user-friendly error message for file operations
+ */
+export function createFileError(operation: string, filePath: string, originalError?: Error): IndexError {
     let message = `Failed to ${operation} file: ${filePath}`;
     
     if (originalError) {
@@ -232,16 +231,15 @@ export class ErrorHandler {
     return new IndexError(message, filePath);
   }
 
-  /**
-   * Create a user-friendly error message for Git operations
-   */
-  static createGitError(operation: string, details?: string): GitError {
-    let message = `Git ${operation} failed`;
-    
-    if (details) {
-      message += `: ${details}`;
-    }
-    
-    return new GitError(message, operation);
+/**
+ * Create a user-friendly error message for Git operations
+ */
+export function createGitError(operation: string, details?: string): GitError {
+  let message = `Git ${operation} failed`;
+  
+  if (details) {
+    message += `: ${details}`;
   }
+  
+  return new GitError(message, operation);
 }

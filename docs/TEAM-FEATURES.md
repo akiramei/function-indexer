@@ -39,7 +39,7 @@ function-indexer diff abc123..def456
 
 ### Example Output
 
-```
+```console
 Function Changes: main..feature-auth
 
 Added (3):

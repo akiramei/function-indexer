@@ -5,7 +5,7 @@ import { MetricsService } from '../services/metrics-service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import chalk from 'chalk';
-import { ErrorHandler, ValidationError } from '../utils/error-handler';
+import { handle as handleError, validateJSON, createFileError, withErrorHandling, ValidationError } from '../utils/error-handler';
 
 interface CIOptions {
   root: string;
@@ -126,7 +126,7 @@ export function createCICommand(): Command {
 }
 
 async function executeCI(options: CIOptions) {
-  await ErrorHandler.withErrorHandling(async () => {
+  await withErrorHandling(async () => {
     const startTime = Date.now();
     console.log(chalk.blue('🔄 Running CI analysis...'));
 
@@ -140,7 +140,7 @@ async function executeCI(options: CIOptions) {
     let thresholds;
     try {
       thresholds = options.thresholds 
-        ? ErrorHandler.validateJSON(options.thresholds, 'thresholds')
+        ? validateJSON(options.thresholds, 'thresholds')
         : DEFAULT_THRESHOLDS;
     } catch (error) {
       if (error instanceof ValidationError) throw error;
@@ -178,7 +178,7 @@ async function executeCI(options: CIOptions) {
       }
       indexContent = await fs.readFile(indexPath, 'utf-8');
     } catch (error) {
-      throw ErrorHandler.createFileError('read', indexPath, error instanceof Error ? error : undefined);
+      throw createFileError('read', indexPath, error instanceof Error ? error : undefined);
     }
 
     const functions: any[] = [];
@@ -280,7 +280,7 @@ async function executeCI(options: CIOptions) {
         await fs.writeFile(options.output, output);
         console.log(chalk.green(`✅ Results saved to ${options.output}`));
       } catch (error) {
-        throw ErrorHandler.createFileError('write', options.output, error instanceof Error ? error : undefined);
+        throw createFileError('write', options.output, error instanceof Error ? error : undefined);
       }
     } else if (options.format === 'terminal') {
       console.log(output);

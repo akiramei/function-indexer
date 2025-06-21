@@ -5,7 +5,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import chalk from 'chalk';
 import { FunctionInfo } from '../types';
-import { ErrorHandler, ValidationError, GitError } from '../utils/error-handler';
+import { handle as handleError, validateInput, validatePath, validateJSON, createFileError, withErrorHandling, ValidationError, GitError } from '../utils/error-handler';
 
 interface DiffOptions {
   root: string;
@@ -83,13 +83,13 @@ export function createDiffCommand(): Command {
 }
 
 async function executeDiff(base: string, target: string, options: DiffOptions) {
-  await ErrorHandler.withErrorHandling(async () => {
+  await withErrorHandling(async () => {
     // Validate inputs
-    ErrorHandler.validateInput(base, 'base', (val) => typeof val === 'string' && val.length > 0);
-    ErrorHandler.validateInput(target, 'target', (val) => typeof val === 'string' && val.length > 0);
-    ErrorHandler.validateInput(options.format, 'format', (val) => ['terminal', 'markdown', 'json'].includes(val));
+    validateInput(base, 'base', (val) => typeof val === 'string' && val.length > 0);
+    validateInput(target, 'target', (val) => typeof val === 'string' && val.length > 0);
+    validateInput(options.format, 'format', (val) => ['terminal', 'markdown', 'json'].includes(val));
     
-    await ErrorHandler.validatePath(options.root, 'directory');
+    await validatePath(options.root, 'directory');
 
     const gitService = new GitService(options.root);
     
@@ -107,7 +107,7 @@ async function executeDiff(base: string, target: string, options: DiffOptions) {
     try {
       await fs.mkdir(tempDir, { recursive: true });
     } catch (error) {
-      throw ErrorHandler.createFileError('create directory', tempDir, error instanceof Error ? error : undefined);
+      throw createFileError('create directory', tempDir, error instanceof Error ? error : undefined);
     }
 
     // Generate indexes for both revisions
@@ -148,7 +148,7 @@ async function executeDiff(base: string, target: string, options: DiffOptions) {
     let thresholds;
     try {
       thresholds = options.thresholds 
-        ? ErrorHandler.validateJSON(options.thresholds, 'thresholds')
+        ? validateJSON(options.thresholds, 'thresholds')
         : DEFAULT_THRESHOLDS;
     } catch (error) {
       if (error instanceof ValidationError) throw error;
@@ -163,7 +163,7 @@ async function executeDiff(base: string, target: string, options: DiffOptions) {
         await fs.writeFile(options.output, output);
         console.log(chalk.green(`Diff saved to ${options.output}`));
       } catch (error) {
-        throw ErrorHandler.createFileError('write', options.output, error instanceof Error ? error : undefined);
+        throw createFileError('write', options.output, error instanceof Error ? error : undefined);
       }
     } else if (options.format === 'terminal') {
       console.log(output);

@@ -6,6 +6,7 @@
 - **Changes**: +2 ~5 -1
 
 ### ⚙️ Thresholds
+
 | Metric | Threshold |
 |--------|----------|
 | cyclomaticComplexity | 10 |

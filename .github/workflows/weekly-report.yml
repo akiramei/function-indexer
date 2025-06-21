@@ -10,42 +10,42 @@ jobs:
   report:
     name: Generate Weekly Report
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Install function-indexer globally
         run: npm install -g function-indexer
-      
+
       - name: Generate function index
         run: function-indexer --root ./src
-      
+
       - name: Generate report
         run: |
           function-indexer report \
             --format markdown \
             --output weekly-report.md
-      
+
       - name: Create issue with report
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('weekly-report.md', 'utf8');
-            
+
             const date = new Date().toISOString().split('T')[0];
             const title = `📊 Weekly Code Quality Report - ${date}`;
-            
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -53,7 +53,7 @@ jobs:
               body: report,
               labels: ['code-quality', 'report']
             });
-      
+
       - name: Upload report
         uses: actions/upload-artifact@v4
         with:
