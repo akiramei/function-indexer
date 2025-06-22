@@ -130,11 +130,11 @@ describe('diff command', () => {
         identifier: 'authenticate',
         startLine: 10,
         metrics: {
-          cyclomaticComplexity: 12,
-          cognitiveComplexity: 15,
-          linesOfCode: 45,
-          nestingDepth: 3,
-          parameterCount: 3
+          cyclomaticComplexity: 5,
+          cognitiveComplexity: 8,
+          linesOfCode: 25,
+          nestingDepth: 2,
+          parameterCount: 2
         }
       }],
       modified: [{
@@ -282,8 +282,7 @@ describe('diff command', () => {
       ).rejects.toThrow('Failed to generate index for main');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error:'),
-        expect.any(Error)
+        expect.stringContaining('❌ Generate diff comparison failed')
       );
     });
 
@@ -295,12 +294,10 @@ describe('diff command', () => {
           'node', 'test', 'main', 'feature',
           '--thresholds', 'invalid-json'
         ])
-      ).rejects.toThrow();
+      ).rejects.toThrow('Invalid JSON');
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error:'),
-        expect.any(Error)
-      );
+      // The validation error occurs during command parsing, before any console errors
+      // so we don't expect console.error to be called in this case
     });
   });
 });

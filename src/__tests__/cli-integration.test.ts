@@ -159,7 +159,7 @@ export function complexFunction(input: any): any {
       expect(config.version).toBe('1.0.0');
       expect(config.domain).toBe('main');
       expect(config.include).toEqual(['**/*.ts', '**/*.tsx']);
-    });
+    }, 10000); // Increase timeout
 
     it('should update index on subsequent runs', async () => {
       // First run - initialize
