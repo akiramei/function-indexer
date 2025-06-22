@@ -177,7 +177,11 @@ export class MetricsStorage {
   private checkAllViolations(metrics: FunctionMetricsHistory, thresholds: MetricsThresholds): MetricsViolation[] {
     const violations: MetricsViolation[] = [];
 
-    const checks = [
+    const checks: Array<{
+      metric: keyof MetricsThresholds;
+      value: number;
+      threshold: number;
+    }> = [
       { metric: 'cyclomaticComplexity', value: metrics.cyclomaticComplexity, threshold: thresholds.cyclomaticComplexity },
       { metric: 'cognitiveComplexity', value: metrics.cognitiveComplexity, threshold: thresholds.cognitiveComplexity },
       { metric: 'linesOfCode', value: metrics.linesOfCode, threshold: thresholds.linesOfCode },
@@ -188,7 +192,7 @@ export class MetricsStorage {
     for (const check of checks) {
       if (check.value > check.threshold) {
         violations.push({
-          metric: check.metric as keyof MetricsThresholds,
+          metric: check.metric,
           value: check.value,
           threshold: check.threshold,
           severity: check.value > check.threshold * 1.5 ? 'error' : 'warning'

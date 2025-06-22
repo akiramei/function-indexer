@@ -437,7 +437,6 @@ async function generateReportOutput(reportData: ReportData, options: ReportOptio
         return JSON.stringify(reportData, null, 2);
       case 'html':
         return await generateHTMLReport(reportData, options.template);
-      case 'markdown':
       default:
         return await generateMarkdownReport(reportData, options.template);
     }

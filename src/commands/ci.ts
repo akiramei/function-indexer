@@ -46,86 +46,261 @@ const DEFAULT_THRESHOLDS = {
   parameterCount: 4
 };
 
+function validateFormat(value: string): string {
+  if (!['terminal', 'github', 'gitlab', 'json'].includes(value)) {
+    throw new Error(`Invalid format: ${value}. Valid options are: terminal, github, gitlab, json`);
+  }
+  return value;
+}
+
+function validateThresholds(value: string): string {
+  try {
+    const parsed = JSON.parse(value);
+    const validKeys = ['cyclomaticComplexity', 'cognitiveComplexity', 'linesOfCode', 'nestingDepth', 'parameterCount'];
+    const invalidKeys = Object.keys(parsed).filter(key => !validKeys.includes(key));
+    if (invalidKeys.length > 0) {
+      throw new Error(`Invalid threshold keys: ${invalidKeys.join(', ')}. Valid keys are: ${validKeys.join(', ')}`);
+    }
+    for (const [key, val] of Object.entries(parsed)) {
+      if (typeof val !== 'number' || val <= 0) {
+        throw new Error(`Threshold ${key} must be a positive number, got: ${val}`);
+      }
+    }
+    return value;
+  } catch (error) {
+    throw new Error(`Invalid JSON in thresholds: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+function validateOptions(options: any): void {
+  if (!options.root || typeof options.root !== 'string') {
+    throw new Error('Root directory is required and must be a string');
+  }
+  
+  if (options.base && typeof options.base !== 'string') {
+    throw new Error('Base branch must be a string');
+  }
+  
+  if (options.output && typeof options.output !== 'string') {
+    throw new Error('Output path must be a string');
+  }
+  
+  if (options.failOnViolation === undefined) {
+    options.failOnViolation = true;
+  }
+  
+  if (typeof options.comment !== 'boolean') {
+    throw new Error('--comment must be a boolean');
+  }
+  
+  if (typeof options.verbose !== 'boolean') {
+    throw new Error('--verbose must be a boolean');
+  }
+}
+
 export function createCICommand(): Command {
   return new Command('ci')
     .description('Run function analysis for CI/CD pipelines')
     .option('-r, --root <path>', 'Project root directory', process.cwd())
     .option('-b, --base <branch>', 'Base branch for comparison')
     .option('-o, --output <path>', 'Output file for results')
-    .option(
-      '-f, --format <format>', 
-      'Output format (terminal, github, gitlab, json)', 
-      (value: string) => {
-        if (!['terminal', 'github', 'gitlab', 'json'].includes(value)) {
-          throw new Error(`Invalid format: ${value}. Valid options are: terminal, github, gitlab, json`);
-        }
-        return value;
-      },
-      'terminal'
-    )
-    .option(
-      '--thresholds <json>', 
-      'Custom complexity thresholds as JSON',
-      (value: string) => {
-        try {
-          const parsed = JSON.parse(value);
-          // Validate that it's an object with expected properties
-          const validKeys = ['cyclomaticComplexity', 'cognitiveComplexity', 'linesOfCode', 'nestingDepth', 'parameterCount'];
-          const invalidKeys = Object.keys(parsed).filter(key => !validKeys.includes(key));
-          if (invalidKeys.length > 0) {
-            throw new Error(`Invalid threshold keys: ${invalidKeys.join(', ')}. Valid keys are: ${validKeys.join(', ')}`);
-          }
-          // Validate that all values are positive numbers
-          for (const [key, val] of Object.entries(parsed)) {
-            if (typeof val !== 'number' || val <= 0) {
-              throw new Error(`Threshold ${key} must be a positive number, got: ${val}`);
-            }
-          }
-          return value;
-        } catch (error) {
-          throw new Error(`Invalid JSON in thresholds: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-      }
-    )
+    .option('-f, --format <format>', 'Output format (terminal, github, gitlab, json)', validateFormat, 'terminal')
+    .option('--thresholds <json>', 'Custom complexity thresholds as JSON', validateThresholds)
     .option('--fail-on-violation', 'Exit with error code if violations found')
     .option('--no-fail-on-violation', 'Do not exit with error code if violations found')
     .option('--comment', 'Generate PR comment (for GitHub/GitLab)', false)
     .option('-v, --verbose', 'Enable verbose output', false)
     .hook('preAction', (thisCommand) => {
-      const options = thisCommand.opts();
-      
-      // Validate root directory
-      if (!options.root || typeof options.root !== 'string') {
-        throw new Error('Root directory is required and must be a string');
-      }
-      
-      // Validate base branch if provided
-      if (options.base && typeof options.base !== 'string') {
-        throw new Error('Base branch must be a string');
-      }
-      
-      // Validate output path if provided
-      if (options.output && typeof options.output !== 'string') {
-        throw new Error('Output path must be a string');
-      }
-      
-      // Commander.js automatically handles --no-fail-on-violation by setting failOnViolation = false
-      // Set default to true if not explicitly set
-      if (options.failOnViolation === undefined) {
-        options.failOnViolation = true;
-      }
-      
-      if (typeof options.comment !== 'boolean') {
-        throw new Error('--comment must be a boolean');
-      }
-      
-      if (typeof options.verbose !== 'boolean') {
-        throw new Error('--verbose must be a boolean');
-      }
+      validateOptions(thisCommand.opts());
     })
     .action(async (options: CIOptions) => {
       await executeCI(options);
     });
+}
+
+function parseOutputOption(options: CIOptions): void {
+  if (options.output === undefined && process.argv.includes('--output')) {
+    const outputIndex = process.argv.indexOf('--output');
+    if (
+      outputIndex !== -1 &&
+      outputIndex + 1 < process.argv.length &&
+      !process.argv[outputIndex + 1].startsWith('-')
+    ) {
+      options.output = process.argv[outputIndex + 1];
+    }
+  }
+  if (options.output === undefined && process.argv.includes('-o')) {
+    const outputIndex = process.argv.indexOf('-o');
+    if (
+      outputIndex !== -1 &&
+      outputIndex + 1 < process.argv.length &&
+      !process.argv[outputIndex + 1].startsWith('-')
+    ) {
+      options.output = process.argv[outputIndex + 1];
+    }
+  }
+}
+
+function parseThresholds(options: CIOptions): any {
+  try {
+    return options.thresholds 
+      ? validateJSON(options.thresholds, 'thresholds')
+      : DEFAULT_THRESHOLDS;
+  } catch (error) {
+    if (error instanceof ValidationError) throw error;
+    throw new ValidationError('Invalid thresholds JSON format', 'thresholds');
+  }
+}
+
+async function ensureIndexDirectory(): Promise<string> {
+  const indexDir = '.function-indexer';
+  const indexPath = path.join(indexDir, 'ci-index.jsonl');
+  
+  try {
+    await fs.mkdir(indexDir, { recursive: true });
+  } catch (error) {
+    // Directory already exists, continue
+  }
+  
+  return indexPath;
+}
+
+async function loadIndexedFunctions(indexPath: string): Promise<any[]> {
+  let indexContent;
+  try {
+    const stats = await fs.stat(indexPath);
+    if (stats.size === 0) {
+      throw new Error('Index file is empty');
+    }
+    indexContent = await fs.readFile(indexPath, 'utf-8');
+  } catch (error) {
+    throw createFileError('read', indexPath, error instanceof Error ? error : undefined);
+  }
+
+  const functions: any[] = [];
+  const lines = indexContent.split('\n').filter(line => line.trim());
+  
+  for (let i = 0; i < lines.length; i++) {
+    try {
+      functions.push(JSON.parse(lines[i]));
+    } catch (error) {
+      console.warn(chalk.yellow(`⚠️ Skipping malformed JSON at line ${i + 1}`));
+    }
+  }
+  
+  return functions;
+}
+
+function checkViolations(functions: any[], thresholds: any): CIResult['violations'] {
+  const violations: CIResult['violations'] = [];
+  
+  functions.forEach(func => {
+    const issues: string[] = [];
+    const metrics = func.metrics || {};
+
+    if (metrics.cyclomaticComplexity && metrics.cyclomaticComplexity > thresholds.cyclomaticComplexity) {
+      issues.push(`Cyclomatic complexity: ${metrics.cyclomaticComplexity} (threshold: ${thresholds.cyclomaticComplexity})`);
+    }
+    if (metrics.cognitiveComplexity && metrics.cognitiveComplexity > thresholds.cognitiveComplexity) {
+      issues.push(`Cognitive complexity: ${metrics.cognitiveComplexity} (threshold: ${thresholds.cognitiveComplexity})`);
+    }
+    if (metrics.linesOfCode && metrics.linesOfCode > thresholds.linesOfCode) {
+      issues.push(`Lines of code: ${metrics.linesOfCode} (threshold: ${thresholds.linesOfCode})`);
+    }
+    if (metrics.nestingDepth && metrics.nestingDepth > thresholds.nestingDepth) {
+      issues.push(`Nesting depth: ${metrics.nestingDepth} (threshold: ${thresholds.nestingDepth})`);
+    }
+    if (metrics.parameterCount && metrics.parameterCount > thresholds.parameterCount) {
+      issues.push(`Parameter count: ${metrics.parameterCount} (threshold: ${thresholds.parameterCount})`);
+    }
+
+    if (issues.length > 0) {
+      violations.push({
+        file: func.file,
+        line: func.startLine,
+        identifier: func.identifier,
+        issues,
+        severity: issues.length >= 3 ? 'error' : 'warning'
+      });
+    }
+  });
+  
+  return violations;
+}
+
+async function getDiffSummary(options: CIOptions): Promise<{added: number, modified: number, removed: number}> {
+  let diffSummary = { added: 0, modified: 0, removed: 0 };
+  
+  if (options.base) {
+    try {
+      const gitService = new GitService(options.root);
+      const changedFiles = await gitService.getChangedFiles(options.base);
+      diffSummary.added = changedFiles.length;
+    } catch (error) {
+      console.warn(chalk.yellow('⚠️  Could not get diff information'));
+    }
+  }
+  
+  return diffSummary;
+}
+
+async function collectPRMetrics(options: CIOptions): Promise<void> {
+  const prNumber = process.env.GITHUB_PR_NUMBER || process.env.CI_MERGE_REQUEST_IID;
+  
+  if (prNumber) {
+    try {
+      const metricsService = new MetricsService();
+      await metricsService.collectMetrics(options.root, {
+        prNumber: parseInt(prNumber),
+        verbose: false
+      });
+      metricsService.close();
+    } catch (error) {
+      console.warn(chalk.yellow('⚠️  Could not collect metrics'));
+    }
+  }
+}
+
+async function outputResults(result: CIResult, options: CIOptions, thresholds: any): Promise<void> {
+  if (options.comment) {
+    result.comment = generatePRComment(result, thresholds);
+  }
+
+  const output = formatCIResult(result, options.format);
+  
+  if (options.output) {
+    try {
+      const fileContent = options.format !== 'json' ? JSON.stringify(result, null, 2) : output;
+      await fs.writeFile(options.output, fileContent);
+      console.log(chalk.green(`✅ Results saved to ${options.output}`));
+      
+      if (options.format !== 'terminal' && options.format !== 'json') {
+        console.log(output);
+      }
+    } catch (error) {
+      throw createFileError('write', options.output, error instanceof Error ? error : undefined);
+    }
+  } else if (options.format === 'terminal') {
+    console.log(output);
+  } else {
+    console.log(output);
+  }
+}
+
+function handleExitCode(result: CIResult, options: CIOptions): void {
+  if (!result.success && options.failOnViolation) {
+    console.error(chalk.red('\n❌ Quality gate failed!'));
+    
+    if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) {
+      throw new Error('Process exited with code 1');
+    }
+    
+    process.exit(1);
+  } else if (!result.success) {
+    console.warn(chalk.yellow('\n⚠️  Quality issues detected'));
+  } else {
+    console.log(chalk.green('\n✅ Quality gate passed!'));
+  }
 }
 
 async function executeCI(options: CIOptions) {
@@ -133,58 +308,16 @@ async function executeCI(options: CIOptions) {
     const startTime = Date.now();
     console.log(chalk.blue('🔄 Running CI analysis...'));
 
-    // Improved workaround for Commander.js sub-command option parsing issue
-    // When called through main CLI, options might not include all parsed values
-    // This adds validation to ensure we don't accidentally parse another flag as a value
-    if (options.output === undefined && process.argv.includes('--output')) {
-      const outputIndex = process.argv.indexOf('--output');
-      if (
-        outputIndex !== -1 &&
-        outputIndex + 1 < process.argv.length &&
-        !process.argv[outputIndex + 1].startsWith('-')
-      ) {
-        options.output = process.argv[outputIndex + 1];
-      }
-    }
-    if (options.output === undefined && process.argv.includes('-o')) {
-      const outputIndex = process.argv.indexOf('-o');
-      if (
-        outputIndex !== -1 &&
-        outputIndex + 1 < process.argv.length &&
-        !process.argv[outputIndex + 1].startsWith('-')
-      ) {
-        options.output = process.argv[outputIndex + 1];
-      }
-    }
+    parseOutputOption(options);
 
-    // Detect CI environment
     const ciEnvironment = detectCIEnvironment();
     if (ciEnvironment) {
       console.log(chalk.gray(`Detected CI: ${ciEnvironment}`));
     }
 
-    // Parse thresholds
-    let thresholds;
-    try {
-      thresholds = options.thresholds 
-        ? validateJSON(options.thresholds, 'thresholds')
-        : DEFAULT_THRESHOLDS;
-    } catch (error) {
-      if (error instanceof ValidationError) throw error;
-      throw new ValidationError('Invalid thresholds JSON format', 'thresholds');
-    }
+    const thresholds = parseThresholds(options);
+    const indexPath = await ensureIndexDirectory();
 
-    // Ensure .function-indexer directory exists
-    const indexDir = '.function-indexer';
-    const indexPath = path.join(indexDir, 'ci-index.jsonl');
-    
-    try {
-      await fs.mkdir(indexDir, { recursive: true });
-    } catch (error) {
-      // Directory already exists, continue
-    }
-
-    // Create indexer
     const indexer = new FunctionIndexer({
       root: options.root,
       output: indexPath,
@@ -192,96 +325,14 @@ async function executeCI(options: CIOptions) {
       verbose: options.verbose || false
     });
 
-    // Run indexing
     console.log(chalk.gray('Indexing functions...'));
-    const indexResult = await indexer.run();
+    await indexer.run();
 
-    // Verify the file was created and load it
-    let indexContent;
-    try {
-      const stats = await fs.stat(indexPath);
-      if (stats.size === 0) {
-        throw new Error('Index file is empty');
-      }
-      indexContent = await fs.readFile(indexPath, 'utf-8');
-    } catch (error) {
-      throw createFileError('read', indexPath, error instanceof Error ? error : undefined);
-    }
+    const functions = await loadIndexedFunctions(indexPath);
+    const violations = checkViolations(functions, thresholds);
+    const diffSummary = await getDiffSummary(options);
+    await collectPRMetrics(options);
 
-    const functions: any[] = [];
-    const lines = indexContent.split('\n').filter(line => line.trim());
-    
-    for (let i = 0; i < lines.length; i++) {
-      try {
-        functions.push(JSON.parse(lines[i]));
-      } catch (error) {
-        console.warn(chalk.yellow(`⚠️ Skipping malformed JSON at line ${i + 1}`));
-      }
-    }
-
-    // Check for violations
-    const violations: CIResult['violations'] = [];
-    functions.forEach(func => {
-      const issues: string[] = [];
-      const metrics = func.metrics || {};
-
-      // Check each metric
-      if (metrics.cyclomaticComplexity && metrics.cyclomaticComplexity > thresholds.cyclomaticComplexity) {
-        issues.push(`Cyclomatic complexity: ${metrics.cyclomaticComplexity} (threshold: ${thresholds.cyclomaticComplexity})`);
-      }
-      if (metrics.cognitiveComplexity && metrics.cognitiveComplexity > thresholds.cognitiveComplexity) {
-        issues.push(`Cognitive complexity: ${metrics.cognitiveComplexity} (threshold: ${thresholds.cognitiveComplexity})`);
-      }
-      if (metrics.linesOfCode && metrics.linesOfCode > thresholds.linesOfCode) {
-        issues.push(`Lines of code: ${metrics.linesOfCode} (threshold: ${thresholds.linesOfCode})`);
-      }
-      if (metrics.nestingDepth && metrics.nestingDepth > thresholds.nestingDepth) {
-        issues.push(`Nesting depth: ${metrics.nestingDepth} (threshold: ${thresholds.nestingDepth})`);
-      }
-      if (metrics.parameterCount && metrics.parameterCount > thresholds.parameterCount) {
-        issues.push(`Parameter count: ${metrics.parameterCount} (threshold: ${thresholds.parameterCount})`);
-      }
-
-      if (issues.length > 0) {
-        violations.push({
-          file: func.file,
-          line: func.startLine,
-          identifier: func.identifier,
-          issues,
-          severity: issues.length >= 3 ? 'error' : 'warning'
-        });
-      }
-    });
-
-    // Get diff information if base branch provided
-    let diffSummary = { added: 0, modified: 0, removed: 0 };
-    if (options.base) {
-      try {
-        const gitService = new GitService(options.root);
-        const changedFiles = await gitService.getChangedFiles(options.base);
-        // Simplified diff summary
-        diffSummary.added = changedFiles.length;
-      } catch (error) {
-        console.warn(chalk.yellow('⚠️  Could not get diff information'));
-      }
-    }
-
-    // Collect metrics if PR number available
-    const prNumber = process.env.GITHUB_PR_NUMBER || process.env.CI_MERGE_REQUEST_IID;
-    if (prNumber) {
-      try {
-        const metricsService = new MetricsService();
-        await metricsService.collectMetrics(options.root, {
-          prNumber: parseInt(prNumber),
-          verbose: false
-        });
-        metricsService.close();
-      } catch (error) {
-        console.warn(chalk.yellow('⚠️  Could not collect metrics'));
-      }
-    }
-
-    // Generate result
     const result: CIResult = {
       success: violations.filter(v => v.severity === 'error').length === 0,
       summary: {
@@ -294,55 +345,12 @@ async function executeCI(options: CIOptions) {
       violations
     };
 
-    // Generate comment if requested
-    if (options.comment) {
-      result.comment = generatePRComment(result, thresholds);
-    }
-
-    // Format and output results
-    const output = formatCIResult(result, options.format);
-    
-    if (options.output) {
-      try {
-        // Strategy: Always write JSON to file for CI consumption, 
-        // while still providing formatted output on stdout when needed
-        // This allows CI workflows to use structured JSON data while still getting formatted annotations
-        const fileContent = options.format !== 'json' ? JSON.stringify(result, null, 2) : output;
-        await fs.writeFile(options.output, fileContent);
-        console.log(chalk.green(`✅ Results saved to ${options.output}`));
-        
-        // For non-terminal formats, also output to stdout for CI systems to pick up
-        if (options.format !== 'terminal' && options.format !== 'json') {
-          console.log(output);
-        }
-      } catch (error) {
-        throw createFileError('write', options.output, error instanceof Error ? error : undefined);
-      }
-    } else if (options.format === 'terminal') {
-      console.log(output);
-    } else {
-      // For CI formats, output to stdout
-      console.log(output);
-    }
+    await outputResults(result, options, thresholds);
 
     const executionTime = Date.now() - startTime;
     console.log(chalk.gray(`\nExecution time: ${executionTime}ms`));
 
-    // Exit with appropriate code
-    if (!result.success && options.failOnViolation) {
-      console.error(chalk.red('\n❌ Quality gate failed!'));
-      
-      // In test environment, throw error instead of exiting
-      if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) {
-        throw new Error('Process exited with code 1');
-      }
-      
-      process.exit(1);
-    } else if (!result.success) {
-      console.warn(chalk.yellow('\n⚠️  Quality issues detected'));
-    } else {
-      console.log(chalk.green('\n✅ Quality gate passed!'));
-    }
+    handleExitCode(result, options);
   }, { command: 'ci', action: 'Run CI analysis' });
 }
 
