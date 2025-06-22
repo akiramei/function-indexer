@@ -65,25 +65,43 @@ function findProjectRoot(startPath: string): string {
 }
 
 /**
- * Find common source directories
+ * Find common source directories with enhanced detection
  */
 function findSourceDirectories(projectRoot: string): string[] {
-  const commonDirs = ['src', 'lib', 'app', 'source', 'sources'];
   const foundDirs: string[] = [];
   
-  for (const dir of commonDirs) {
-    const fullPath = path.join(projectRoot, dir);
-    try {
-      if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
-        foundDirs.push(dir);
-      }
-    } catch {
-      // Handle potential filesystem errors gracefully
-      continue;
+  // 1. First, try to detect from tsconfig.json
+  const tsconfigDirs = detectFromTsConfig(projectRoot);
+  if (tsconfigDirs.length > 0) {
+    foundDirs.push(...tsconfigDirs);
+  }
+  
+  // 2. Try to detect from package.json
+  if (foundDirs.length === 0) {
+    const packageDirs = detectFromPackageJson(projectRoot);
+    if (packageDirs.length > 0) {
+      foundDirs.push(...packageDirs);
     }
   }
   
-  // If no common directories found, check for TypeScript files in root
+  // 3. Fallback to common directory patterns
+  if (foundDirs.length === 0) {
+    const commonDirs = ['src', 'lib', 'app', 'source', 'sources'];
+    
+    for (const dir of commonDirs) {
+      const fullPath = path.join(projectRoot, dir);
+      try {
+        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+          foundDirs.push(dir);
+        }
+      } catch {
+        // Handle potential filesystem errors gracefully
+        continue;
+      }
+    }
+  }
+  
+  // 4. If still no directories found, check for TypeScript files in root
   if (foundDirs.length === 0) {
     try {
       const hasRootTsFiles = fs.readdirSync(projectRoot)
@@ -98,6 +116,100 @@ function findSourceDirectories(projectRoot: string): string[] {
   }
   
   return foundDirs;
+}
+
+/**
+ * Detect source directories from tsconfig.json
+ */
+function detectFromTsConfig(projectRoot: string): string[] {
+  const tsconfigPath = path.join(projectRoot, 'tsconfig.json');
+  
+  if (!fs.existsSync(tsconfigPath)) {
+    return [];
+  }
+  
+  try {
+    const content = fs.readFileSync(tsconfigPath, 'utf-8');
+    // Remove comments and parse JSON
+    const cleanContent = content.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+    const tsconfig = JSON.parse(cleanContent);
+    
+    const includePaths = tsconfig.include || [];
+    const srcDirs: string[] = [];
+    
+    for (const includePath of includePaths) {
+      // Extract directory from patterns like "src/**/*", "lib/**/*.ts"
+      const match = includePath.match(/^([^*]+)/);
+      if (match) {
+        let dir = match[1].replace(/\/$/, ''); // Remove trailing slash
+        if (dir && dir !== '.' && !srcDirs.includes(dir)) {
+          // Verify directory exists
+          const fullPath = path.join(projectRoot, dir);
+          if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+            srcDirs.push(dir);
+          }
+        }
+      }
+    }
+    
+    return srcDirs;
+  } catch {
+    // Failed to parse tsconfig.json
+    return [];
+  }
+}
+
+/**
+ * Detect source directories from package.json
+ */
+function detectFromPackageJson(projectRoot: string): string[] {
+  const packagePath = path.join(projectRoot, 'package.json');
+  
+  if (!fs.existsSync(packagePath)) {
+    return [];
+  }
+  
+  try {
+    const content = fs.readFileSync(packagePath, 'utf-8');
+    const pkg = JSON.parse(content);
+    const srcDirs: string[] = [];
+    
+    // Check files field
+    if (pkg.files && Array.isArray(pkg.files)) {
+      for (const file of pkg.files) {
+        if (typeof file === 'string') {
+          // Extract directory from patterns like "src/", "lib/**"
+          const match = file.match(/^([^*]+)/);
+          if (match) {
+            let dir = match[1].replace(/\/$/, ''); // Remove trailing slash
+            if (dir && dir !== '.' && dir !== 'dist' && dir !== 'build' && !srcDirs.includes(dir)) {
+              // Verify directory exists
+              const fullPath = path.join(projectRoot, dir);
+              if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+                srcDirs.push(dir);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Check main field for additional hints
+    if (pkg.main && typeof pkg.main === 'string') {
+      const mainDir = path.dirname(pkg.main);
+      if (mainDir !== '.' && mainDir !== 'dist' && mainDir !== 'build') {
+        const fullPath = path.join(projectRoot, mainDir);
+        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory() && !srcDirs.includes(mainDir)) {
+          srcDirs.push(mainDir);
+        }
+      }
+    }
+    
+    return srcDirs;
+  } catch {
+    // Failed to parse package.json
+    return [];
+  }
 }
 
 /**

@@ -89,8 +89,8 @@ export function createDefaultConfig(projectRoot?: string): FunctionIndexerConfig
   
   return {
     version: DEFAULT_VERSION,
-    root: path.relative(projectInfo.root, projectInfo.suggestedRoot) || '.',
-    output: path.relative(projectInfo.root, getDefaultIndexPath(projectInfo.root)),
+    root: projectInfo.suggestedRoot,
+    output: getDefaultIndexPath(projectInfo.root),
     domain: 'main',
     include: ['**/*.ts', '**/*.tsx'],
     exclude: excludePatterns,

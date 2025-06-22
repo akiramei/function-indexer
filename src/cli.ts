@@ -57,6 +57,14 @@ program
         // Auto-detect project
         console.log(chalk.cyan(`✨ Detected ${projectInfo.type} project at: ${projectInfo.root}`));
         
+        // Show source detection results
+        if (projectInfo.srcDirs.length > 0) {
+          console.log(chalk.cyan(`📁 Found source directories: ${projectInfo.srcDirs.join(', ')}`));
+          console.log(chalk.cyan(`🎯 Suggested scan root: ${path.relative(projectInfo.root, projectInfo.suggestedRoot) || '.'}`));
+        } else {
+          console.log(chalk.yellow(`⚠️  No source directories detected, using project root`));
+        }
+        
         // Initialize configuration
         const config = ConfigService.initialize(projectInfo.root);
         console.log(chalk.green(`✅ Created configuration in ${ConfigService.getConfigDir(projectInfo.root)}`));
