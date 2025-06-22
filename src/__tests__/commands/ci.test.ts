@@ -381,7 +381,7 @@ describe('ci command', () => {
       const command = createCICommand();
       
       await expect(
-        command.parseAsync(['node', 'test', '--comment'])
+        command.parseAsync(['node', 'test', '--comment', '--format', 'json'])
       ).rejects.toThrow('Process exited with code 1');
 
       const jsonCall = consoleLogSpy.mock.calls.find(call => 
@@ -404,7 +404,7 @@ describe('ci command', () => {
       );
 
       const command = createCICommand();
-      await command.parseAsync(['node', 'test', '--comment']);
+      await command.parseAsync(['node', 'test', '--comment', '--format', 'json']);
 
       const jsonCall = consoleLogSpy.mock.calls.find(call => 
         call[0].includes('"comment"')
@@ -429,8 +429,27 @@ describe('ci command', () => {
         'ci-results.json',
         expect.stringContaining('"success": false')
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Results saved to ci-results.json')
+      );
+    });
+
+    it('should save JSON to file and output annotations when using github format', async () => {
+      const command = createCICommand();
+      
+      await expect(
+        command.parseAsync(['node', 'test', '--output', 'ci-results.json', '--format', 'github', '--comment'])
+      ).rejects.toThrow('Process exited with code 1');
+
+      // Should write JSON to file (not GitHub annotations)
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        'ci-results.json',
+        expect.stringContaining('"success": false')
+      );
+      
+      // Should also output GitHub annotations to stdout
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('::error file=')
       );
     });
   });
@@ -462,7 +481,7 @@ describe('ci command', () => {
   describe('base branch comparison', () => {
     it('should get diff information when base branch is provided', async () => {
       const command = createCICommand();
-      await command.parseAsync(['node', 'test', '--base', 'main']);
+      await command.parseAsync(['node', 'test', '--base', 'main', '--no-fail-on-violation']);
 
       expect(mockGitService.getChangedFiles).toHaveBeenCalledWith('main');
     });
@@ -471,7 +490,7 @@ describe('ci command', () => {
       mockGitService.getChangedFiles.mockRejectedValue(new Error('Git error'));
 
       const command = createCICommand();
-      await command.parseAsync(['node', 'test', '--base', 'main']);
+      await command.parseAsync(['node', 'test', '--base', 'main', '--no-fail-on-violation']);
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining('Could not get diff information')
@@ -495,7 +514,7 @@ describe('ci command', () => {
       mockMetricsService.collectMetrics.mockRejectedValue(new Error('Metrics failed'));
 
       const command = createCICommand();
-      await command.parseAsync(['node', 'test']);
+      await command.parseAsync(['node', 'test', '--no-fail-on-violation']);
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining('Could not collect metrics')

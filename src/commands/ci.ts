@@ -132,6 +132,21 @@ async function executeCI(options: CIOptions) {
   await withErrorHandling(async () => {
     const startTime = Date.now();
     console.log(chalk.blue('🔄 Running CI analysis...'));
+    
+    // Workaround for Commander.js sub-command option parsing issue
+    // When called through main CLI, options might not include all parsed values
+    if (options.output === undefined && process.argv.includes('--output')) {
+      const outputIndex = process.argv.indexOf('--output');
+      if (outputIndex !== -1 && outputIndex + 1 < process.argv.length) {
+        options.output = process.argv[outputIndex + 1];
+      }
+    }
+    if (options.output === undefined && process.argv.includes('-o')) {
+      const outputIndex = process.argv.indexOf('-o');
+      if (outputIndex !== -1 && outputIndex + 1 < process.argv.length) {
+        options.output = process.argv[outputIndex + 1];
+      }
+    }
 
     // Detect CI environment
     const ciEnvironment = detectCIEnvironment();
@@ -280,8 +295,18 @@ async function executeCI(options: CIOptions) {
     
     if (options.output) {
       try {
-        await fs.writeFile(options.output, output);
-        console.log(chalk.green(`✅ Results saved to ${options.output}`));
+        // When outputting to file with non-JSON format, always write JSON to file
+        // This allows CI workflows to use the JSON data while still getting formatted output on stdout
+        const fileContent = options.format !== 'json' ? JSON.stringify(result, null, 2) : output;
+        await fs.writeFile(options.output, fileContent);
+        
+        // For non-terminal formats, also output to stdout for CI systems to pick up
+        if (options.format !== 'terminal' && options.format !== 'json') {
+          console.log(output);
+        }
+        
+        // Log success message to stderr to avoid corrupting stdout output
+        console.error(chalk.green(`✅ Results saved to ${options.output}`));
       } catch (error) {
         throw createFileError('write', options.output, error instanceof Error ? error : undefined);
       }
@@ -293,7 +318,7 @@ async function executeCI(options: CIOptions) {
     }
 
     const executionTime = Date.now() - startTime;
-    console.log(chalk.gray(`\nExecution time: ${executionTime}ms`));
+    console.error(chalk.gray(`\nExecution time: ${executionTime}ms`));
 
     // Exit with appropriate code
     if (!result.success && options.failOnViolation) {
