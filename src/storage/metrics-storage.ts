@@ -157,71 +157,50 @@ export class MetricsStorage {
    */
   analyzeViolations(thresholds: MetricsThresholds): MetricsAnalysisResult[] {
     const latestMetrics = this.getLatestMetrics();
-    const results: MetricsAnalysisResult[] = [];
+    return latestMetrics.map(metrics => this.analyzeMetricsViolations(metrics, thresholds));
+  }
 
-    for (const metrics of latestMetrics) {
-      const violations: MetricsViolation[] = [];
+  private analyzeMetricsViolations(metrics: FunctionMetricsHistory, thresholds: MetricsThresholds): MetricsAnalysisResult {
+    const violations = this.checkAllViolations(metrics, thresholds);
+    const trend = this.calculateTrend(metrics.functionId);
+    const riskLevel = this.calculateRiskLevel(violations);
 
-      // 各メトリクスの閾値チェック
-      if (metrics.cyclomaticComplexity > thresholds.cyclomaticComplexity) {
+    return {
+      functionId: metrics.functionId,
+      currentMetrics: metrics,
+      violations,
+      trend,
+      riskLevel
+    };
+  }
+
+  private checkAllViolations(metrics: FunctionMetricsHistory, thresholds: MetricsThresholds): MetricsViolation[] {
+    const violations: MetricsViolation[] = [];
+
+    const checks: Array<{
+      metric: keyof MetricsThresholds;
+      value: number;
+      threshold: number;
+    }> = [
+      { metric: 'cyclomaticComplexity', value: metrics.cyclomaticComplexity, threshold: thresholds.cyclomaticComplexity },
+      { metric: 'cognitiveComplexity', value: metrics.cognitiveComplexity, threshold: thresholds.cognitiveComplexity },
+      { metric: 'linesOfCode', value: metrics.linesOfCode, threshold: thresholds.linesOfCode },
+      { metric: 'nestingDepth', value: metrics.nestingDepth, threshold: thresholds.nestingDepth },
+      { metric: 'parameterCount', value: metrics.parameterCount, threshold: thresholds.parameterCount }
+    ];
+
+    for (const check of checks) {
+      if (check.value > check.threshold) {
         violations.push({
-          metric: 'cyclomaticComplexity',
-          value: metrics.cyclomaticComplexity,
-          threshold: thresholds.cyclomaticComplexity,
-          severity: metrics.cyclomaticComplexity > thresholds.cyclomaticComplexity * 1.5 ? 'error' : 'warning'
+          metric: check.metric,
+          value: check.value,
+          threshold: check.threshold,
+          severity: check.value > check.threshold * 1.5 ? 'error' : 'warning'
         });
       }
-
-      if (metrics.cognitiveComplexity > thresholds.cognitiveComplexity) {
-        violations.push({
-          metric: 'cognitiveComplexity',
-          value: metrics.cognitiveComplexity,
-          threshold: thresholds.cognitiveComplexity,
-          severity: metrics.cognitiveComplexity > thresholds.cognitiveComplexity * 1.5 ? 'error' : 'warning'
-        });
-      }
-
-      if (metrics.linesOfCode > thresholds.linesOfCode) {
-        violations.push({
-          metric: 'linesOfCode',
-          value: metrics.linesOfCode,
-          threshold: thresholds.linesOfCode,
-          severity: metrics.linesOfCode > thresholds.linesOfCode * 1.5 ? 'error' : 'warning'
-        });
-      }
-
-      if (metrics.nestingDepth > thresholds.nestingDepth) {
-        violations.push({
-          metric: 'nestingDepth',
-          value: metrics.nestingDepth,
-          threshold: thresholds.nestingDepth,
-          severity: metrics.nestingDepth > thresholds.nestingDepth * 1.5 ? 'error' : 'warning'
-        });
-      }
-
-      if (metrics.parameterCount > thresholds.parameterCount) {
-        violations.push({
-          metric: 'parameterCount',
-          value: metrics.parameterCount,
-          threshold: thresholds.parameterCount,
-          severity: metrics.parameterCount > thresholds.parameterCount * 1.5 ? 'error' : 'warning'
-        });
-      }
-
-      // トレンド分析
-      const trend = this.calculateTrend(metrics.functionId);
-      const riskLevel = this.calculateRiskLevel(violations);
-
-      results.push({
-        functionId: metrics.functionId,
-        currentMetrics: metrics,
-        violations,
-        trend,
-        riskLevel
-      });
     }
 
-    return results;
+    return violations;
   }
 
   /**

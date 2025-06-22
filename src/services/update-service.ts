@@ -31,112 +31,21 @@ export class UpdateService {
     const errors: string[] = [];
 
     try {
-      // 1. Load metadata
-      const metadata = await this.storage.loadMetadata(identifier);
-      if (!metadata) {
-        throw new Error(`No metadata found for index: ${identifier}. Please recreate the index.`);
-      }
-
-      // 2. Validate index
-      const validation = await this.storage.validateIndex(identifier);
-      if (!validation.valid) {
-        throw new Error(`Index validation failed: ${validation.error}`);
-      }
-
-      // 3. Create backup if enabled
-      if (options.autoBackup) {
-        await this.storage.createBackup(identifier);
-        if (this.verbose) {
-          console.log('Backup created successfully');
-        }
-      }
-
-      // 4. Load existing index
-      const existingFunctions = await this.storage.loadIndex(identifier);
-      const existingMap = this.createFunctionMap(existingFunctions);
-
-      // 5. Calculate file-level changes
+      // Initialize and validate
+      const { metadata, existingFunctions } = await this.initializeUpdate(identifier, options);
+      
+      // Calculate changes
       const fileChanges = await this.calculateFileChanges(metadata, existingFunctions);
-      
-      if (this.verbose) {
-        console.log(`Files to add: ${fileChanges.added.length}`);
-        console.log(`Files to update: ${fileChanges.modified.length}`);
-        console.log(`Files to remove: ${fileChanges.deleted.length}`);
-      }
+      this.logFileChanges(fileChanges);
 
-      // 6. Process changes
-      const updatedFunctions: FunctionInfo[] = [];
-      const functionChanges = {
-        added: 0,
-        updated: 0,
-        deleted: 0
-      };
+      // Process all changes
+      const { updatedFunctions, functionChanges } = await this.processAllChanges(
+        fileChanges,
+        { existingFunctions, metadata, options, errors }
+      );
 
-      // Process deleted files
-      for (const file of fileChanges.deleted) {
-        const functionsInFile = existingFunctions.filter(f => f.file === file);
-        functionChanges.deleted += functionsInFile.length;
-      }
-
-      // Keep functions from unchanged files
-      for (const func of existingFunctions) {
-        if (!fileChanges.deleted.includes(func.file) && !fileChanges.modified.includes(func.file)) {
-          updatedFunctions.push(func);
-        }
-      }
-
-      // Process new and modified files
-      const indexerOptions: IndexerOptions = {
-        root: metadata.options.root,
-        output: identifier,
-        domain: metadata.options.domain,
-        include: metadata.options.include,
-        exclude: metadata.options.exclude,
-        verbose: options.verbose
-      };
-
-      const indexer = new FunctionIndexer(indexerOptions);
-      
-      for (const file of [...fileChanges.added, ...fileChanges.modified]) {
-        try {
-          const newFunctions = await this.processFile(indexer, file, metadata.options.domain);
-          
-          if (fileChanges.modified.includes(file)) {
-            // Compare functions for modified files
-            const oldFunctions = existingFunctions.filter(f => f.file === file);
-            const changes = this.compareFunctions(oldFunctions, newFunctions);
-            
-            functionChanges.added += changes.added.length;
-            functionChanges.updated += changes.updated.length;
-            functionChanges.deleted += changes.deleted.length;
-            
-            updatedFunctions.push(...newFunctions);
-          } else {
-            // All functions from new files are additions
-            functionChanges.added += newFunctions.length;
-            updatedFunctions.push(...newFunctions);
-          }
-          
-        } catch (error) {
-          errors.push(`Failed to process ${file}: ${error instanceof Error ? error.message : String(error)}`);
-        }
-      }
-
-      // 7. Save updated index
-      await this.storage.saveIndex(identifier, updatedFunctions);
-
-      // 8. Update metadata
-      const updatedMetadata: IndexMetadata = {
-        ...metadata,
-        lastUpdated: new Date().toISOString(),
-        statistics: {
-          totalFiles: fileChanges.current.length,
-          totalFunctions: updatedFunctions.length
-        },
-        fileHashes: await this.calculateFileHashes(fileChanges.current)
-      };
-
-      await this.storage.saveMetadata(identifier, updatedMetadata);
+      // Save results
+      await this.saveUpdateResults(identifier, metadata, updatedFunctions, fileChanges.current);
 
       return {
         success: true,
@@ -148,22 +57,232 @@ export class UpdateService {
       };
 
     } catch (error) {
-      // Restore from backup if enabled
-      if (options.autoRestore) {
-        try {
-          const backups = await this.storage.listBackups();
-          if (backups.length > 0) {
-            await this.storage.restoreFromBackup(backups[0].id);
-            if (this.verbose) {
-              console.log('Restored from backup due to error');
+      await this.handleUpdateError(error, options, errors);
+      throw error;
+    }
+  }
+
+  private async initializeUpdate(identifier: string, options: UpdateOptions): Promise<{
+    metadata: IndexMetadata;
+    existingFunctions: FunctionInfo[];
+  }> {
+    // Load and validate metadata
+    const metadata = await this.storage.loadMetadata(identifier);
+    if (!metadata) {
+      throw new Error(`No metadata found for index: ${identifier}. Please recreate the index.`);
+    }
+
+    // Validate index
+    const validation = await this.storage.validateIndex(identifier);
+    if (!validation.valid) {
+      throw new Error(`Index validation failed: ${validation.error}`);
+    }
+
+    // Create backup if enabled
+    if (options.autoBackup) {
+      await this.storage.createBackup(identifier);
+      if (this.verbose) {
+        console.log('Backup created successfully');
+      }
+    }
+
+    // Load existing index
+    const existingFunctions = await this.storage.loadIndex(identifier);
+
+    return { metadata, existingFunctions };
+  }
+
+
+  private logFileChanges(fileChanges: {
+    added: string[];
+    modified: string[];
+    deleted: string[];
+    current: string[];
+  }): void {
+    if (this.verbose) {
+      console.log(`Files to add: ${fileChanges.added.length}`);
+      console.log(`Files to update: ${fileChanges.modified.length}`);
+      console.log(`Files to remove: ${fileChanges.deleted.length}`);
+    }
+  }
+
+  private async processAllChanges(
+    fileChanges: {
+      added: string[];
+      modified: string[];
+      deleted: string[];
+      current: string[];
+    },
+    context: {
+      existingFunctions: FunctionInfo[];
+      metadata: IndexMetadata;
+      options: UpdateOptions;
+      errors: string[];
+    }
+  ): Promise<{
+    updatedFunctions: FunctionInfo[];
+    functionChanges: { added: number; updated: number; deleted: number };
+  }> {
+    const updatedFunctions: FunctionInfo[] = [];
+    const functionChanges = { added: 0, updated: 0, deleted: 0 };
+
+    // Process deleted files
+    functionChanges.deleted = this.processDeletedFiles(fileChanges.deleted, context.existingFunctions);
+
+    // Keep unchanged functions
+    this.keepUnchangedFunctions(context.existingFunctions, fileChanges, updatedFunctions);
+
+    // Process new and modified files
+    const indexer = this.createIndexer(context.metadata, context.options);
+    await this.processNewAndModifiedFiles(
+      fileChanges,
+      {
+        existingFunctions: context.existingFunctions,
+        indexer,
+        domain: context.metadata.options.domain,
+        updatedFunctions,
+        functionChanges,
+        errors: context.errors
+      }
+    );
+
+    return { updatedFunctions, functionChanges };
+  }
+
+  private processDeletedFiles(deletedFiles: string[], existingFunctions: FunctionInfo[]): number {
+    let deletedCount = 0;
+    for (const file of deletedFiles) {
+      const functionsInFile = existingFunctions.filter(f => f.file === file);
+      deletedCount += functionsInFile.length;
+    }
+    return deletedCount;
+  }
+
+  private keepUnchangedFunctions(
+    existingFunctions: FunctionInfo[],
+    fileChanges: { deleted: string[]; modified: string[]; added: string[]; current: string[] },
+    updatedFunctions: FunctionInfo[]
+  ): void {
+    for (const func of existingFunctions) {
+      if (!fileChanges.deleted.includes(func.file) && !fileChanges.modified.includes(func.file)) {
+        updatedFunctions.push(func);
+      }
+    }
+  }
+
+  private createIndexer(metadata: IndexMetadata, options: UpdateOptions): FunctionIndexer {
+    const indexerOptions: IndexerOptions = {
+      root: metadata.options.root,
+      output: '', // Not used for in-memory processing
+      domain: metadata.options.domain,
+      include: metadata.options.include,
+      exclude: metadata.options.exclude,
+      verbose: options.verbose
+    };
+    return new FunctionIndexer(indexerOptions);
+  }
+
+  private async processNewAndModifiedFiles(
+    fileChanges: { added: string[]; modified: string[]; deleted: string[]; current: string[] },
+    context: {
+      existingFunctions: FunctionInfo[];
+      indexer: FunctionIndexer;
+      domain: string;
+      updatedFunctions: FunctionInfo[];
+      functionChanges: { added: number; updated: number; deleted: number };
+      errors: string[];
+    }
+  ): Promise<void> {
+    const filesToProcess = [...fileChanges.added, ...fileChanges.modified];
+    
+    for (const file of filesToProcess) {
+      try {
+        const newFunctions = await this.processFile(context.indexer, file, context.domain);
+        
+        if (fileChanges.modified.includes(file)) {
+          await this.processModifiedFile(
+            file,
+            {
+              existingFunctions: context.existingFunctions,
+              newFunctions,
+              functionChanges: context.functionChanges,
+              updatedFunctions: context.updatedFunctions
             }
-          }
-        } catch (restoreError) {
-          errors.push(`Restore failed: ${restoreError instanceof Error ? restoreError.message : String(restoreError)}`);
+          );
+        } else {
+          // All functions from new files are additions
+          context.functionChanges.added += newFunctions.length;
+          context.updatedFunctions.push(...newFunctions);
         }
+      } catch (error) {
+        context.errors.push(`Failed to process ${file}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }
+
+  private async processModifiedFile(
+    file: string,
+    context: {
+      existingFunctions: FunctionInfo[];
+      newFunctions: FunctionInfo[];
+      functionChanges: { added: number; updated: number; deleted: number };
+      updatedFunctions: FunctionInfo[];
+    }
+  ): Promise<void> {
+    const oldFunctions = context.existingFunctions.filter(f => f.file === file);
+    const changes = this.compareFunctions(oldFunctions, context.newFunctions);
+    
+    context.functionChanges.added += changes.added.length;
+    context.functionChanges.updated += changes.updated.length;
+    context.functionChanges.deleted += changes.deleted.length;
+    
+    context.updatedFunctions.push(...context.newFunctions);
+  }
+
+  private async saveUpdateResults(
+    identifier: string,
+    metadata: IndexMetadata,
+    updatedFunctions: FunctionInfo[],
+    currentFiles: string[]
+  ): Promise<void> {
+    // Save updated index
+    await this.storage.saveIndex(identifier, updatedFunctions);
+
+    // Update metadata
+    const updatedMetadata: IndexMetadata = {
+      ...metadata,
+      lastUpdated: new Date().toISOString(),
+      statistics: {
+        totalFiles: currentFiles.length,
+        totalFunctions: updatedFunctions.length
+      },
+      fileHashes: await this.calculateFileHashes(currentFiles)
+    };
+
+    await this.storage.saveMetadata(identifier, updatedMetadata);
+  }
+
+  private async handleUpdateError(
+    error: unknown,
+    options: UpdateOptions,
+    errors: string[]
+  ): Promise<void> {
+    if (!options.autoRestore) {
+      return;
+    }
+
+    try {
+      const backups = await this.storage.listBackups();
+      if (backups.length === 0) {
+        return;
       }
 
-      throw error;
+      await this.storage.restoreFromBackup(backups[0].id);
+      if (this.verbose) {
+        console.log('Restored from backup due to error');
+      }
+    } catch (restoreError) {
+      errors.push(`Restore failed: ${restoreError instanceof Error ? restoreError.message : String(restoreError)}`);
     }
   }
 
@@ -197,8 +316,11 @@ export class UpdateService {
       
       if (!existingFiles.has(relativePath)) {
         added.push(relativePath);
-      } else if (metadata.fileHashes) {
-        // Check if file has been modified
+        continue;
+      }
+
+      // Check if file has been modified
+      if (metadata.fileHashes) {
         const currentHash = await this.calculateFileHash(file);
         const storedHash = metadata.fileHashes[relativePath];
         

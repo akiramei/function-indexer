@@ -22,6 +22,42 @@ const DEFAULT_THRESHOLDS = {
   parameterCount: 4
 };
 
+function validateDiffFormat(value: string): string {
+  if (!['terminal', 'markdown', 'json'].includes(value)) {
+    throw new Error(`Invalid format: ${value}. Valid options are: terminal, markdown, json`);
+  }
+  return value;
+}
+
+function validateDiffThresholds(value: string): string {
+  try {
+    const parsed = JSON.parse(value);
+    const validKeys = ['cyclomaticComplexity', 'cognitiveComplexity', 'linesOfCode', 'nestingDepth', 'parameterCount'];
+    const invalidKeys = Object.keys(parsed).filter(key => !validKeys.includes(key));
+    if (invalidKeys.length > 0) {
+      throw new Error(`Invalid threshold keys: ${invalidKeys.join(', ')}. Valid keys are: ${validKeys.join(', ')}`);
+    }
+    for (const [key, val] of Object.entries(parsed)) {
+      if (typeof val !== 'number' || val <= 0) {
+        throw new Error(`Threshold ${key} must be a positive number, got: ${val}`);
+      }
+    }
+    return value;
+  } catch (error) {
+    throw new Error(`Invalid JSON in thresholds: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+function validateDiffOptions(options: any): void {
+  if (!options.root || typeof options.root !== 'string') {
+    throw new Error('Root directory is required and must be a string');
+  }
+  
+  if (options.output && typeof options.output !== 'string') {
+    throw new Error('Output path must be a string');
+  }
+}
+
 export function createDiffCommand(): Command {
   return new Command('diff')
     .description('Compare functions between Git branches or commits')
@@ -29,157 +65,116 @@ export function createDiffCommand(): Command {
     .argument('[target]', 'Target branch or commit (default: HEAD)', 'HEAD')
     .option('-r, --root <path>', 'Project root directory', process.cwd())
     .option('-o, --output <path>', 'Output file path')
-    .option(
-      '-f, --format <format>', 
-      'Output format (terminal, markdown, json)', 
-      (value: string) => {
-        if (!['terminal', 'markdown', 'json'].includes(value)) {
-          throw new Error(`Invalid format: ${value}. Valid options are: terminal, markdown, json`);
-        }
-        return value;
-      },
-      'terminal'
-    )
-    .option(
-      '--thresholds <json>', 
-      'Custom complexity thresholds as JSON',
-      (value: string) => {
-        try {
-          const parsed = JSON.parse(value);
-          // Validate that it's an object with expected properties
-          const validKeys = ['cyclomaticComplexity', 'cognitiveComplexity', 'linesOfCode', 'nestingDepth', 'parameterCount'];
-          const invalidKeys = Object.keys(parsed).filter(key => !validKeys.includes(key));
-          if (invalidKeys.length > 0) {
-            throw new Error(`Invalid threshold keys: ${invalidKeys.join(', ')}. Valid keys are: ${validKeys.join(', ')}`);
-          }
-          // Validate that all values are positive numbers
-          for (const [key, val] of Object.entries(parsed)) {
-            if (typeof val !== 'number' || val <= 0) {
-              throw new Error(`Threshold ${key} must be a positive number, got: ${val}`);
-            }
-          }
-          return value;
-        } catch (error) {
-          throw new Error(`Invalid JSON in thresholds: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-      }
-    )
+    .option('-f, --format <format>', 'Output format (terminal, markdown, json)', validateDiffFormat, 'terminal')
+    .option('--thresholds <json>', 'Custom complexity thresholds as JSON', validateDiffThresholds)
     .hook('preAction', (thisCommand) => {
-      const options = thisCommand.opts();
-      
-      // Validate root directory
-      if (!options.root || typeof options.root !== 'string') {
-        throw new Error('Root directory is required and must be a string');
-      }
-      
-      // Validate output path if provided
-      if (options.output && typeof options.output !== 'string') {
-        throw new Error('Output path must be a string');
-      }
+      validateDiffOptions(thisCommand.opts());
     })
     .action(async (base: string, target: string, options: DiffOptions) => {
       await executeDiff(base, target, options);
     });
 }
 
+async function setupDiffEnvironment(options: DiffOptions): Promise<{ gitService: GitService, tempDir: string }> {
+  await validatePath(options.root, 'directory');
+
+  const gitService = new GitService(options.root);
+  
+  if (!await gitService.isGitRepository()) {
+    throw new GitError('Not a git repository', 'git rev-parse --git-dir');
+  }
+
+  const indexDir = path.join(options.root, '.function-indexer');
+  const tempDir = path.join(indexDir, 'temp');
+  
+  try {
+    await fs.mkdir(tempDir, { recursive: true });
+  } catch (error) {
+    throw createFileError('create directory', tempDir, error instanceof Error ? error : undefined);
+  }
+  
+  return { gitService, tempDir };
+}
+
+async function generateRevisionIndexes(gitService: GitService, options: DiffOptions, tempDir: string, base: string, target: string): Promise<{ baseIndexPath: string, targetIndexPath: string }> {
+  const baseIndexPath = path.join(tempDir, `index-${base.replace(/\//g, '-')}.jsonl`);
+  const targetIndexPath = path.join(tempDir, `index-${target.replace(/\//g, '-')}.jsonl`);
+
+  const indexer = new FunctionIndexer({
+    root: options.root,
+    output: baseIndexPath,
+    include: ['**/*.{ts,tsx}'],
+    exclude: ['node_modules/**', '**/*.test.ts', '**/*.spec.ts'],
+    verbose: false,
+    domain: 'diff'
+  });
+
+  console.log(chalk.gray(`Generating index for ${base}...`));
+  try {
+    await generateIndexForRevision(gitService, indexer, base, baseIndexPath);
+  } catch (error) {
+    throw new GitError(`Failed to generate index for ${base}`, `indexing ${base}`);
+  }
+
+  console.log(chalk.gray(`Generating index for ${target}...`));
+  try {
+    await generateIndexForRevision(gitService, indexer, target, targetIndexPath);
+  } catch (error) {
+    throw new GitError(`Failed to generate index for ${target}`, `indexing ${target}`);
+  }
+  
+  return { baseIndexPath, targetIndexPath };
+}
+
+async function outputDiffResults(diffResult: any, options: DiffOptions): Promise<any> {
+  let thresholds;
+  try {
+    thresholds = options.thresholds 
+      ? validateJSON(options.thresholds, 'thresholds')
+      : DEFAULT_THRESHOLDS;
+  } catch (error) {
+    if (error instanceof ValidationError) throw error;
+    throw new ValidationError('Invalid thresholds JSON format', 'thresholds');
+  }
+
+  const output = formatDiffResult(diffResult, thresholds, options.format);
+  
+  if (options.output) {
+    try {
+      await fs.writeFile(options.output, output);
+      console.log(chalk.green(`Diff saved to ${options.output}`));
+    } catch (error) {
+      throw createFileError('write', options.output, error instanceof Error ? error : undefined);
+    }
+  } else {
+    console.log(output);
+  }
+  
+  return thresholds;
+}
+
 async function executeDiff(base: string, target: string, options: DiffOptions) {
   await withErrorHandling(async () => {
-    // Validate inputs
     validateInput(base, 'base', (val) => typeof val === 'string' && val.length > 0);
     validateInput(target, 'target', (val) => typeof val === 'string' && val.length > 0);
     validateInput(options.format, 'format', (val) => ['terminal', 'markdown', 'json'].includes(val));
     
-    await validatePath(options.root, 'directory');
-
-    const gitService = new GitService(options.root);
-    
-    // Verify it's a git repository
-    if (!await gitService.isGitRepository()) {
-      throw new GitError('Not a git repository', 'git rev-parse --git-dir');
-    }
-
     console.log(chalk.blue(`Comparing ${base}...${target}`));
 
-    // Get the index directory
-    const indexDir = path.join(options.root, '.function-indexer');
-    const tempDir = path.join(indexDir, 'temp');
-    
-    try {
-      await fs.mkdir(tempDir, { recursive: true });
-    } catch (error) {
-      throw createFileError('create directory', tempDir, error instanceof Error ? error : undefined);
-    }
+    const { gitService, tempDir } = await setupDiffEnvironment(options);
+    const { baseIndexPath, targetIndexPath } = await generateRevisionIndexes(gitService, options, tempDir, base, target);
 
-    // Generate indexes for both revisions
-    const baseIndexPath = path.join(tempDir, `index-${base.replace(/\//g, '-')}.jsonl`);
-    const targetIndexPath = path.join(tempDir, `index-${target.replace(/\//g, '-')}.jsonl`);
-
-    // Create indexer instance
-    const indexer = new FunctionIndexer({
-      root: options.root,
-      output: baseIndexPath,
-      include: ['**/*.{ts,tsx}'],
-      exclude: ['node_modules/**', '**/*.test.ts', '**/*.spec.ts'],
-      verbose: false,
-      domain: 'diff'
-    });
-
-    // Generate base index
-    console.log(chalk.gray(`Generating index for ${base}...`));
-    try {
-      await generateIndexForRevision(gitService, indexer, base, baseIndexPath);
-    } catch (error) {
-      throw new GitError(`Failed to generate index for ${base}`, `indexing ${base}`);
-    }
-
-    // Generate target index
-    console.log(chalk.gray(`Generating index for ${target}...`));
-    try {
-      await generateIndexForRevision(gitService, indexer, target, targetIndexPath);
-    } catch (error) {
-      throw new GitError(`Failed to generate index for ${target}`, `indexing ${target}`);
-    }
-
-    // Compare indexes
     console.log(chalk.gray('Comparing indexes...'));
     const diffResult = await gitService.compareIndexes(baseIndexPath, targetIndexPath);
 
-    // Parse thresholds
-    let thresholds;
-    try {
-      thresholds = options.thresholds 
-        ? validateJSON(options.thresholds, 'thresholds')
-        : DEFAULT_THRESHOLDS;
-    } catch (error) {
-      if (error instanceof ValidationError) throw error;
-      throw new ValidationError('Invalid thresholds JSON format', 'thresholds');
-    }
-
-    // Format and output results
-    const output = formatDiffResult(diffResult, thresholds, options.format);
+    const thresholds = await outputDiffResults(diffResult, options);
     
-    if (options.output) {
-      try {
-        await fs.writeFile(options.output, output);
-        console.log(chalk.green(`Diff saved to ${options.output}`));
-      } catch (error) {
-        throw createFileError('write', options.output, error instanceof Error ? error : undefined);
-      }
-    } else if (options.format === 'terminal') {
-      console.log(output);
-    } else {
-      console.log(output);
-    }
-
-    // Clean up temp files
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
     } catch (error) {
-      // Non-critical error, just warn
       console.warn(chalk.yellow(`⚠️ Could not clean up temporary files: ${tempDir}`));
     }
 
-    // Exit with error if there are violations
     const hasViolations = checkForViolations(diffResult, thresholds);
     if (hasViolations) {
       process.exit(1);
@@ -225,18 +220,11 @@ function formatDiffResult(
   }
 }
 
-function formatTerminal(result: DiffResult, thresholds: typeof DEFAULT_THRESHOLDS): string {
+function formatAddedFunctions(functions: any[], thresholds: any): string[] {
   const lines: string[] = [];
-  
-  lines.push(chalk.bold('\nFunction Changes Summary:'));
-  lines.push(chalk.green(`  Added: ${result.added.length}`));
-  lines.push(chalk.yellow(`  Modified: ${result.modified.length}`));
-  lines.push(chalk.red(`  Removed: ${result.removed.length}`));
-  lines.push('');
-
-  if (result.added.length > 0) {
+  if (functions.length > 0) {
     lines.push(chalk.bold.green('\nAdded Functions:'));
-    result.added.forEach(func => {
+    functions.forEach(func => {
       const violations = checkMetricViolations(func.metrics, thresholds);
       const icon = violations.length > 0 ? '⚠️ ' : '✅ ';
       lines.push(`  ${icon}${func.file}:${func.startLine} - ${func.identifier}()`);
@@ -245,23 +233,25 @@ function formatTerminal(result: DiffResult, thresholds: typeof DEFAULT_THRESHOLD
       }
     });
   }
+  return lines;
+}
 
-  if (result.modified.length > 0) {
+function formatModifiedFunctions(functions: any[], thresholds: any): string[] {
+  const lines: string[] = [];
+  if (functions.length > 0) {
     lines.push(chalk.bold.yellow('\nModified Functions:'));
-    result.modified.forEach(({ before, after, metricsChanges }) => {
+    functions.forEach(({ before, after, metricsChanges }) => {
       const violations = checkMetricViolations(after.metrics, thresholds);
       const icon = violations.length > 0 ? '⚠️ ' : '✅ ';
       lines.push(`  ${icon}${after.file}:${after.startLine} - ${after.identifier}()`);
       
-      // Show metric changes
-      Object.entries(metricsChanges).forEach(([metric, change]) => {
+      Object.entries(metricsChanges).forEach(([metric, change]: [string, any]) => {
         const changeStr = typeof change.change === 'number' 
           ? (change.change > 0 ? `+${change.change}` : `${change.change}`)
           : change.change;
         
         const metricLine = `     ${metric}: ${change.before} → ${change.after} (${changeStr})`;
         
-        // Highlight if threshold exceeded
         if (thresholds[metric as keyof typeof thresholds] && 
             typeof change.after === 'number' &&
             change.after > thresholds[metric as keyof typeof thresholds]) {
@@ -272,13 +262,32 @@ function formatTerminal(result: DiffResult, thresholds: typeof DEFAULT_THRESHOLD
       });
     });
   }
+  return lines;
+}
 
-  if (result.removed.length > 0) {
+function formatRemovedFunctions(functions: any[]): string[] {
+  const lines: string[] = [];
+  if (functions.length > 0) {
     lines.push(chalk.bold.red('\nRemoved Functions:'));
-    result.removed.forEach(func => {
+    functions.forEach(func => {
       lines.push(`  ❌ ${func.file}:${func.startLine} - ${func.identifier}()`);
     });
   }
+  return lines;
+}
+
+function formatTerminal(result: DiffResult, thresholds: typeof DEFAULT_THRESHOLDS): string {
+  const lines: string[] = [];
+  
+  lines.push(chalk.bold('\nFunction Changes Summary:'));
+  lines.push(chalk.green(`  Added: ${result.added.length}`));
+  lines.push(chalk.yellow(`  Modified: ${result.modified.length}`));
+  lines.push(chalk.red(`  Removed: ${result.removed.length}`));
+  lines.push('');
+
+  lines.push(...formatAddedFunctions(result.added, thresholds));
+  lines.push(...formatModifiedFunctions(result.modified, thresholds));
+  lines.push(...formatRemovedFunctions(result.removed));
 
   return lines.join('\n');
 }
