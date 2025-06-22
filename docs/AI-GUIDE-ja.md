@@ -20,7 +20,7 @@ npm install -g github:akiramei/function-indexer
 function-indexer
 
 # 特定ディレクトリをスキャンして出力
-function-indexer index --root ./src --output functions.jsonl
+function-indexer --root ./src --output functions.jsonl
 
 # PRのメトリクスを収集
 function-indexer collect-metrics --root ./src --pr 123
@@ -28,18 +28,17 @@ function-indexer collect-metrics --root ./src --pr 123
 
 ## コマンドリファレンス
 
-### 1. `index` - 関数インデックス生成
+### 1. メインコマンド - 関数インデックス生成
 ```bash
-function-indexer index --root <path> --output <file> [options]
+function-indexer --root <path> --output <file> [options]
 ```
 **目的**: コードベースをスキャンし、すべての関数をJSONLファイルに出力
 **オプション**:
-- `--root`: スキャンディレクトリ（デフォルト: カレント）
-- `--output`: 出力ファイル（デフォルト: function-index.jsonl）
-- `--include`: 含めるファイルパターン（デフォルト: **/*.ts,**/*.tsx）
-- `--exclude`: 除外パターン（デフォルト: node_modules,テストファイル）
-- `--domain`: カテゴリ分類用のカスタムドメインタグ
-- `--verbose`: 詳細な進捗表示
+- `--root, -r`: スキャンディレクトリ（デフォルト: 自動検出）
+- `--output, -o`: 出力ファイル（デフォルト: .function-indexer/ 内に自動生成）
+- `--verbose, -v`: 詳細な進捗表示
+
+**注意**: Function Indexerは設定不要で動作します - `function-indexer` を実行するだけで開始できます！
 
 **出力形式**（JSONL、1行1オブジェクト）:
 ```json
@@ -71,20 +70,20 @@ function-indexer search <query> [options]
 ```
 **目的**: 名前、内容、自然言語で関数を検索
 **オプション**:
-- `--root`: 検索ディレクトリ
-- `--limit`: 最大結果数（デフォルト: 10）
-- `--metrics`: メトリクスでフィルタ（例: --metrics.complexity ">10"）
+- `--context, -c`: 検索のコンテキストを提供
+- `--limit, -l`: 最大結果数（デフォルト: 10）
+- `--no-save-history`: 検索履歴を保存しない
 
 **使用例**:
 ```bash
 # 名前で検索
 function-indexer search "validate"
 
-# 複雑な関数を検索
-function-indexer search "*" --metrics.complexity ">15"
+# コンテキスト付き自然言語検索
+function-indexer search "認証" --context "ログインとセキュリティ"
 
-# 自然言語検索
-function-indexer search "認証を処理する関数"
+# 結果数制限
+function-indexer search "コンポーネント" --limit 5
 ```
 
 ### 3. `metrics` - コード品質分析
@@ -93,9 +92,7 @@ function-indexer metrics [options]
 ```
 **目的**: コード品質メトリクスと違反を表示
 **オプション**:
-- `--root`: 分析ディレクトリ
-- `--threshold`: 違反のみ表示
-- `--sort`: メトリクスでソート（complexity, loc, nesting）
+- `--details, -d`: 関数レベルの詳細メトリクスを表示
 
 **出力例**:
 ```
@@ -126,11 +123,48 @@ function-indexer show-metrics <function-path>
 ```
 **目的**: 特定関数のメトリクス履歴を表示
 **形式**: "file:functionName" または "file:className.methodName"
+**オプション**:
+- `--limit, -l`: 履歴エントリ数の制限（デフォルト: 10）
 
 **例**:
 ```bash
 function-indexer show-metrics "src/auth.ts:validateToken"
 ```
+
+### 6. `diff` - ブランチ間の関数比較
+```bash
+function-indexer diff [base] [target]
+```
+**目的**: Gitブランチまたはコミット間で関数を比較
+**引数**:
+- `base`: ベースブランチまたはコミット（デフォルト: main）
+- `target`: ターゲットブランチまたはコミット（デフォルト: HEAD）
+**オプション**:
+- `--root, -r`: プロジェクトルートディレクトリ
+- `--output, -o`: 出力ファイルパス
+- `--format, -f`: 出力形式（terminal, markdown, json）
+
+### 7. `report` - 包括的レポート生成
+```bash
+function-indexer report [options]
+```
+**目的**: 詳細なコード品質レポートを生成
+
+### 8. `ci` - CI/CDパイプライン統合
+```bash
+function-indexer ci [options]
+```
+**目的**: CI/CDパイプラインに最適化された分析を実行
+**オプション**:
+- `--format`: 出力形式（github, jsonなど）
+
+### 9. その他のコマンド
+- `analyze-trends`: メトリクストレンドと違反の分析
+- `pr-metrics <prNumber>`: 特定PRのメトリクス表示
+- `update <index>`: 既存の関数インデックスを更新
+- `validate <index>`: インデックスの整合性検証
+- `backup <index>`: インデックスのバックアップ作成
+- `restore <backupId>`: バックアップから復元
 
 ## AIタスクテンプレート
 
@@ -139,8 +173,8 @@ function-indexer show-metrics "src/auth.ts:validateToken"
 function-indexerを使用して、src/ディレクトリ内の循環的複雑度が10を超えるすべての関数を見つけ、リファクタリングの優先順位を提案してください。
 
 実行コマンド:
-1. function-indexer index --root ./src
-2. function-indexer search "*" --metrics.complexity ">10" --limit 20
+1. function-indexer --root ./src
+2. function-indexer metrics --details
 ```
 
 ### タスク2: PR前のコード品質分析
@@ -150,16 +184,17 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 実行コマンド:
 1. function-indexer collect-metrics --root ./src --pr 123
 2. function-indexer pr-metrics 123
+3. function-indexer analyze-trends
 3. function-indexer analyze-trends --days 30
 ```
 
 ### タスク3: 類似関数の検索
 ```
-データベース操作を処理するすべての非同期関数を見つけてください：
+データベース操作を処理する関数を見つけてください：
 
 実行コマンド:
-1. function-indexer index --root ./src
-2. function-indexer search "database" --metrics.async "true"
+1. function-indexer --root ./src
+2. function-indexer search "database" --context "非同期操作"
 ```
 
 ### タスク4: 関数の成長監視
@@ -179,7 +214,7 @@ PR #123をマージする前に、コード品質への影響を分析してく�
   run: |
     npm install -g github:akiramei/function-indexer
     function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
-    function-indexer metrics --threshold --format markdown >> $GITHUB_STEP_SUMMARY
+    function-indexer ci --format github
 ```
 
 ### Pre-commitフック

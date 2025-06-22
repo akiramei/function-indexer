@@ -16,10 +16,10 @@ npm install
 npm run build
 
 # Run in development mode (with ts-node)
-npm run dev -- --root ./src --output function-index.jsonl --domain backend
+npm run dev -- --root ./src --output function-index.jsonl
 
 # Run in production mode (compiled JavaScript)
-npm start -- --root ./src --output function-index.jsonl --domain backend
+npm start -- --root ./src --output function-index.jsonl
 
 # Run tests
 npm test
@@ -70,7 +70,7 @@ interface FunctionRecord {
     parameterCount: number;
     hasReturnType: boolean;
   };
-  domain: string;        // User-specified domain
+  domain: string;        // User-specified domain (optional)
 }
 ```
 

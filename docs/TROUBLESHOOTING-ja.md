@@ -93,9 +93,9 @@
 
 2. **ルートディレクトリを指定:**
    ```bash
-   function-indexer -r ./src
-   function-indexer -r ./lib
-   function-indexer -r ./app
+   function-indexer --root ./src
+   function-indexer --root ./lib
+   function-indexer --root ./app
    ```
 
 3. **ファイル拡張子をチェック:**
@@ -252,7 +252,7 @@
 
 2. **特定のディレクトリを処理:**
    ```bash
-   function-indexer -r ./src/core
+   function-indexer --root ./src/core
    ```
 
 3. **システムリソースをチェック:**
@@ -284,8 +284,8 @@
 
 2. **チャンクで処理:**
    ```bash
-   function-indexer -r ./src/module1
-   function-indexer -r ./src/module2
+   function-indexer --root ./src/module1
+   function-indexer --root ./src/module2
    ```
 
 3. **大きなファイルを除外:**

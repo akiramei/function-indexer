@@ -154,11 +154,11 @@ function-indexer
 ### Unified Analysis (Advanced)
 ```bash
 # From monorepo root
-function-indexer -r packages/frontend
-function-indexer -r packages/backend
+function-indexer --root packages/frontend
+function-indexer --root packages/backend
 
 # Compare complexity across packages
-function-indexer metrics | grep "High Risk"
+function-indexer metrics --details
 ```
 
 ### Workspace Integration
@@ -260,7 +260,7 @@ src/
 function-indexer metrics
 
 # Find potential refactoring candidates
-function-indexer metrics --details | grep "High Risk"
+function-indexer metrics --details
 ```
 
 </details>
@@ -355,7 +355,7 @@ function-indexer metrics --details
 **Solutions:**
 ```bash
 # Specify custom directory
-function-indexer -r ./your-custom-src
+function-indexer --root ./your-custom-src
 
 # Check what Function Indexer detected
 function-indexer --verbose

@@ -65,7 +65,7 @@ function-indexer
 ✨ Detected typescript project at: /Users/you/my-project
 ✅ Created configuration in .function-indexer/
 📁 Scanning: src/
-📄 Output: .function-indexer/index.jsonl
+📄 Output: .function-indexer/function-index.jsonl
 ✅ Indexing completed!
 📊 Functions found: 23
 📁 Files processed: 8

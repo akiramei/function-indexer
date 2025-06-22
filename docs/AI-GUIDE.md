@@ -20,7 +20,7 @@ npm install -g github:akiramei/function-indexer
 function-indexer
 
 # Scan specific directory with output file
-function-indexer index --root ./src --output functions.jsonl
+function-indexer --root ./src --output functions.jsonl
 
 # Collect metrics for PR
 function-indexer collect-metrics --root ./src --pr 123
@@ -28,18 +28,17 @@ function-indexer collect-metrics --root ./src --pr 123
 
 ## Command Reference
 
-### 1. `index` - Generate Function Index
+### 1. Main Command - Generate Function Index
 ```bash
-function-indexer index --root <path> --output <file> [options]
+function-indexer --root <path> --output <file> [options]
 ```
 **Purpose**: Scans codebase and generates JSONL file with all functions
 **Options**:
-- `--root`: Directory to scan (default: current)
-- `--output`: Output file (default: function-index.jsonl)
-- `--include`: File patterns to include (default: **/*.ts,**/*.tsx)
-- `--exclude`: Patterns to exclude (default: node_modules,test files)
-- `--domain`: Custom domain tag for categorization
-- `--verbose`: Show detailed progress
+- `--root, -r`: Directory to scan (default: auto-detected)
+- `--output, -o`: Output file (default: auto-generated in .function-indexer/)
+- `--verbose, -v`: Show detailed progress
+
+**Note**: Function Indexer now works with zero configuration - just run `function-indexer` to get started!
 
 **Output Format** (JSONL, one object per line):
 ```json
@@ -71,20 +70,20 @@ function-indexer search <query> [options]
 ```
 **Purpose**: Search functions by name, content, or natural language
 **Options**:
-- `--root`: Search directory
-- `--limit`: Max results (default: 10)
-- `--metrics`: Filter by metrics (e.g., --metrics.complexity ">10")
+- `--context, -c`: Provide context for the search
+- `--limit, -l`: Max results (default: 10)
+- `--no-save-history`: Don't save search to history
 
 **Examples**:
 ```bash
 # Find by name
 function-indexer search "validate"
 
-# Find complex functions
-function-indexer search "*" --metrics.complexity ">15"
+# Natural language search with context
+function-indexer search "authentication" --context "login and security"
 
-# Natural language search
-function-indexer search "functions that handle authentication"
+# Limit results
+function-indexer search "component" --limit 5
 ```
 
 ### 3. `metrics` - Analyze Code Quality
@@ -93,9 +92,7 @@ function-indexer metrics [options]
 ```
 **Purpose**: Display code quality metrics and violations
 **Options**:
-- `--root`: Analysis directory
-- `--threshold`: Show only violations
-- `--sort`: Sort by metric (complexity, loc, nesting)
+- `--details, -d`: Show detailed function-level metrics
 
 **Output Example**:
 ```
@@ -126,11 +123,51 @@ function-indexer show-metrics <function-path>
 ```
 **Purpose**: Display metric history for specific function
 **Format**: "file:functionName" or "file:className.methodName"
+**Options**:
+- `--limit, -l`: Limit number of history entries (default: 10)
 
 **Example**:
 ```bash
 function-indexer show-metrics "src/auth.ts:validateToken"
 ```
+
+### 6. `diff` - Compare Functions Between Branches
+```bash
+function-indexer diff [base] [target]
+```
+**Purpose**: Compare functions between Git branches or commits
+**Arguments**:
+- `base`: Base branch or commit (default: main)
+- `target`: Target branch or commit (default: HEAD)
+**Options**:
+- `--root, -r`: Project root directory
+- `--output, -o`: Output file path
+- `--format, -f`: Output format (terminal, markdown, json)
+- `--thresholds`: Custom complexity thresholds as JSON
+
+### 7. `report` - Generate Comprehensive Reports
+```bash
+function-indexer report [options]
+```
+**Purpose**: Generate detailed code quality reports
+**Options**:
+- Various formatting and output options
+
+### 8. `ci` - CI/CD Pipeline Integration
+```bash
+function-indexer ci [options]
+```
+**Purpose**: Run analysis optimized for CI/CD pipelines
+**Options**:
+- `--format`: Output format (github, json, etc.)
+
+### 9. Additional Commands
+- `analyze-trends`: Analyze metrics trends and violations
+- `pr-metrics <prNumber>`: Show metrics for a specific PR
+- `update <index>`: Update an existing function index
+- `validate <index>`: Validate index integrity
+- `backup <index>`: Create backup of index
+- `restore <backupId>`: Restore from backup
 
 ## AI Task Templates
 
@@ -150,16 +187,16 @@ Before merging PR #123, analyze the code quality impact:
 Commands to run:
 1. function-indexer collect-metrics --root ./src --pr 123
 2. function-indexer pr-metrics 123
-3. function-indexer analyze-trends --days 30
+3. function-indexer analyze-trends
 ```
 
 ### Task 3: Find Similar Functions
 ```
-Find all async functions that handle database operations:
+Find all functions that handle database operations:
 
 Commands to run:
-1. function-indexer index --root ./src
-2. function-indexer search "database" --metrics.async "true"
+1. function-indexer --root ./src
+2. function-indexer search "database" --context "async operations"
 ```
 
 ### Task 4: Monitor Function Growth
@@ -179,14 +216,14 @@ Commands to run:
   run: |
     npm install -g github:akiramei/function-indexer
     function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
-    function-indexer metrics --threshold --format markdown >> $GITHUB_STEP_SUMMARY
+    function-indexer ci --format github
 ```
 
 ### Pre-commit Hook
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
-function-indexer metrics --threshold --root ./src
+function-indexer metrics --details
 if [ $? -ne 0 ]; then
   echo "❌ Code quality check failed. Fix high complexity functions."
   exit 1
@@ -198,7 +235,7 @@ fi
 {
   "label": "Find Complex Functions",
   "type": "shell",
-  "command": "function-indexer search '*' --metrics.complexity '>10'",
+  "command": "function-indexer metrics --details",
   "problemMatcher": []
 }
 ```
@@ -218,28 +255,31 @@ fi
 ### 1. Codebase Understanding
 ```bash
 # Get overview
-function-indexer metrics --root ./src
+function-indexer metrics
 
 # Find entry points
-function-indexer search "main" --exported true
+function-indexer search "main" --context "entry point"
 
 # Find complex areas
-function-indexer search "*" --metrics.complexity ">10"
+function-indexer metrics --details
 ```
 
 ### 2. Code Review Assistance
 ```bash
 # Index changed files
-function-indexer index --root ./src --include "**/changed/*.ts"
+function-indexer --root ./src
 
 # Check quality
-function-indexer metrics --threshold
+function-indexer metrics --details
+
+# Compare branches
+function-indexer diff main HEAD
 ```
 
 ### 3. Refactoring Planning
 ```bash
-# Find candidates
-function-indexer search "*" --metrics.loc ">50"
+# Find complex candidates
+function-indexer metrics --details
 
 # Find duplicates
 function-indexer search "similar function names or patterns"
@@ -256,9 +296,10 @@ function-indexer search "similar function names or patterns"
 
 - **Need to find a function?** → Use `search` command
 - **Want quality overview?** → Use `metrics` command
-- **Building automation?** → Use `index` command + parse JSONL
+- **Building automation?** → Use main command + parse JSONL
 - **Tracking trends?** → Use `collect-metrics` + `analyze-trends`
-- **Reviewing code?** → Use `metrics --threshold`
+- **Reviewing code?** → Use `metrics --details` or `diff` command
+- **CI/CD integration?** → Use `ci` command
 
 ## Error Handling
 
@@ -269,7 +310,7 @@ function-indexer search "similar function names or patterns"
 
 ## Best Practices for AI Usage
 
-1. Always run `index` first to create fresh data
+1. Always run main command first to create fresh data
 2. Use specific `--root` paths to limit scope
 3. Combine multiple metrics for better insights
 4. Store JSONL output for advanced processing

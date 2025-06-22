@@ -90,7 +90,7 @@ function-indexer search "authentication"
 function-indexer metrics
 
 # Compare functions between branches (NEW!)
-function-indexer diff main..feature
+function-indexer diff main feature
 
 # Generate comprehensive reports (NEW!)
 function-indexer report --format markdown
@@ -112,13 +112,13 @@ function-indexer update  # Update all projects
 
 ```bash
 # In your CI pipeline (NEW!)
-function-indexer ci --format github --fail-on-violation
+function-indexer ci --format github
 
-# Generate PR comments automatically
-function-indexer ci --comment --base origin/main
+# Compare branches for PR analysis
+function-indexer diff origin/main HEAD
 
 # Pre-commit hook (with Husky)
-function-indexer ci --fail-on-violation
+function-indexer metrics
 ```
 
 📋 **[Full Integration Guide](docs/INTEGRATIONS.md)** - GitHub Actions, GitLab CI, pre-commit hooks, and more
@@ -186,8 +186,8 @@ While Function Indexer works without configuration, you can customize it:
 If you're using an older version with manual commands:
 
 ```bash
-# Old way
-function-indexer --root ./src --output index.jsonl --domain backend
+# Old way (still works)
+function-indexer --root ./src --output index.jsonl
 
 # New way (automatic)
 function-indexer

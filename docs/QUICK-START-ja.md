@@ -151,11 +151,11 @@ function-indexer
 ### 統合解析（高度）
 ```bash
 # モノレポルートから
-function-indexer -r packages/frontend
-function-indexer -r packages/backend
+function-indexer --root packages/frontend
+function-indexer --root packages/backend
 
 # パッケージ間の複雑度を比較
-function-indexer metrics | grep "High Risk"
+function-indexer metrics --details
 ```
 
 ### ワークスペース統合
@@ -257,7 +257,7 @@ src/
 function-indexer metrics
 
 # リファクタリング候補を見つける
-function-indexer metrics --details | grep "High Risk"
+function-indexer metrics --details
 ```
 
 </details>
@@ -352,7 +352,7 @@ function-indexer metrics --details
 **解決方法:**
 ```bash
 # カスタムディレクトリを指定
-function-indexer -r ./your-custom-src
+function-indexer --root ./your-custom-src
 
 # Function Indexerが検出した内容をチェック
 function-indexer --verbose

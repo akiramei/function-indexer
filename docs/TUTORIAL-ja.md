@@ -65,7 +65,7 @@ function-indexer
 ✨ TypeScriptプロジェクトを検出しました: /Users/you/my-project
 ✅ .function-indexer/ に設定を作成しました
 📁 スキャン中: src/
-📄 出力: .function-indexer/index.jsonl
+📄 出力: .function-indexer/function-index.jsonl
 ✅ インデックス化完了！
 📊 見つかった関数: 23
 📁 処理したファイル: 8
