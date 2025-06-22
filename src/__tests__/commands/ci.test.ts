@@ -429,8 +429,27 @@ describe('ci command', () => {
         'ci-results.json',
         expect.stringContaining('"success": false')
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Results saved to ci-results.json')
+      );
+    });
+
+    it('should save JSON to file and output annotations when using github format', async () => {
+      const command = createCICommand();
+      
+      await expect(
+        command.parseAsync(['node', 'test', '--output', 'ci-results.json', '--format', 'github', '--comment'])
+      ).rejects.toThrow('Process exited with code 1');
+
+      // Should write JSON to file (not GitHub annotations)
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        'ci-results.json',
+        expect.stringContaining('"success": false')
+      );
+      
+      // Should also output GitHub annotations to stdout
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('::error file=')
       );
     });
   });

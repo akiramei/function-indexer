@@ -1,4 +1,4 @@
-name: Function Analysis
+name: Code Quality Check
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   analyze:
-    name: Analyze Code Quality
+    name: Check Code Quality
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -46,7 +46,8 @@ jobs:
             --format github \
             --output ci-results.json \
             --comment \
-            --verbose || echo "CI command failed with exit code $?"
+            --no-fail-on-violation \
+            --verbose
         env:
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
       
