@@ -100,25 +100,32 @@ async function generateRevisionIndexes(gitService: GitService, options: DiffOpti
   const baseIndexPath = path.join(tempDir, `index-${base.replace(/\//g, '-')}.jsonl`);
   const targetIndexPath = path.join(tempDir, `index-${target.replace(/\//g, '-')}.jsonl`);
 
-  const indexer = new FunctionIndexer({
-    root: options.root,
-    output: baseIndexPath,
-    include: ['**/*.{ts,tsx}'],
-    exclude: ['node_modules/**', '**/*.test.ts', '**/*.spec.ts'],
-    verbose: false,
-    domain: 'diff'
-  });
-
   console.log(chalk.gray(`Generating index for ${base}...`));
   try {
-    await generateIndexForRevision(gitService, indexer, base, baseIndexPath);
+    const baseIndexer = new FunctionIndexer({
+      root: options.root,
+      output: baseIndexPath,
+      include: ['**/*.{ts,tsx}'],
+      exclude: ['node_modules/**', '**/*.test.ts', '**/*.spec.ts'],
+      verbose: false,
+      domain: 'diff'
+    });
+    await generateIndexForRevision(gitService, baseIndexer, base, baseIndexPath);
   } catch (error) {
     throw new GitError(`Failed to generate index for ${base}`, `indexing ${base}`);
   }
 
   console.log(chalk.gray(`Generating index for ${target}...`));
   try {
-    await generateIndexForRevision(gitService, indexer, target, targetIndexPath);
+    const targetIndexer = new FunctionIndexer({
+      root: options.root,
+      output: targetIndexPath,
+      include: ['**/*.{ts,tsx}'],
+      exclude: ['node_modules/**', '**/*.test.ts', '**/*.spec.ts'],
+      verbose: false,
+      domain: 'diff'
+    });
+    await generateIndexForRevision(gitService, targetIndexer, target, targetIndexPath);
   } catch (error) {
     throw new GitError(`Failed to generate index for ${target}`, `indexing ${target}`);
   }
