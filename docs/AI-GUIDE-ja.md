@@ -3,6 +3,14 @@
 ## 概要
 Function Indexerは、TypeScript/TSXコードベースをスキャンし、すべての関数・メソッド・アロー関数を構造化されたJSONL形式で抽出し、コード品質メトリクスを計算するCLIツールです。
 
+### AIアシスタント向け
+「Function Indexerを使ってコード品質を管理する」よう依頼された場合は、以下の手順に従ってください：
+1. Function Indexerをグローバルにインストール
+2. 初回スキャンを実行してベースラインを確立
+3. 追跡用のメトリクス収集を設定
+4. 自動チェック用のCI/CD統合を構成
+5. コードレビュー用の定期レポートを作成
+
 ## 主要機能
 - **関数検出**: TypeScript/TSXファイル内のすべての関数を検出
 - **メトリクス分析**: 複雑度、コード行数、ネスト深度を計算
@@ -304,8 +312,41 @@ function-indexer search "類似した関数名やパターン"
 
 ## AI使用のベストプラクティス
 
-1. 常に最初に`index`を実行して最新データを作成
+1. 常に最初にメインコマンドを実行して最新データを作成
 2. 特定の`--root`パスを使用してスコープを制限
 3. 複数のメトリクスを組み合わせてより良い洞察を得る
 4. 高度な処理のためにJSONL出力を保存
 5. デバッグ時は`--verbose`を使用
+
+## 新規プロジェクトのクイックセットアップ
+
+新しいプロジェクトのコード品質管理を設定する場合：
+
+```bash
+# 1. インストールと初期化
+npm install -g github:akiramei/function-indexer
+cd your-project
+function-indexer
+
+# 2. 現在の品質状態を確認
+function-indexer metrics --details
+
+# 3. 継続的な監視を設定
+function-indexer collect-metrics --pr $PR_NUMBER
+
+# 4. package.jsonスクリプトに追加
+npm pkg set scripts.quality="function-indexer metrics"
+npm pkg set scripts.quality:detailed="function-indexer metrics --details"
+
+# 5. GitHub Actionを作成（.github/workflows/code-quality.ymlとして保存）
+echo 'name: Code Quality Check
+on: [push, pull_request]
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install -g github:akiramei/function-indexer
+      - run: function-indexer ci --format github' > .github/workflows/code-quality.yml
+```

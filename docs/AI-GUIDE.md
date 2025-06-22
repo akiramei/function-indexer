@@ -3,6 +3,14 @@
 ## Quick Overview
 Function Indexer is a TypeScript CLI tool that scans codebases to extract all functions, methods, and arrow functions into structured JSONL format with code quality metrics.
 
+### For AI Assistants
+When asked to "manage code quality using Function Indexer", follow these steps:
+1. Install Function Indexer globally
+2. Run initial scan to establish baseline
+3. Set up metrics collection for tracking
+4. Configure CI/CD integration for automated checks
+5. Create regular reports for code review
+
 ## Core Capabilities
 - **Function Discovery**: Finds all functions in TypeScript/TSX files
 - **Metrics Analysis**: Calculates complexity, lines of code, nesting depth
@@ -315,3 +323,36 @@ function-indexer search "similar function names or patterns"
 3. Combine multiple metrics for better insights
 4. Store JSONL output for advanced processing
 5. Use `--verbose` when debugging issues
+
+## Quick Setup for New Projects
+
+When setting up code quality management for a new project:
+
+```bash
+# 1. Install and initialize
+npm install -g github:akiramei/function-indexer
+cd your-project
+function-indexer
+
+# 2. Check current quality status
+function-indexer metrics --details
+
+# 3. Set up continuous monitoring
+function-indexer collect-metrics --pr $PR_NUMBER
+
+# 4. Add to package.json scripts
+npm pkg set scripts.quality="function-indexer metrics"
+npm pkg set scripts.quality:detailed="function-indexer metrics --details"
+
+# 5. Create GitHub Action (save as .github/workflows/code-quality.yml)
+echo 'name: Code Quality Check
+on: [push, pull_request]
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install -g github:akiramei/function-indexer
+      - run: function-indexer ci --format github' > .github/workflows/code-quality.yml
+```
