@@ -312,12 +312,33 @@ export function complexFunction(input: any): any {
   });
 
   describe('Error handling', () => {
-    it.skip('should handle invalid command gracefully', async () => {
-      // Skip this test for now - commander.js behavior is complex
+    it('should handle invalid command gracefully', async () => {
+      try {
+        await execAsync(
+          `node "${cliPath}" --invalid-flag`,
+          { cwd: projectDir }
+        );
+        fail('Expected command to fail with invalid flag');
+      } catch (error: any) {
+        // Commander.js exits with non-zero code for unknown flags
+        expect(error.code).toBeDefined();
+        expect(error.code).not.toBe(0);
+        expect(error.stderr || error.stdout).toMatch(/unknown option|invalid.*option|help|Usage/i);
+      }
     });
 
-    it.skip('should handle missing search query', async () => {
-      // Skip this test for now - commander.js behavior is complex
+    it('should handle missing search query', async () => {
+      try {
+        await execAsync(
+          `node "${cliPath}" search`,
+          { cwd: projectDir }
+        );
+        fail('Expected command to fail with missing search query');
+      } catch (error: any) {
+        expect(error.code).toBeDefined();
+        expect(error.code).not.toBe(0);
+        expect(error.stderr || error.stdout).toMatch(/missing.*argument|required|help|Usage/i);
+      }
     });
 
     it('should handle verbose flag', async () => {

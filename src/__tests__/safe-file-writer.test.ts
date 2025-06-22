@@ -70,10 +70,15 @@ describe('SafeFileWriter', () => {
       const content = 'Content ';
       
       // Create multiple versions to trigger cleanup
+      // Use controlled timing to ensure different timestamps without race conditions
+      let startTime = Date.now();
       for (let i = 0; i < 8; i++) {
+        // Ensure each write has a unique timestamp by waiting for next millisecond
+        while (Date.now() === startTime) {
+          // Busy wait to ensure different timestamp
+        }
+        startTime = Date.now();
         await writer.writeAtomic(testFile, content + i);
-        // Small delay to ensure different timestamps
-        await new Promise(resolve => setTimeout(resolve, 10));
       }
       
       const historyDir = path.join(testDir, '.history');

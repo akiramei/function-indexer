@@ -3,6 +3,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+// Test constants for threshold values
+const DEFAULT_THRESHOLDS = {
+  cyclomaticComplexity: 10,
+  cognitiveComplexity: 15,
+  linesOfCode: 50,
+  nestingDepth: 4,
+  parameterCount: 4
+} as const;
+
 // Mock ProjectDetector
 jest.mock('../utils/project-detector', () => ({
   detectProject: jest.fn(),
@@ -154,13 +163,7 @@ describe('ConfigService', () => {
         domain: 'main',
         include: ['**/*.ts', '**/*.tsx'],
         metrics: {
-          thresholds: {
-            cyclomaticComplexity: 10,
-            cognitiveComplexity: 15,
-            linesOfCode: 50,
-            nestingDepth: 4,
-            parameterCount: 4
-          }
+          thresholds: DEFAULT_THRESHOLDS
         }
       });
 
