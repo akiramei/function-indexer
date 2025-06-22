@@ -1,0 +1,265 @@
+{
+  "success": false,
+  "summary": {
+    "totalFunctions": 242,
+    "violations": 25,
+    "added": 0,
+    "modified": 0,
+    "removed": 0
+  },
+  "violations": [
+    {
+      "file": "src/indexer.ts",
+      "line": 51,
+      "identifier": "FunctionIndexer.run",
+      "issues": [
+        "Cognitive complexity: 23 (threshold: 15)",
+        "Nesting depth: 4 (threshold: 3)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/indexer.ts",
+      "line": 162,
+      "identifier": "FunctionIndexer.extractFunctionInfo",
+      "issues": [
+        "Parameter count: 5 (threshold: 4)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/indexer.ts",
+      "line": 193,
+      "identifier": "FunctionIndexer.extractMethodInfo",
+      "issues": [
+        "Parameter count: 5 (threshold: 4)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/utils/safe-file-writer.ts",
+      "line": 14,
+      "identifier": "SafeFileWriter.writeAtomic",
+      "issues": [
+        "Cognitive complexity: 18 (threshold: 15)",
+        "Nesting depth: 4 (threshold: 3)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/utils/project-detector.ts",
+      "line": 70,
+      "identifier": "findSourceDirectories",
+      "issues": [
+        "Cognitive complexity: 16 (threshold: 15)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/utils/metrics-calculator.ts",
+      "line": 28,
+      "identifier": "MetricsCalculator.calculateAllMetricsInSinglePass",
+      "issues": [
+        "Cyclomatic complexity: 15 (threshold: 10)",
+        "Lines of code: 61 (threshold: 40)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/utils/error-handler.ts",
+      "line": 40,
+      "identifier": "handle",
+      "issues": [
+        "Nesting depth: 4 (threshold: 3)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/utils/error-handler.ts",
+      "line": 221,
+      "identifier": "createFileError",
+      "issues": [
+        "Nesting depth: 4 (threshold: 3)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/storage/metrics-storage.ts",
+      "line": 158,
+      "identifier": "MetricsStorage.analyzeViolations",
+      "issues": [
+        "Cyclomatic complexity: 12 (threshold: 10)",
+        "Cognitive complexity: 26 (threshold: 15)",
+        "Lines of code: 51 (threshold: 40)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/storage/filesystem-storage.ts",
+      "line": 268,
+      "identifier": "FileSystemStorage.validateIndex",
+      "issues": [
+        "Cognitive complexity: 24 (threshold: 15)",
+        "Nesting depth: 4 (threshold: 3)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/storage/filesystem-storage.ts",
+      "line": 314,
+      "identifier": "FileSystemStorage.repairIndex",
+      "issues": [
+        "Cognitive complexity: 20 (threshold: 15)",
+        "Nesting depth: 4 (threshold: 3)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/storage/filesystem-storage.ts",
+      "line": 381,
+      "identifier": "FileSystemStorage.isValidFunction",
+      "issues": [
+        "Cyclomatic complexity: 12 (threshold: 10)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/services/update-service.ts",
+      "line": 29,
+      "identifier": "UpdateService.updateIndex",
+      "issues": [
+        "Cyclomatic complexity: 20 (threshold: 10)",
+        "Cognitive complexity: 61 (threshold: 15)",
+        "Lines of code: 100 (threshold: 40)",
+        "Nesting depth: 6 (threshold: 3)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/services/update-service.ts",
+      "line": 170,
+      "identifier": "UpdateService.calculateFileChanges",
+      "issues": [
+        "Nesting depth: 4 (threshold: 3)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/services/metrics-service.ts",
+      "line": 25,
+      "identifier": "MetricsService.collectMetrics",
+      "issues": [
+        "Cyclomatic complexity: 12 (threshold: 10)",
+        "Lines of code: 46 (threshold: 40)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/commands/report.ts",
+      "line": 57,
+      "identifier": "createReportCommand",
+      "issues": [
+        "Cyclomatic complexity: 12 (threshold: 10)",
+        "Cognitive complexity: 18 (threshold: 15)",
+        "Lines of code: 45 (threshold: 40)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/commands/report.ts",
+      "line": 115,
+      "identifier": "executeReport",
+      "issues": [
+        "Cyclomatic complexity: 22 (threshold: 10)",
+        "Cognitive complexity: 39 (threshold: 15)",
+        "Lines of code: 85 (threshold: 40)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/commands/report.ts",
+      "line": 231,
+      "identifier": "generateReportData",
+      "issues": [
+        "Cyclomatic complexity: 22 (threshold: 10)",
+        "Cognitive complexity: 22 (threshold: 15)",
+        "Lines of code: 95 (threshold: 40)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/commands/diff.ts",
+      "line": 25,
+      "identifier": "createDiffCommand",
+      "issues": [
+        "Cyclomatic complexity: 12 (threshold: 10)",
+        "Cognitive complexity: 18 (threshold: 15)",
+        "Lines of code: 47 (threshold: 40)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/commands/diff.ts",
+      "line": 85,
+      "identifier": "executeDiff",
+      "issues": [
+        "Cyclomatic complexity: 17 (threshold: 10)",
+        "Cognitive complexity: 32 (threshold: 15)",
+        "Lines of code: 77 (threshold: 40)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/commands/diff.ts",
+      "line": 228,
+      "identifier": "formatTerminal",
+      "issues": [
+        "Cyclomatic complexity: 12 (threshold: 10)",
+        "Cognitive complexity: 17 (threshold: 15)",
+        "Lines of code: 42 (threshold: 40)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/commands/diff.ts",
+      "line": 286,
+      "identifier": "formatMarkdown",
+      "issues": [
+        "Cognitive complexity: 17 (threshold: 15)"
+      ],
+      "severity": "warning"
+    },
+    {
+      "file": "src/commands/ci.ts",
+      "line": 49,
+      "identifier": "createCICommand",
+      "issues": [
+        "Cyclomatic complexity: 17 (threshold: 10)",
+        "Cognitive complexity: 23 (threshold: 15)",
+        "Lines of code: 61 (threshold: 40)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/commands/ci.ts",
+      "line": 131,
+      "identifier": "executeCI",
+      "issues": [
+        "Cyclomatic complexity: 51 (threshold: 10)",
+        "Cognitive complexity: 80 (threshold: 15)",
+        "Lines of code: 155 (threshold: 40)"
+      ],
+      "severity": "error"
+    },
+    {
+      "file": "src/commands/ci.ts",
+      "line": 423,
+      "identifier": "generatePRComment",
+      "issues": [
+        "Lines of code: 41 (threshold: 40)"
+      ],
+      "severity": "warning"
+    }
+  ],
+  "comment": "## ❌ Function Indexer Quality Gate failed\n\n### 📊 Summary\n- **Total Functions**: 242\n- **Violations**: 25\n\n### ⚙️ Thresholds\n| Metric | Threshold |\n|--------|----------|\n| cyclomaticComplexity | 10 |\n| cognitiveComplexity | 15 |\n| linesOfCode | 40 |\n| nestingDepth | 3 |\n| parameterCount | 4 |\n\n### ⚠️ Violations\n\n#### ❌ Errors (10)\n- `src/storage/metrics-storage.ts:158` - **MetricsStorage.analyzeViolations**\n  - Cyclomatic complexity: 12 (threshold: 10)\n  - Cognitive complexity: 26 (threshold: 15)\n  - Lines of code: 51 (threshold: 40)\n- `src/services/update-service.ts:29` - **UpdateService.updateIndex**\n  - Cyclomatic complexity: 20 (threshold: 10)\n  - Cognitive complexity: 61 (threshold: 15)\n  - Lines of code: 100 (threshold: 40)\n  - Nesting depth: 6 (threshold: 3)\n- `src/commands/report.ts:57` - **createReportCommand**\n  - Cyclomatic complexity: 12 (threshold: 10)\n  - Cognitive complexity: 18 (threshold: 15)\n  - Lines of code: 45 (threshold: 40)\n- `src/commands/report.ts:115` - **executeReport**\n  - Cyclomatic complexity: 22 (threshold: 10)\n  - Cognitive complexity: 39 (threshold: 15)\n  - Lines of code: 85 (threshold: 40)\n- `src/commands/report.ts:231` - **generateReportData**\n  - Cyclomatic complexity: 22 (threshold: 10)\n  - Cognitive complexity: 22 (threshold: 15)\n  - Lines of code: 95 (threshold: 40)\n\n_...and 5 more errors_\n\n#### ⚠️ Warnings (15)\n- `src/indexer.ts:51` - **FunctionIndexer.run**\n  - Cognitive complexity: 23 (threshold: 15)\n  - Nesting depth: 4 (threshold: 3)\n- `src/indexer.ts:162` - **FunctionIndexer.extractFunctionInfo**\n  - Parameter count: 5 (threshold: 4)\n- `src/indexer.ts:193` - **FunctionIndexer.extractMethodInfo**\n  - Parameter count: 5 (threshold: 4)\n\n_...and 12 more warnings_\n\n---\n*Generated by [function-indexer](https://github.com/akiramei/function-indexer)*"
+}
