@@ -43,22 +43,22 @@ jobs:
         run: npm ci
         
       - name: Function Indexerをインストール
-        run: npm install -g github:akiramei/function-indexer
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3-dev
         
       - name: 関数インデックスを生成
-        run: function-indexer
+        run: npx github:akiramei/function-indexer
         
       - name: コードメトリクスを解析
         id: metrics
         run: |
           echo "## 📊 コード品質レポート" >> $GITHUB_STEP_SUMMARY
-          function-indexer metrics >> $GITHUB_STEP_SUMMARY
+          npx github:akiramei/function-indexer metrics >> $GITHUB_STEP_SUMMARY
           
           # 高複雑度関数をチェック
-          if function-indexer metrics | grep -q "High Risk"; then
+          if npx github:akiramei/function-indexer metrics | grep -q "High Risk"; then
             echo "high_complexity=true" >> $GITHUB_OUTPUT
             echo "⚠️ **高複雑度関数が検出されました！**" >> $GITHUB_STEP_SUMMARY
-            function-indexer metrics --details >> $GITHUB_STEP_SUMMARY
+            npx github:akiramei/function-indexer metrics --details >> $GITHUB_STEP_SUMMARY
           else
             echo "high_complexity=false" >> $GITHUB_OUTPUT
             echo "✅ **すべての関数が複雑度閾値内です**" >> $GITHUB_STEP_SUMMARY
@@ -70,7 +70,7 @@ jobs:
         with:
           script: |
             const { execSync } = require('child_process');
-            const metrics = execSync('function-indexer metrics', { encoding: 'utf8' });
+            const metrics = execSync('npx github:akiramei/function-indexer metrics', { encoding: 'utf8' });
             
             const comment = `## 📊 Function Indexer レポート
             
@@ -81,7 +81,7 @@ jobs:
             
             解析された関数を検索できます：
             \`\`\`bash
-            function-indexer search "your query"
+            npx github:akiramei/function-indexer search "your query"
             \`\`\`
             
             </details>
@@ -132,12 +132,12 @@ jobs:
           node-version: '18'
           
       - name: Function Indexerをインストール
-        run: npm install -g github:akiramei/function-indexer
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3-dev
         
       - name: メトリクスレポートを生成
         run: |
-          function-indexer
-          function-indexer metrics --details > complexity-report.txt
+          npx github:akiramei/function-indexer
+          npx github:akiramei/function-indexer metrics --details > complexity-report.txt
           
       - name: 複雑度レポートをアップロード
         uses: actions/upload-artifact@v4
@@ -148,7 +148,7 @@ jobs:
       - name: リポジトリにメトリクスを保存
         run: |
           mkdir -p .github/metrics
-          echo "$(date): $(function-indexer metrics | grep 'Total Functions')" >> .github/metrics/history.log
+          echo "$(date): $(npx github:akiramei/function-indexer metrics | grep 'Total Functions')" >> .github/metrics/history.log
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .github/metrics/history.log
@@ -177,11 +177,11 @@ function-indexer:analyze:
   stage: analyze
   image: node:${NODE_VERSION}
   before_script:
-    - npm install -g github:akiramei/function-indexer
+    - sudo apt-get update && sudo apt-get install -y build-essential python3-dev
   script:
-    - function-indexer
-    - function-indexer metrics > metrics-report.txt
-    - function-indexer metrics --details > detailed-metrics.txt
+    - npx github:akiramei/function-indexer
+    - npx github:akiramei/function-indexer metrics > metrics-report.txt
+    - npx github:akiramei/function-indexer metrics --details > detailed-metrics.txt
   artifacts:
     reports:
       junit: test-results.xml
@@ -244,12 +244,12 @@ steps:
   displayName: 'Node.jsをインストール'
 
 - script: |
-    npm install -g github:akiramei/function-indexer
+    sudo apt-get update && sudo apt-get install -y build-essential python3-dev
   displayName: 'Function Indexerをインストール'
 
 - script: |
-    function-indexer
-    function-indexer metrics > $(Agent.TempDirectory)/metrics.txt
+    npx github:akiramei/function-indexer
+    npx github:akiramei/function-indexer metrics > $(Agent.TempDirectory)/metrics.txt
   displayName: 'コード品質を解析'
 
 - script: |
@@ -257,7 +257,7 @@ steps:
     
     if grep -q "High Risk" $(Agent.TempDirectory)/metrics.txt; then
       echo "##vso[task.logissue type=warning]高複雑度関数が検出されました"
-      function-indexer metrics --details
+      npx github:akiramei/function-indexer metrics --details
     fi
   displayName: '結果を報告'
 
@@ -292,8 +292,8 @@ steps:
    ```json
    {
      "scripts": {
-       "pre-commit": "function-indexer && npm run check-complexity",
-       "check-complexity": "function-indexer metrics | grep -q 'High Risk' && echo '⚠️ 高複雑度検出' || echo '✅ 複雑度OK'"
+       "pre-commit": "npx github:akiramei/function-indexer && npm run check-complexity",
+       "check-complexity": "npx github:akiramei/function-indexer metrics | grep -q 'High Risk' && echo '⚠️ 高複雑度検出' || echo '✅ 複雑度OK'"
      }
    }
    ```
@@ -306,7 +306,7 @@ steps:
    echo "🔍 Function Indexerでコードを解析中..."
    
    # 関数インデックスを更新
-   function-indexer
+   npx github:akiramei/function-indexer
    
    # 変更されたファイルの高複雑度をチェック
    changed_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx|js|jsx)$')
@@ -316,10 +316,10 @@ steps:
      
      # 変更されたファイルに高複雑度があるかチェック
      for file in $changed_files; do
-       if function-indexer search "$(basename "$file" .ts)" --limit 1 | grep -q "High complexity"; then
+       if npx github:akiramei/function-indexer search "$(basename "$file" .ts)" --limit 1 | grep -q "High complexity"; then
          echo "⚠️ $file で高複雑度が検出されました"
          echo "コミット前にリファクタリングを検討してください。"
-         echo "詳細は 'function-indexer metrics --details' を実行してください。"
+         echo "詳細は 'npx github:akiramei/function-indexer metrics --details' を実行してください。"
          exit 1
        fi
      done
@@ -350,10 +350,10 @@ steps:
 echo "🚀 push前品質チェックを実行中..."
 
 # push前の完全解析
-function-indexer
+npx github:akiramei/function-indexer
 
 # 包括的レポートを生成
-function-indexer metrics > /tmp/quality-report.txt
+npx github:akiramei/function-indexer metrics > /tmp/quality-report.txt
 
 # 品質閾値をチェック
 high_risk=$(grep "High Risk:" /tmp/quality-report.txt | grep -o "[0-9]\+")
@@ -367,7 +367,7 @@ if [ "$high_risk" -gt 0 ]; then
   
   if [ "$(echo "$high_risk / $total_functions > 0.1" | bc)" -eq 1 ]; then
     echo "❌ 品質ゲート失敗: 高リスク関数が多すぎます (>10%)"
-    echo "'function-indexer metrics --details' を実行して具体的な問題を確認してください"
+    echo "'npx github:akiramei/function-indexer metrics --details' を実行して具体的な問題を確認してください"
     exit 1
   fi
 fi
@@ -393,7 +393,7 @@ echo "✅ 品質ゲート通過"
     {
       "label": "Function Indexer: 解析",
       "type": "shell",
-      "command": "function-indexer",
+      "command": "npx github:akiramei/function-indexer",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -406,7 +406,7 @@ echo "✅ 品質ゲート通過"
     {
       "label": "Function Indexer: メトリクス",
       "type": "shell",
-      "command": "function-indexer metrics",
+      "command": "npx github:akiramei/function-indexer metrics",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -419,7 +419,7 @@ echo "✅ 品質ゲート通過"
     {
       "label": "Function Indexer: 検索",
       "type": "shell",
-      "command": "function-indexer search",
+      "command": "npx github:akiramei/function-indexer search",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -464,13 +464,13 @@ echo "✅ 品質ゲート通過"
 ```json
 {
   "scripts": {
-    "analyze": "function-indexer",
-    "analyze:verbose": "function-indexer --verbose",
-    "metrics": "function-indexer metrics",
-    "metrics:details": "function-indexer metrics --details",
-    "search": "function-indexer search",
-    "quality:check": "function-indexer metrics | grep -q 'High Risk' && exit 1 || echo '✅ 品質OK'",
-    "quality:report": "function-indexer metrics > quality-report.txt && cat quality-report.txt",
+    "analyze": "npx github:akiramei/function-indexer",
+    "analyze:verbose": "npx github:akiramei/function-indexer --verbose",
+    "metrics": "npx github:akiramei/function-indexer metrics",
+    "metrics:details": "npx github:akiramei/function-indexer metrics --details",
+    "search": "npx github:akiramei/function-indexer search",
+    "quality:check": "npx github:akiramei/function-indexer metrics | grep -q 'High Risk' && exit 1 || echo '✅ 品質OK'",
+    "quality:report": "npx github:akiramei/function-indexer metrics > quality-report.txt && cat quality-report.txt",
     "pre-commit": "npm run analyze && npm run quality:check",
     "pre-push": "npm run analyze && npm run quality:report"
   }
@@ -503,33 +503,33 @@ help: ## このヘルプメッセージを表示
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 setup: ## Function Indexerをインストール
-	npm install -g github:akiramei/function-indexer
+	sudo apt-get update && sudo apt-get install -y build-essential python3-dev
 
 analyze: ## 関数解析を実行
 	@echo "🔍 コードベースを解析中..."
-	function-indexer
+	npx github:akiramei/function-indexer
 
 metrics: ## コード品質メトリクスを表示
 	@echo "📊 コード品質メトリクス:"
-	function-indexer metrics
+	npx github:akiramei/function-indexer metrics
 
 metrics-details: ## 詳細メトリクスを表示
 	@echo "📊 詳細コード品質メトリクス:"
-	function-indexer metrics --details
+	npx github:akiramei/function-indexer metrics --details
 
 search: ## 関数を検索（使用法: make search QUERY="auth"）
 	@echo "🔍 検索対象: $(QUERY)"
-	function-indexer search "$(QUERY)"
+	npx github:akiramei/function-indexer search "$(QUERY)"
 
 quality-check: ## 品質閾値をチェック
 	@echo "🎯 品質チェック:"
-	@function-indexer metrics | grep -q "High Risk" && \
+	@npx github:akiramei/function-indexer metrics | grep -q "High Risk" && \
 		(echo "❌ 品質チェック失敗" && exit 1) || \
 		echo "✅ 品質チェック合格"
 
 quality-report: ## 品質レポートを生成
 	@echo "📄 品質レポートを生成中..."
-	function-indexer metrics > quality-report.txt
+	npx github:akiramei/function-indexer metrics > quality-report.txt
 	@cat quality-report.txt
 
 ci-check: analyze quality-check ## CI品質チェックを実行
@@ -574,24 +574,24 @@ cat > "$REPORT_FILE" << EOF
 # コード品質レポート - $DATE
 
 ## サマリー
-$(function-indexer metrics)
+$(npx github:akiramei/function-indexer metrics)
 
 ## 詳細解析
-$(function-indexer metrics --details)
+$(npx github:akiramei/function-indexer metrics --details)
 
 ## 複雑度上位関数
-$(function-indexer search "function" --limit 10 | grep "High complexity")
+$(npx github:akiramei/function-indexer search "function" --limit 10 | grep "High complexity")
 
 ## 検索例
 \`\`\`bash
 # 認証関数を検索
-function-indexer search "auth"
+npx github:akiramei/function-indexer search "auth"
 
 # APIエンドポイントを検索
-function-indexer search "api route"
+npx github:akiramei/function-indexer search "api route"
 
 # データベース操作を検索
-function-indexer search "database query"
+npx github:akiramei/function-indexer search "database query"
 \`\`\`
 
 ---
@@ -603,7 +603,7 @@ echo "📊 品質レポートが生成されました: $REPORT_FILE"
 # オプション: チームチャット（Slack、Discordなど）に送信
 if [ -n "$SLACK_WEBHOOK" ]; then
   curl -X POST -H 'Content-type: application/json' \
-    --data "{\"text\":\"📊 日次コード品質レポート: $DATE\n\`\`\`$(function-indexer metrics)\`\`\`\"}" \
+    --data "{\"text\":\"📊 日次コード品質レポート: $DATE\n\`\`\`$(npx github:akiramei/function-indexer metrics)\`\`\`\"}" \
     "$SLACK_WEBHOOK"
 fi
 ```
@@ -644,7 +644,7 @@ echo ""
 
 # 現在の状態を解析
 echo "📊 現在の品質メトリクス:"
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 echo ""
 
 # 変更されたファイルを個別チェック
@@ -653,7 +653,7 @@ for file in $changed_files; do
   if [ -f "$file" ]; then
     basename_file=$(basename "$file" | sed 's/\.[^.]*$//')
     echo "📄 $file:"
-    function-indexer search "$basename_file" --limit 3
+    npx github:akiramei/function-indexer search "$basename_file" --limit 3
     echo ""
   fi
 done
@@ -687,7 +687,7 @@ git checkout feature/new-auth
 FROM node:18-alpine
 
 # Function Indexerをインストール
-RUN npm install -g github:akiramei/function-indexer
+RUN sudo apt-get update && sudo apt-get install -y build-essential python3-dev
 
 # 作業ディレクトリを設定
 WORKDIR /app
@@ -696,7 +696,7 @@ WORKDIR /app
 COPY . .
 
 # 解析を実行
-CMD ["sh", "-c", "function-indexer && function-indexer metrics"]
+CMD ["sh", "-c", "npx github:akiramei/function-indexer && npx github:akiramei/function-indexer metrics"]
 ```
 
 使用方法：
@@ -726,8 +726,8 @@ services:
       - .:/app
     command: |
       sh -c "
-        function-indexer
-        function-indexer metrics > /tmp/metrics.txt
+        npx github:akiramei/function-indexer
+        npx github:akiramei/function-indexer metrics > /tmp/metrics.txt
         cat /tmp/metrics.txt
       "
 ```
@@ -749,7 +749,7 @@ WEBHOOK_URL="YOUR_SLACK_WEBHOOK_URL"
 PROJECT_NAME="My Awesome Project"
 
 # メトリクスを生成
-metrics=$(function-indexer metrics)
+metrics=$(npx github:akiramei/function-indexer metrics)
 high_risk=$(echo "$metrics" | grep "High Risk:" | grep -o "[0-9]\+")
 
 # メッセージの色を決定
@@ -783,7 +783,7 @@ Discord用：
 # discord-notify.sh
 
 DISCORD_WEBHOOK="YOUR_DISCORD_WEBHOOK"
-metrics=$(function-indexer metrics)
+metrics=$(npx github:akiramei/function-indexer metrics)
 
 curl -H "Content-Type: application/json" \
   -d "{

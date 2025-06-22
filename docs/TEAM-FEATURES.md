@@ -22,13 +22,13 @@ Compare functions between branches or commits to understand how code complexity 
 
 ```bash
 # Compare current branch with main
-function-indexer diff main
+npx github:akiramei/function-indexer diff main
 
 # Compare two branches
-function-indexer diff main..feature/new-auth
+npx github:akiramei/function-indexer diff main..feature/new-auth
 
 # Compare specific commits
-function-indexer diff abc123..def456
+npx github:akiramei/function-indexer diff abc123..def456
 ```
 
 ### Options
@@ -65,13 +65,13 @@ Generate comprehensive code quality reports in various formats.
 
 ```bash
 # Generate markdown report (default)
-function-indexer report
+npx github:akiramei/function-indexer report
 
 # Generate HTML report
-function-indexer report --format html --output report.html
+npx github:akiramei/function-indexer report --format html --output report.html
 
 # Use custom template
-function-indexer report --template ./my-template.hbs
+npx github:akiramei/function-indexer report --template ./my-template.hbs
 ```
 
 ### Report Contents
@@ -113,13 +113,13 @@ The `ci` command provides a streamlined experience for continuous integration pi
 
 ```bash
 # Run CI analysis
-function-indexer ci
+npx github:akiramei/function-indexer ci
 
 # Generate PR comment
-function-indexer ci --comment --base origin/main
+npx github:akiramei/function-indexer ci --comment --base origin/main
 
 # Custom format for your CI system
-function-indexer ci --format github  # or gitlab, json
+npx github:akiramei/function-indexer ci --format github  # or gitlab, json
 ```
 
 ### Exit Codes
@@ -150,8 +150,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: npm install -g function-indexer
-      - run: function-indexer ci --format github --comment
+      - run: sudo apt-get update && sudo apt-get install -y build-essential python3-dev
+      - run: npx github:akiramei/function-indexer ci --format github --comment
 ```
 
 ### GitLab CI
@@ -160,8 +160,8 @@ jobs:
 code-quality:
   stage: test
   script:
-    - npm install -g function-indexer
-    - function-indexer ci --format gitlab --output code-quality.json
+    - apt-get update && apt-get install -y build-essential python3-dev
+    - npx github:akiramei/function-indexer ci --format gitlab --output code-quality.json
   artifacts:
     reports:
       codequality: code-quality.json
@@ -174,9 +174,9 @@ code-quality:
 # .husky/pre-commit
 
 # Check code quality before commit
-function-indexer ci --fail-on-violation || {
+npx github:akiramei/function-indexer ci --fail-on-violation || {
   echo "❌ Code quality check failed!"
-  echo "Run 'function-indexer metrics --details' to see issues"
+  echo "Run 'npx github:akiramei/function-indexer metrics --details' to see issues"
   exit 1
 }
 ```
@@ -198,9 +198,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          npm install -g function-indexer
-          function-indexer
-          function-indexer report --output weekly-report.md
+          sudo apt-get update && sudo apt-get install -y build-essential python3-dev
+          npx github:akiramei/function-indexer
+          npx github:akiramei/function-indexer report --output weekly-report.md
       - uses: actions/create-issue@v2
         with:
           title: Weekly Code Quality Report
@@ -233,10 +233,10 @@ Start with warnings, then enforce:
 
 ```bash
 # Phase 1: Warning only
-function-indexer ci --no-fail-on-violation
+npx github:akiramei/function-indexer ci --no-fail-on-violation
 
 # Phase 2: Enforce standards
-function-indexer ci --fail-on-violation
+npx github:akiramei/function-indexer ci --fail-on-violation
 ```
 
 ### 3. Focus on Trends
@@ -245,11 +245,11 @@ Use diff to track improvement:
 
 ```bash
 # Check if PR improves code quality
-function-indexer diff $BASE_BRANCH..$HEAD_BRANCH
+npx github:akiramei/function-indexer diff $BASE_BRANCH..$HEAD_BRANCH
 
 # Track metrics over time
-function-indexer collect-metrics --pr $PR_NUMBER
-function-indexer analyze-trends
+npx github:akiramei/function-indexer collect-metrics --pr $PR_NUMBER
+npx github:akiramei/function-indexer analyze-trends
 ```
 
 ### 4. Integrate with Code Reviews
@@ -258,7 +258,7 @@ Add to PR template:
 
 ```markdown
 ## Code Quality Checklist
-- [ ] Run `function-indexer diff main` - no new violations
+- [ ] Run `npx github:akiramei/function-indexer diff main` - no new violations
 - [ ] Complex functions documented
 - [ ] Metrics within team thresholds
 ```
@@ -284,7 +284,7 @@ Add to PR template:
 - Ensure full clone (not shallow) for diffs
 
 **Q: Reports are empty**
-- Run `function-indexer` first to generate index
+- Run `npx github:akiramei/function-indexer` first to generate index
 - Check `.function-indexer/index.jsonl` exists
 - Verify file patterns in config
 

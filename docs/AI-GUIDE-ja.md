@@ -5,7 +5,7 @@ Function Indexerは、TypeScript/TSXコードベースをスキャンし、す�
 
 ### AIアシスタント向け
 「Function Indexerを使ってコード品質を管理する」よう依頼された場合は、以下の手順に従ってください：
-1. Function Indexerをグローバルにインストール
+1. 前提条件（Linux）をインストールしてFunction Indexerを準備
 2. 初回スキャンを実行してベースラインを確立
 3. 追跡用のメトリクス収集を設定
 4. 自動チェック用のCI/CD統合を構成
@@ -21,24 +21,25 @@ Function Indexerは、TypeScript/TSXコードベースをスキャンし、す�
 ## インストールと基本使用法
 
 ```bash
-# グローバルインストール
-npm install -g github:akiramei/function-indexer
+# 前提条件（Linux/WSL）
+sudo apt-get update
+sudo apt-get install build-essential python3-dev
 
 # カレントディレクトリをスキャン
-function-indexer
+npx github:akiramei/function-indexer
 
 # 特定ディレクトリをスキャンして出力
-function-indexer --root ./src --output functions.jsonl
+npx github:akiramei/function-indexer --root ./src --output functions.jsonl
 
 # PRのメトリクスを収集
-function-indexer collect-metrics --root ./src --pr 123
+npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123
 ```
 
 ## コマンドリファレンス
 
 ### 1. メインコマンド - 関数インデックス生成
 ```bash
-function-indexer --root <path> --output <file> [options]
+npx github:akiramei/function-indexer --root <path> --output <file> [options]
 ```
 **目的**: コードベースをスキャンし、すべての関数をJSONLファイルに出力
 **オプション**:
@@ -46,7 +47,7 @@ function-indexer --root <path> --output <file> [options]
 - `--output, -o`: 出力ファイル（デフォルト: .function-indexer/ 内に自動生成）
 - `--verbose, -v`: 詳細な進捗表示
 
-**注意**: Function Indexerは設定不要で動作します - `function-indexer` を実行するだけで開始できます！
+**注意**: Function Indexerは設定不要で動作します - `npx github:akiramei/function-indexer` を実行するだけで開始できます！
 
 **出力形式**（JSONL、1行1オブジェクト）:
 ```json
@@ -74,7 +75,7 @@ function-indexer --root <path> --output <file> [options]
 
 ### 2. `search` - 関数検索
 ```bash
-function-indexer search <query> [options]
+npx github:akiramei/function-indexer search <query> [options]
 ```
 **目的**: 名前、内容、自然言語で関数を検索
 **オプション**:
@@ -85,18 +86,18 @@ function-indexer search <query> [options]
 **使用例**:
 ```bash
 # 名前で検索
-function-indexer search "validate"
+npx github:akiramei/function-indexer search "validate"
 
 # コンテキスト付き自然言語検索
-function-indexer search "認証" --context "ログインとセキュリティ"
+npx github:akiramei/function-indexer search "認証" --context "ログインとセキュリティ"
 
 # 結果数制限
-function-indexer search "コンポーネント" --limit 5
+npx github:akiramei/function-indexer search "コンポーネント" --limit 5
 ```
 
 ### 3. `metrics` - コード品質分析
 ```bash
-function-indexer metrics [options]
+npx github:akiramei/function-indexer metrics [options]
 ```
 **目的**: コード品質メトリクスと違反を表示
 **オプション**:
@@ -117,7 +118,7 @@ function-indexer metrics [options]
 
 ### 4. `collect-metrics` - 品質の経時追跡
 ```bash
-function-indexer collect-metrics --root <path> [options]
+npx github:akiramei/function-indexer collect-metrics --root <path> [options]
 ```
 **目的**: SQLiteデータベースにメトリクスを保存しトレンド分析
 **オプション**:
@@ -127,7 +128,7 @@ function-indexer collect-metrics --root <path> [options]
 
 ### 5. `show-metrics` - 関数履歴表示
 ```bash
-function-indexer show-metrics <function-path>
+npx github:akiramei/function-indexer show-metrics <function-path>
 ```
 **目的**: 特定関数のメトリクス履歴を表示
 **形式**: "file:functionName" または "file:className.methodName"
@@ -136,12 +137,12 @@ function-indexer show-metrics <function-path>
 
 **例**:
 ```bash
-function-indexer show-metrics "src/auth.ts:validateToken"
+npx github:akiramei/function-indexer show-metrics "src/auth.ts:validateToken"
 ```
 
 ### 6. `diff` - ブランチ間の関数比較
 ```bash
-function-indexer diff [base] [target]
+npx github:akiramei/function-indexer diff [base] [target]
 ```
 **目的**: Gitブランチまたはコミット間で関数を比較
 **引数**:
@@ -154,13 +155,13 @@ function-indexer diff [base] [target]
 
 ### 7. `report` - 包括的レポート生成
 ```bash
-function-indexer report [options]
+npx github:akiramei/function-indexer report [options]
 ```
 **目的**: 詳細なコード品質レポートを生成
 
 ### 8. `ci` - CI/CDパイプライン統合
 ```bash
-function-indexer ci [options]
+npx github:akiramei/function-indexer ci [options]
 ```
 **目的**: CI/CDパイプラインに最適化された分析を実行
 **オプション**:
@@ -181,8 +182,8 @@ function-indexer ci [options]
 function-indexerを使用して、src/ディレクトリ内の循環的複雑度が10を超えるすべての関数を見つけ、リファクタリングの優先順位を提案してください。
 
 実行コマンド:
-1. function-indexer --root ./src
-2. function-indexer metrics --details
+1. npx github:akiramei/function-indexer --root ./src
+2. npx github:akiramei/function-indexer metrics --details
 ```
 
 ### タスク2: PR前のコード品質分析
@@ -190,10 +191,10 @@ function-indexerを使用して、src/ディレクトリ内の循環的複雑度
 PR #123をマージする前に、コード品質への影響を分析してください：
 
 実行コマンド:
-1. function-indexer collect-metrics --root ./src --pr 123
-2. function-indexer pr-metrics 123
-3. function-indexer analyze-trends
-3. function-indexer analyze-trends --days 30
+1. npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123
+2. npx github:akiramei/function-indexer pr-metrics 123
+3. npx github:akiramei/function-indexer analyze-trends
+3. npx github:akiramei/function-indexer analyze-trends --days 30
 ```
 
 ### タスク3: 類似関数の検索
@@ -201,8 +202,8 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 データベース操作を処理する関数を見つけてください：
 
 実行コマンド:
-1. function-indexer --root ./src
-2. function-indexer search "database" --context "非同期操作"
+1. npx github:akiramei/function-indexer --root ./src
+2. npx github:akiramei/function-indexer search "database" --context "非同期操作"
 ```
 
 ### タスク4: 関数の成長監視
@@ -210,7 +211,7 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 特定の関数が時間とともにどのように成長したかを追跡してください：
 
 実行コマンド:
-1. function-indexer show-metrics "src/core/processor.ts:processData" --limit 10
+1. npx github:akiramei/function-indexer show-metrics "src/core/processor.ts:processData" --limit 10
 ```
 
 ## 統合パターン
@@ -220,16 +221,16 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 # GitHub Actions例
 - name: コード品質分析
   run: |
-    npm install -g github:akiramei/function-indexer
-    function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
-    function-indexer ci --format github
+    sudo apt-get update && sudo apt-get install -y build-essential python3-dev
+    npx github:akiramei/function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
+    npx github:akiramei/function-indexer ci --format github
 ```
 
 ### Pre-commitフック
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
-function-indexer metrics --threshold --root ./src
+npx github:akiramei/function-indexer metrics --threshold --root ./src
 if [ $? -ne 0 ]; then
   echo "❌ コード品質チェック失敗。高複雑度の関数を修正してください。"
   exit 1
@@ -241,7 +242,7 @@ fi
 {
   "label": "複雑な関数を検索",
   "type": "shell",
-  "command": "function-indexer search '*' --metrics.complexity '>10'",
+  "command": "npx github:akiramei/function-indexer search '*' --metrics.complexity '>10'",
   "problemMatcher": []
 }
 ```
@@ -261,31 +262,31 @@ fi
 ### 1. コードベース理解
 ```bash
 # 概要取得
-function-indexer metrics --root ./src
+npx github:akiramei/function-indexer metrics --root ./src
 
 # エントリポイント検索
-function-indexer search "main" --exported true
+npx github:akiramei/function-indexer search "main" --exported true
 
 # 複雑な領域検索
-function-indexer search "*" --metrics.complexity ">10"
+npx github:akiramei/function-indexer search "*" --metrics.complexity ">10"
 ```
 
 ### 2. コードレビュー支援
 ```bash
 # 変更ファイルをインデックス
-function-indexer index --root ./src --include "**/changed/*.ts"
+npx github:akiramei/function-indexer index --root ./src --include "**/changed/*.ts"
 
 # 品質チェック
-function-indexer metrics --threshold
+npx github:akiramei/function-indexer metrics --threshold
 ```
 
 ### 3. リファクタリング計画
 ```bash
 # 候補検索
-function-indexer search "*" --metrics.loc ">50"
+npx github:akiramei/function-indexer search "*" --metrics.loc ">50"
 
 # 重複検索
-function-indexer search "類似した関数名やパターン"
+npx github:akiramei/function-indexer search "類似した関数名やパターン"
 ```
 
 ## 出力処理のヒント
@@ -323,20 +324,20 @@ function-indexer search "類似した関数名やパターン"
 新しいプロジェクトのコード品質管理を設定する場合：
 
 ```bash
-# 1. インストールと初期化
-npm install -g github:akiramei/function-indexer
+# 1. 前提条件と初期化
+sudo apt-get update && sudo apt-get install -y build-essential python3-dev
 cd your-project
-function-indexer
+npx github:akiramei/function-indexer
 
 # 2. 現在の品質状態を確認
-function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 
 # 3. 継続的な監視を設定
-function-indexer collect-metrics --pr $PR_NUMBER
+npx github:akiramei/function-indexer collect-metrics --pr $PR_NUMBER
 
 # 4. package.jsonスクリプトに追加
-npm pkg set scripts.quality="function-indexer metrics"
-npm pkg set scripts.quality:detailed="function-indexer metrics --details"
+npm pkg set scripts.quality="npx github:akiramei/function-indexer metrics"
+npm pkg set scripts.quality:detailed="npx github:akiramei/function-indexer metrics --details"
 
 # 5. GitHub Actionを作成（.github/workflows/code-quality.ymlとして保存）
 echo 'name: Code Quality Check
@@ -347,6 +348,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: npm install -g github:akiramei/function-indexer
-      - run: function-indexer ci --format github' > .github/workflows/code-quality.yml
+      - run: sudo apt-get update && sudo apt-get install -y build-essential python3-dev
+      - run: npx github:akiramei/function-indexer ci --format github' > .github/workflows/code-quality.yml
 ```

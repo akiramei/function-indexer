@@ -26,7 +26,7 @@ By the end of this tutorial, you'll know how to:
 
 ```bash
 # Install globally (recommended)
-npm install -g github:akiramei/function-indexer
+sudo apt-get update && sudo apt-get install -y build-essential python3-dev
 
 # Or install in your project
 npm install --save-dev function-indexer
@@ -49,7 +49,7 @@ npm install typescript @types/node
 
 ```bash
 # Just run it - no configuration needed!
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 **What happens?** Function Indexer will:
@@ -76,7 +76,7 @@ function-indexer
 ### Step 4: View Code Quality Metrics
 
 ```bash
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 ```
 
 **Sample Output:**
@@ -104,13 +104,13 @@ function-indexer metrics
 
 ```bash
 # Find authentication-related functions
-function-indexer search "authentication"
+npx github:akiramei/function-indexer search "authentication"
 
 # Find functions that handle user data
-function-indexer search "user profile"
+npx github:akiramei/function-indexer search "user profile"
 
 # Search with context for better results
-function-indexer search "database query" --context "user management"
+npx github:akiramei/function-indexer search "database query" --context "user management"
 ```
 
 **Sample Output:**
@@ -136,7 +136,7 @@ Found 3 matching functions:
 
 ```bash
 # Update after making changes
-function-indexer
+npx github:akiramei/function-indexer
 
 # It's smart - only processes changed files!
 ```
@@ -174,7 +174,7 @@ export async function processPayment(order: Order, card: Card, options: PaymentO
 
 **Run Function Indexer:**
 ```bash
-function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 ```
 
 **Output shows:**
@@ -201,31 +201,31 @@ async function executePayment(session: PaymentSession, card: Card) { /* ... */ }
 
 **Re-run and see improvement:**
 ```bash
-function-indexer
-function-indexer metrics
+npx github:akiramei/function-indexer
+npx github:akiramei/function-indexer metrics
 ```
 
 ### Example 2: Finding Dead Code
 
 ```bash
 # Search for functions that might be unused
-function-indexer search "helper" --limit 20
+npx github:akiramei/function-indexer search "helper" --limit 20
 
 # Look for functions that weren't updated recently
-function-indexer metrics | grep "Last updated"
+npx github:akiramei/function-indexer metrics | grep "Last updated"
 ```
 
 ### Example 3: Code Review Preparation
 
 ```bash
 # Before submitting a PR, check code quality
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 
 # Search for functions you modified
-function-indexer search "user authentication login"
+npx github:akiramei/function-indexer search "user authentication login"
 
 # Get a summary for your PR description
-function-indexer | grep "Functions found"
+npx github:akiramei/function-indexer | grep "Functions found"
 ```
 
 ## 📁 Part 5: Project Type Examples
@@ -233,37 +233,37 @@ function-indexer | grep "Functions found"
 ### React Project
 ```bash
 cd my-react-app
-function-indexer  # Automatically detects TSX files
+npx github:akiramei/function-indexer  # Automatically detects TSX files
 
 # Find React components
-function-indexer search "component"
+npx github:akiramei/function-indexer search "component"
 
 # Find custom hooks
-function-indexer search "use"
+npx github:akiramei/function-indexer search "use"
 ```
 
 ### Node.js API Project
 ```bash
 cd my-api-server
-function-indexer
+npx github:akiramei/function-indexer
 
 # Find route handlers
-function-indexer search "route handler"
+npx github:akiramei/function-indexer search "route handler"
 
 # Find middleware functions
-function-indexer search "middleware"
+npx github:akiramei/function-indexer search "middleware"
 ```
 
 ### Library/Package Project
 ```bash
 cd my-library
-function-indexer
+npx github:akiramei/function-indexer
 
 # Find exported functions
-function-indexer search "export" --context "public API"
+npx github:akiramei/function-indexer search "export" --context "public API"
 
 # Check complexity before publishing
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 ```
 
 ## 🔧 Part 6: Advanced Usage
@@ -276,12 +276,12 @@ Create `.husky/pre-commit`:
 . "$(dirname "$0")/_/husky.sh"
 
 # Update function index before commit
-function-indexer
+npx github:akiramei/function-indexer
 
 # Check for high complexity functions
-if function-indexer metrics | grep -q "High Risk"; then
+if npx github:akiramei/function-indexer metrics | grep -q "High Risk"; then
   echo "⚠️ High complexity functions detected. Consider refactoring."
-  function-indexer metrics --details
+  npx github:akiramei/function-indexer metrics --details
 fi
 ```
 
@@ -302,18 +302,18 @@ jobs:
           node-version: '18'
       
       - name: Install Function Indexer
-        run: npm install -g github:akiramei/function-indexer
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3-dev
       
       - name: Analyze Code Quality
         run: |
-          function-indexer
-          function-indexer metrics
+          npx github:akiramei/function-indexer
+          npx github:akiramei/function-indexer metrics
           
       - name: Check for High Complexity
         run: |
-          if function-indexer metrics | grep -q "High Risk"; then
+          if npx github:akiramei/function-indexer metrics | grep -q "High Risk"; then
             echo "::warning::High complexity functions detected"
-            function-indexer metrics --details
+            npx github:akiramei/function-indexer metrics --details
           fi
 ```
 

@@ -26,7 +26,7 @@
 
 ```bash
 # グローバルインストール（推奨）
-npm install -g github:akiramei/function-indexer
+sudo apt-get update && sudo apt-get install -y build-essential python3-dev
 
 # またはプロジェクトにインストール
 npm install --save-dev function-indexer
@@ -49,7 +49,7 @@ npm install typescript @types/node
 
 ```bash
 # 実行するだけ - 設定不要！
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 **何が起こる？** Function Indexerは：
@@ -76,7 +76,7 @@ function-indexer
 ### ステップ4: コード品質メトリクスを表示
 
 ```bash
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 ```
 
 **サンプル出力:**
@@ -104,13 +104,13 @@ function-indexer metrics
 
 ```bash
 # 認証関連の関数を見つける
-function-indexer search "authentication"
+npx github:akiramei/function-indexer search "authentication"
 
 # ユーザーデータを扱う関数を見つける
-function-indexer search "user profile"
+npx github:akiramei/function-indexer search "user profile"
 
 # より良い結果のためにコンテキストを付けて検索
-function-indexer search "database query" --context "user management"
+npx github:akiramei/function-indexer search "database query" --context "user management"
 ```
 
 **サンプル出力:**
@@ -136,7 +136,7 @@ function-indexer search "database query" --context "user management"
 
 ```bash
 # 変更後に更新
-function-indexer
+npx github:akiramei/function-indexer
 
 # スマート！変更されたファイルのみを処理します
 ```
@@ -174,7 +174,7 @@ export async function processPayment(order: Order, card: Card, options: PaymentO
 
 **Function Indexerを実行:**
 ```bash
-function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 ```
 
 **出力が表示:**
@@ -201,31 +201,31 @@ async function executePayment(session: PaymentSession, card: Card) { /* ... */ }
 
 **再実行して改善を確認:**
 ```bash
-function-indexer
-function-indexer metrics
+npx github:akiramei/function-indexer
+npx github:akiramei/function-indexer metrics
 ```
 
 ### 例2: デッドコードの発見
 
 ```bash
 # 使われていない可能性のある関数を検索
-function-indexer search "helper" --limit 20
+npx github:akiramei/function-indexer search "helper" --limit 20
 
 # 最近更新されていない関数を探す
-function-indexer metrics | grep "Last updated"
+npx github:akiramei/function-indexer metrics | grep "Last updated"
 ```
 
 ### 例3: コードレビュー準備
 
 ```bash
 # PRを提出する前にコード品質をチェック
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 
 # 変更した関数を検索
-function-indexer search "user authentication login"
+npx github:akiramei/function-indexer search "user authentication login"
 
 # PR説明用のサマリーを取得
-function-indexer | grep "Functions found"
+npx github:akiramei/function-indexer | grep "Functions found"
 ```
 
 ## 📁 パート5: プロジェクトタイプ例
@@ -233,37 +233,37 @@ function-indexer | grep "Functions found"
 ### Reactプロジェクト
 ```bash
 cd my-react-app
-function-indexer  # TSXファイルを自動検出
+npx github:akiramei/function-indexer  # TSXファイルを自動検出
 
 # Reactコンポーネントを見つける
-function-indexer search "component"
+npx github:akiramei/function-indexer search "component"
 
 # カスタムフックを見つける
-function-indexer search "use"
+npx github:akiramei/function-indexer search "use"
 ```
 
 ### Node.js APIプロジェクト
 ```bash
 cd my-api-server
-function-indexer
+npx github:akiramei/function-indexer
 
 # ルートハンドラーを見つける
-function-indexer search "route handler"
+npx github:akiramei/function-indexer search "route handler"
 
 # ミドルウェア関数を見つける
-function-indexer search "middleware"
+npx github:akiramei/function-indexer search "middleware"
 ```
 
 ### ライブラリ/パッケージプロジェクト
 ```bash
 cd my-library
-function-indexer
+npx github:akiramei/function-indexer
 
 # エクスポートされた関数を見つける
-function-indexer search "export" --context "public API"
+npx github:akiramei/function-indexer search "export" --context "public API"
 
 # 公開前に複雑度をチェック
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 ```
 
 ## 🔧 パート6: 高度な使用法
@@ -276,12 +276,12 @@ function-indexer metrics
 . "$(dirname "$0")/_/husky.sh"
 
 # コミット前に関数インデックスを更新
-function-indexer
+npx github:akiramei/function-indexer
 
 # 高複雑度関数をチェック
-if function-indexer metrics | grep -q "High Risk"; then
+if npx github:akiramei/function-indexer metrics | grep -q "High Risk"; then
   echo "⚠️ 高複雑度関数が検出されました。リファクタリングを検討してください。"
-  function-indexer metrics --details
+  npx github:akiramei/function-indexer metrics --details
 fi
 ```
 
@@ -302,18 +302,18 @@ jobs:
           node-version: '18'
       
       - name: Function Indexerをインストール
-        run: npm install -g github:akiramei/function-indexer
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3-dev
       
       - name: コード品質を解析
         run: |
-          function-indexer
-          function-indexer metrics
+          npx github:akiramei/function-indexer
+          npx github:akiramei/function-indexer metrics
           
       - name: 高複雑度をチェック
         run: |
-          if function-indexer metrics | grep -q "High Risk"; then
+          if npx github:akiramei/function-indexer metrics | grep -q "High Risk"; then
             echo "::warning::高複雑度関数が検出されました"
-            function-indexer metrics --details
+            npx github:akiramei/function-indexer metrics --details
           fi
 ```
 

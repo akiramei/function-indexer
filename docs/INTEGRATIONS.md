@@ -42,23 +42,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Install Function Indexer
-        run: npm install -g github:akiramei/function-indexer
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3-dev
         
       - name: Generate function index
-        run: function-indexer
+        run: npx github:akiramei/function-indexer
         
       - name: Analyze code metrics
         id: metrics
         run: |
           echo "## 📊 Code Quality Report" >> $GITHUB_STEP_SUMMARY
-          function-indexer metrics >> $GITHUB_STEP_SUMMARY
+          npx github:akiramei/function-indexer metrics >> $GITHUB_STEP_SUMMARY
           
           # Check for high complexity functions
-          if function-indexer metrics | grep -q "High Risk"; then
+          if npx github:akiramei/function-indexer metrics | grep -q "High Risk"; then
             echo "high_complexity=true" >> $GITHUB_OUTPUT
             echo "⚠️ **High complexity functions detected!**" >> $GITHUB_STEP_SUMMARY
-            function-indexer metrics --details >> $GITHUB_STEP_SUMMARY
+            npx github:akiramei/function-indexer metrics --details >> $GITHUB_STEP_SUMMARY
           else
             echo "high_complexity=false" >> $GITHUB_OUTPUT
             echo "✅ **All functions within complexity thresholds**" >> $GITHUB_STEP_SUMMARY
@@ -70,7 +72,7 @@ jobs:
         with:
           script: |
             const { execSync } = require('child_process');
-            const metrics = execSync('function-indexer metrics', { encoding: 'utf8' });
+            const metrics = execSync('npx github:akiramei/function-indexer metrics', { encoding: 'utf8' });
             
             const comment = `## 📊 Function Indexer Report
             
@@ -81,7 +83,7 @@ jobs:
             
             You can search through the analyzed functions:
             \`\`\`bash
-            function-indexer search "your query"
+            npx github:akiramei/function-indexer search "your query"
             \`\`\`
             
             </details>
@@ -131,13 +133,15 @@ jobs:
         with:
           node-version: '18'
           
-      - name: Install Function Indexer
-        run: npm install -g github:akiramei/function-indexer
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3-dev
         
       - name: Generate metrics report
         run: |
-          function-indexer
-          function-indexer metrics --details > complexity-report.txt
+          npx github:akiramei/function-indexer
+          npx github:akiramei/function-indexer metrics --details > complexity-report.txt
           
       - name: Upload complexity report
         uses: actions/upload-artifact@v4
@@ -148,7 +152,7 @@ jobs:
       - name: Store metrics in repository
         run: |
           mkdir -p .github/metrics
-          echo "$(date): $(function-indexer metrics | grep 'Total Functions')" >> .github/metrics/history.log
+          echo "$(date): $(npx github:akiramei/function-indexer metrics | grep 'Total Functions')" >> .github/metrics/history.log
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .github/metrics/history.log
@@ -177,11 +181,11 @@ function-indexer:analyze:
   stage: analyze
   image: node:${NODE_VERSION}
   before_script:
-    - npm install -g github:akiramei/function-indexer
+    - apt-get update && apt-get install -y build-essential python3-dev
   script:
-    - function-indexer
-    - function-indexer metrics > metrics-report.txt
-    - function-indexer metrics --details > detailed-metrics.txt
+    - npx github:akiramei/function-indexer
+    - npx github:akiramei/function-indexer metrics > metrics-report.txt
+    - npx github:akiramei/function-indexer metrics --details > detailed-metrics.txt
   artifacts:
     reports:
       junit: test-results.xml
@@ -244,12 +248,13 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
-    npm install -g github:akiramei/function-indexer
-  displayName: 'Install Function Indexer'
+    sudo apt-get update
+    sudo apt-get install -y build-essential python3-dev
+  displayName: 'Install Build Tools'
 
 - script: |
-    function-indexer
-    function-indexer metrics > $(Agent.TempDirectory)/metrics.txt
+    npx github:akiramei/function-indexer
+    npx github:akiramei/function-indexer metrics > $(Agent.TempDirectory)/metrics.txt
   displayName: 'Analyze Code Quality'
 
 - script: |
@@ -257,7 +262,7 @@ steps:
     
     if grep -q "High Risk" $(Agent.TempDirectory)/metrics.txt; then
       echo "##vso[task.logissue type=warning]High complexity functions detected"
-      function-indexer metrics --details
+      npx github:akiramei/function-indexer metrics --details
     fi
   displayName: 'Report Results'
 
@@ -292,8 +297,8 @@ steps:
    ```json
    {
      "scripts": {
-       "pre-commit": "function-indexer && npm run check-complexity"
-       "check-complexity": "function-indexer metrics | grep -q 'High Risk' && echo '⚠️ High complexity detected' || echo '✅ Complexity OK'"
+       "pre-commit": "npx github:akiramei/function-indexer && npm run check-complexity"
+       "check-complexity": "npx github:akiramei/function-indexer metrics | grep -q 'High Risk' && echo '⚠️ High complexity detected' || echo '✅ Complexity OK'"
      }
    }
    ```
@@ -306,7 +311,7 @@ steps:
    echo "🔍 Analyzing code with Function Indexer..."
    
    # Update function index
-   function-indexer
+   npx github:akiramei/function-indexer
    
    # Check for high complexity in changed files
    changed_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx|js|jsx)$')
@@ -316,10 +321,10 @@ steps:
      
      # Check if any changed files have high complexity
      for file in $changed_files; do
-       if function-indexer search "$(basename "$file" .ts)" --limit 1 | grep -q "High complexity"; then
+       if npx github:akiramei/function-indexer search "$(basename "$file" .ts)" --limit 1 | grep -q "High complexity"; then
          echo "⚠️ High complexity detected in $file"
          echo "Consider refactoring before committing."
-         echo "Run 'function-indexer metrics --details' for more information."
+         echo "Run 'npx github:akiramei/function-indexer metrics --details' for more information."
          exit 1
        fi
      done
@@ -350,10 +355,10 @@ Create `.husky/pre-push`:
 echo "🚀 Running pre-push quality checks..."
 
 # Full analysis before push
-function-indexer
+npx github:akiramei/function-indexer
 
 # Generate comprehensive report
-function-indexer metrics > /tmp/quality-report.txt
+npx github:akiramei/function-indexer metrics > /tmp/quality-report.txt
 
 # Check quality thresholds
 high_risk=$(grep "High Risk:" /tmp/quality-report.txt | grep -o "[0-9]\+")
@@ -367,7 +372,7 @@ if [ "$high_risk" -gt 0 ]; then
   
   if [ "$(echo "$high_risk / $total_functions > 0.1" | bc)" -eq 1 ]; then
     echo "❌ Quality gate failed: Too many high-risk functions (>10%)"
-    echo "Run 'function-indexer metrics --details' to see specific issues"
+    echo "Run 'npx github:akiramei/function-indexer metrics --details' to see specific issues"
     exit 1
   fi
 fi
@@ -393,7 +398,7 @@ Create `.vscode/tasks.json`:
     {
       "label": "Function Indexer: Analyze",
       "type": "shell",
-      "command": "function-indexer",
+      "command": "npx github:akiramei/function-indexer",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -406,7 +411,7 @@ Create `.vscode/tasks.json`:
     {
       "label": "Function Indexer: Metrics",
       "type": "shell",
-      "command": "function-indexer metrics",
+      "command": "npx github:akiramei/function-indexer metrics",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -419,7 +424,7 @@ Create `.vscode/tasks.json`:
     {
       "label": "Function Indexer: Search",
       "type": "shell",
-      "command": "function-indexer search",
+      "command": "npx github:akiramei/function-indexer search",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -464,13 +469,13 @@ Add to your `package.json`:
 ```json
 {
   "scripts": {
-    "analyze": "function-indexer",
-    "analyze:verbose": "function-indexer --verbose",
-    "metrics": "function-indexer metrics",
-    "metrics:details": "function-indexer metrics --details",
-    "search": "function-indexer search",
-    "quality:check": "function-indexer metrics | grep -q 'High Risk' && exit 1 || echo '✅ Quality OK'",
-    "quality:report": "function-indexer metrics > quality-report.txt && cat quality-report.txt",
+    "analyze": "npx github:akiramei/function-indexer",
+    "analyze:verbose": "npx github:akiramei/function-indexer --verbose",
+    "metrics": "npx github:akiramei/function-indexer metrics",
+    "metrics:details": "npx github:akiramei/function-indexer metrics --details",
+    "search": "npx github:akiramei/function-indexer search",
+    "quality:check": "npx github:akiramei/function-indexer metrics | grep -q 'High Risk' && exit 1 || echo '✅ Quality OK'",
+    "quality:report": "npx github:akiramei/function-indexer metrics > quality-report.txt && cat quality-report.txt",
     "pre-commit": "npm run analyze && npm run quality:check",
     "pre-push": "npm run analyze && npm run quality:report"
   }
@@ -502,34 +507,34 @@ help: ## Show this help message
 	@echo "Function Indexer Make Commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-setup: ## Install Function Indexer
-	npm install -g github:akiramei/function-indexer
+setup: ## Install build tools (Linux)
+	sudo apt-get update && sudo apt-get install -y build-essential python3-dev
 
 analyze: ## Run function analysis
 	@echo "🔍 Analyzing codebase..."
-	function-indexer
+	npx github:akiramei/function-indexer
 
 metrics: ## Show code quality metrics
 	@echo "📊 Code Quality Metrics:"
-	function-indexer metrics
+	npx github:akiramei/function-indexer metrics
 
 metrics-details: ## Show detailed metrics
 	@echo "📊 Detailed Code Quality Metrics:"
-	function-indexer metrics --details
+	npx github:akiramei/function-indexer metrics --details
 
 search: ## Search functions (usage: make search QUERY="auth")
 	@echo "🔍 Searching for: $(QUERY)"
-	function-indexer search "$(QUERY)"
+	npx github:akiramei/function-indexer search "$(QUERY)"
 
 quality-check: ## Check quality thresholds
 	@echo "🎯 Quality Check:"
-	@function-indexer metrics | grep -q "High Risk" && \
+	@npx github:akiramei/function-indexer metrics | grep -q "High Risk" && \
 		(echo "❌ Quality check failed" && exit 1) || \
 		echo "✅ Quality check passed"
 
 quality-report: ## Generate quality report
 	@echo "📄 Generating quality report..."
-	function-indexer metrics > quality-report.txt
+	npx github:akiramei/function-indexer metrics > quality-report.txt
 	@cat quality-report.txt
 
 ci-check: analyze quality-check ## Run CI quality checks
@@ -574,24 +579,24 @@ cat > "$REPORT_FILE" << EOF
 # Code Quality Report - $DATE
 
 ## Summary
-$(function-indexer metrics)
+$(npx github:akiramei/function-indexer metrics)
 
 ## Detailed Analysis
-$(function-indexer metrics --details)
+$(npx github:akiramei/function-indexer metrics --details)
 
 ## Top Complex Functions
-$(function-indexer search "function" --limit 10 | grep "High complexity")
+$(npx github:akiramei/function-indexer search "function" --limit 10 | grep "High complexity")
 
 ## Search Examples
 \`\`\`bash
 # Search for authentication functions
-function-indexer search "auth"
+npx github:akiramei/function-indexer search "auth"
 
 # Search for API endpoints
-function-indexer search "api route"
+npx github:akiramei/function-indexer search "api route"
 
 # Search for database operations
-function-indexer search "database query"
+npx github:akiramei/function-indexer search "database query"
 \`\`\`
 
 ---
@@ -603,7 +608,7 @@ echo "📊 Quality report generated: $REPORT_FILE"
 # Optional: Send to team chat (Slack, Discord, etc.)
 if [ -n "$SLACK_WEBHOOK" ]; then
   curl -X POST -H 'Content-type: application/json' \
-    --data "{\"text\":\"📊 Daily Code Quality Report: $DATE\n\`\`\`$(function-indexer metrics)\`\`\`\"}" \
+    --data "{\"text\":\"📊 Daily Code Quality Report: $DATE\n\`\`\`$(npx github:akiramei/function-indexer metrics)\`\`\`\"}" \
     "$SLACK_WEBHOOK"
 fi
 ```
@@ -644,7 +649,7 @@ echo ""
 
 # Analyze current state
 echo "📊 Current Quality Metrics:"
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 echo ""
 
 # Check specific changed files
@@ -653,7 +658,7 @@ for file in $changed_files; do
   if [ -f "$file" ]; then
     basename_file=$(basename "$file" | sed 's/\.[^.]*$//')
     echo "📄 $file:"
-    function-indexer search "$basename_file" --limit 3
+    npx github:akiramei/function-indexer search "$basename_file" --limit 3
     echo ""
   fi
 done
@@ -686,8 +691,9 @@ Create `Dockerfile.analysis`:
 ```dockerfile
 FROM node:18-alpine
 
-# Install Function Indexer
-RUN npm install -g github:akiramei/function-indexer
+# Install build tools and dependencies
+RUN apk add --no-cache build-base python3-dev
+RUN npm install -g typescript
 
 # Set working directory
 WORKDIR /app
@@ -696,7 +702,7 @@ WORKDIR /app
 COPY . .
 
 # Run analysis
-CMD ["sh", "-c", "function-indexer && function-indexer metrics"]
+CMD ["sh", "-c", "npx github:akiramei/function-indexer && npx github:akiramei/function-indexer metrics"]
 ```
 
 Usage:
@@ -726,8 +732,8 @@ services:
       - .:/app
     command: |
       sh -c "
-        function-indexer
-        function-indexer metrics > /tmp/metrics.txt
+        npx github:akiramei/function-indexer
+        npx github:akiramei/function-indexer metrics > /tmp/metrics.txt
         cat /tmp/metrics.txt
       "
 ```
@@ -749,7 +755,7 @@ WEBHOOK_URL="YOUR_SLACK_WEBHOOK_URL"
 PROJECT_NAME="My Awesome Project"
 
 # Generate metrics
-metrics=$(function-indexer metrics)
+metrics=$(npx github:akiramei/function-indexer metrics)
 high_risk=$(echo "$metrics" | grep "High Risk:" | grep -o "[0-9]\+")
 
 # Determine message color
@@ -783,7 +789,7 @@ For Discord:
 # discord-notify.sh
 
 DISCORD_WEBHOOK="YOUR_DISCORD_WEBHOOK"
-metrics=$(function-indexer metrics)
+metrics=$(npx github:akiramei/function-indexer metrics)
 
 curl -H "Content-Type: application/json" \
   -d "{

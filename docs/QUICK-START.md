@@ -13,12 +13,12 @@
 
 ### Installation
 ```bash
-# Install from GitHub
-npm install -g github:akiramei/function-indexer
+# Prerequisites (Linux/WSL users only)
+sudo apt update && sudo apt install build-essential python3
 
-# Then navigate to your project
+# Navigate to your project and run directly
 cd your-typescript-project
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### What You'll See
@@ -52,9 +52,11 @@ function-indexer search "database"
 
 ### Installation
 ```bash
-npm install -g github:akiramei/function-indexer
+# Prerequisites (Linux/WSL users only)
+sudo apt update && sudo apt install build-essential python3
+
 cd your-react-app
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### What You'll Get
@@ -67,13 +69,13 @@ function-indexer
 ### Quick Commands
 ```bash
 # Find React components
-function-indexer search "component"
+npx github:akiramei/function-indexer search "component"
 
 # Find custom hooks
-function-indexer search "hook use"
+npx github:akiramei/function-indexer search "hook use"
 
 # Check component complexity
-function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 ```
 
 ### Example Output
@@ -94,15 +96,17 @@ function-indexer metrics --details
 
 ### Installation
 ```bash
-npm install -g github:akiramei/function-indexer
+# Prerequisites (Linux/WSL users only)
+sudo apt update && sudo apt install build-essential python3
+
 cd your-js-project
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### Setup for Pure JavaScript
 ```bash
 # Function Indexer works with .js files too!
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### Enhance with JSDoc
@@ -121,10 +125,10 @@ async function authenticateUser(email, password) {
 ### Quick Commands
 ```bash
 # Find all functions
-function-indexer search "function"
+npx github:akiramei/function-indexer search "function"
 
 # View complexity metrics
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 ```
 
 </details>
@@ -134,7 +138,9 @@ function-indexer metrics
 
 ### Installation
 ```bash
-npm install -g github:akiramei/function-indexer
+# Prerequisites (Linux/WSL users only)
+sudo apt update && sudo apt install build-essential python3
+
 cd your-monorepo
 ```
 
@@ -142,23 +148,23 @@ cd your-monorepo
 ```bash
 # Analyze each package separately
 cd packages/frontend
-function-indexer
+npx github:akiramei/function-indexer
 
 cd ../backend  
-function-indexer
+npx github:akiramei/function-indexer
 
 cd ../shared
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### Unified Analysis (Advanced)
 ```bash
 # From monorepo root
-function-indexer --root packages/frontend
-function-indexer --root packages/backend
+npx github:akiramei/function-indexer --root packages/frontend
+npx github:akiramei/function-indexer --root packages/backend
 
 # Compare complexity across packages
-function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 ```
 
 ### Workspace Integration
@@ -167,8 +173,8 @@ function-indexer metrics --details
 {
   "scripts": {
     "analyze": "npm run analyze:frontend && npm run analyze:backend",
-    "analyze:frontend": "cd packages/frontend && function-indexer",
-    "analyze:backend": "cd packages/backend && function-indexer"
+    "analyze:frontend": "cd packages/frontend && npx github:akiramei/function-indexer",
+    "analyze:backend": "cd packages/backend && npx github:akiramei/function-indexer"
   }
 }
 ```

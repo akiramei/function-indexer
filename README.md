@@ -37,24 +37,28 @@ Function Indexer scans your TypeScript/TSX codebase and creates a comprehensive 
 ### Installation
 
 ```bash
-# Install from GitHub
-npm install -g github:akiramei/function-indexer
+# Prerequisites (Linux/WSL users only)
+sudo apt update && sudo apt install build-essential python3
 
-# Or using the full URL
-npm install -g https://github.com/akiramei/function-indexer.git
+# Run directly with npx (recommended - no installation needed!)
+npx github:akiramei/function-indexer
 
-# Or clone and link locally for development
+# Or install locally to project
+npm install --save-dev github:akiramei/function-indexer
+npx function-indexer
+
+# For development
 git clone https://github.com/akiramei/function-indexer.git
 cd function-indexer
 npm install
-npm link
+npm run build
 ```
 
 ### First Run
 
 ```bash
 # Run in your project - that's it!
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 **🎯 New to Function Indexer?** Check our guides:
@@ -81,44 +85,48 @@ No configuration needed! Function Indexer will:
 
 ```bash
 # Index your codebase (first time or update)
-function-indexer
+npx github:akiramei/function-indexer
 
 # Search for functions using natural language
-function-indexer search "authentication"
+npx github:akiramei/function-indexer search "authentication"
 
 # View code quality metrics
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 
 # Compare functions between branches (NEW!)
-function-indexer diff main feature
+npx github:akiramei/function-indexer diff main feature
 
 # Generate comprehensive reports (NEW!)
-function-indexer report --format markdown
+npx github:akiramei/function-indexer report --format markdown
 ```
 
 ### Working with Specific Directories
 
 ```bash
 # Scan a specific directory
-function-indexer -r ./src/services
+npx github:akiramei/function-indexer -r ./src/services
 
-# Scan multiple projects
-function-indexer add frontend ./src/frontend
-function-indexer add backend ./src/backend
-function-indexer update  # Update all projects
+# Or install locally and use shorter commands
+npm install --save-dev github:akiramei/function-indexer
+npx function-indexer add frontend ./src/frontend
+npx function-indexer add backend ./src/backend
+npx function-indexer update  # Update all projects
 ```
 
 ### CI/CD Integration
 
 ```bash
+# Prerequisites for CI environments
+sudo apt update && sudo apt install build-essential python3
+
 # In your CI pipeline (NEW!)
-function-indexer ci --format github
+npx github:akiramei/function-indexer ci --format github
 
 # Compare branches for PR analysis
-function-indexer diff origin/main HEAD
+npx github:akiramei/function-indexer diff origin/main HEAD
 
 # Pre-commit hook (with Husky)
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 ```
 
 📋 **[Full Integration Guide](docs/INTEGRATIONS.md)** - GitHub Actions, GitLab CI, pre-commit hooks, and more
@@ -183,14 +191,17 @@ While Function Indexer works without configuration, you can customize it:
 
 ## 🔄 Migration from Previous Versions
 
-If you're using an older version with manual commands:
+If you're using an older version with global installation:
 
 ```bash
-# Old way (still works)
-function-indexer --root ./src --output index.jsonl
+# Old way (npm install -g)
+npm uninstall -g function-indexer  # Remove old global installation
 
-# New way (automatic)
-function-indexer
+# New way (npx - no installation needed)
+npx github:akiramei/function-indexer
+
+# Manual options still work
+npx github:akiramei/function-indexer --root ./src --output index.jsonl
 ```
 
 Your existing indexes will continue to work, and the new version maintains backward compatibility.

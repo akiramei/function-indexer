@@ -11,11 +11,17 @@
 <details>
 <summary>🟦 <strong>TypeScript/Node.jsプロジェクト</strong></summary>
 
-### インストール
+### 前提条件
 ```bash
-npm install -g github:akiramei/function-indexer
+# Linuxでは事前にビルドツールが必要です
+sudo apt-get update
+sudo apt-get install build-essential python3-dev
+```
+
+### 実行
+```bash
 cd your-typescript-project
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### 表示される内容
@@ -31,10 +37,10 @@ function-indexer
 ### 次のステップ
 ```bash
 # コード品質を確認
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 
 # 関数を検索
-function-indexer search "database"
+npx github:akiramei/function-indexer search "database"
 ```
 
 ### 一般的な用途
@@ -47,11 +53,17 @@ function-indexer search "database"
 <details>
 <summary>⚛️ <strong>Reactプロジェクト</strong></summary>
 
-### インストール
+### 前提条件
 ```bash
-npm install -g github:akiramei/function-indexer
+# Linuxでは事前にビルドツールが必要です
+sudo apt-get update
+sudo apt-get install build-essential python3-dev
+```
+
+### 実行
+```bash
 cd your-react-app
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### 解析対象
@@ -64,13 +76,13 @@ function-indexer
 ### クイックコマンド
 ```bash
 # Reactコンポーネントを見つける
-function-indexer search "component"
+npx github:akiramei/function-indexer search "component"
 
 # カスタムフックを見つける
-function-indexer search "hook use"
+npx github:akiramei/function-indexer search "hook use"
 
 # コンポーネントの複雑度をチェック
-function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 ```
 
 ### 出力例
@@ -89,17 +101,23 @@ function-indexer metrics --details
 <details>
 <summary>🟨 <strong>JavaScriptプロジェクト</strong></summary>
 
-### インストール
+### 前提条件
 ```bash
-npm install -g github:akiramei/function-indexer
+# Linuxでは事前にビルドツールが必要です
+sudo apt-get update
+sudo apt-get install build-essential python3-dev
+```
+
+### 実行
+```bash
 cd your-js-project
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### 純粋なJavaScript用セットアップ
 ```bash
 # Function Indexerは.jsファイルも動作します！
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### JSDocで強化
@@ -118,10 +136,10 @@ async function authenticateUser(email, password) {
 ### クイックコマンド
 ```bash
 # すべての関数を見つける
-function-indexer search "function"
+npx github:akiramei/function-indexer search "function"
 
 # 複雑度メトリクスを表示
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 ```
 
 </details>
@@ -129,9 +147,15 @@ function-indexer metrics
 <details>
 <summary>🏗️ <strong>モノレポ/マルチパッケージ</strong></summary>
 
-### インストール
+### 前提条件
 ```bash
-npm install -g github:akiramei/function-indexer
+# Linuxでは事前にビルドツールが必要です
+sudo apt-get update
+sudo apt-get install build-essential python3-dev
+```
+
+### セットアップ
+```bash
 cd your-monorepo
 ```
 
@@ -139,23 +163,23 @@ cd your-monorepo
 ```bash
 # 各パッケージを個別に解析
 cd packages/frontend
-function-indexer
+npx github:akiramei/function-indexer
 
 cd ../backend  
-function-indexer
+npx github:akiramei/function-indexer
 
 cd ../shared
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### 統合解析（高度）
 ```bash
 # モノレポルートから
-function-indexer --root packages/frontend
-function-indexer --root packages/backend
+npx github:akiramei/function-indexer --root packages/frontend
+npx github:akiramei/function-indexer --root packages/backend
 
 # パッケージ間の複雑度を比較
-function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 ```
 
 ### ワークスペース統合
@@ -164,8 +188,8 @@ function-indexer metrics --details
 {
   "scripts": {
     "analyze": "npm run analyze:frontend && npm run analyze:backend",
-    "analyze:frontend": "cd packages/frontend && function-indexer",
-    "analyze:backend": "cd packages/backend && function-indexer"
+    "analyze:frontend": "cd packages/frontend && npx github:akiramei/function-indexer",
+    "analyze:backend": "cd packages/backend && npx github:akiramei/function-indexer"
   }
 }
 ```
@@ -175,11 +199,17 @@ function-indexer metrics --details
 <details>
 <summary>⚡ <strong>Next.jsプロジェクト</strong></summary>
 
-### インストール
+### 前提条件
 ```bash
-npm install -g github:akiramei/function-indexer
+# Linuxでは事前にビルドツールが必要です
+sudo apt-get update
+sudo apt-get install build-essential python3-dev
+```
+
+### 実行
+```bash
 cd your-nextjs-app
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### Function Indexerが見つけるもの
@@ -193,13 +223,13 @@ function-indexer
 ### Next.js固有コマンド
 ```bash
 # APIルートを見つける
-function-indexer search "api route handler"
+npx github:akiramei/function-indexer search "api route handler"
 
 # ページコンポーネントを見つける
-function-indexer search "page component"
+npx github:akiramei/function-indexer search "page component"
 
 # SSR/SSG関数をチェック
-function-indexer search "getServerSideProps getStaticProps"
+npx github:akiramei/function-indexer search "getServerSideProps getStaticProps"
 ```
 
 ### 出力例
@@ -220,11 +250,17 @@ function-indexer search "getServerSideProps getStaticProps"
 <details>
 <summary>🔧 <strong>Express.js API</strong></summary>
 
-### インストール
+### 前提条件
 ```bash
-npm install -g github:akiramei/function-indexer
+# Linuxでは事前にビルドツールが必要です
+sudo apt-get update
+sudo apt-get install build-essential python3-dev
+```
+
+### 実行
+```bash
 cd your-express-api
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### Express固有解析
@@ -232,13 +268,13 @@ Function IndexerはExpress APIの解析に優れています：
 
 ```bash
 # ルートハンドラーを見つける
-function-indexer search "route handler"
+npx github:akiramei/function-indexer search "route handler"
 
 # ミドルウェア関数を見つける
-function-indexer search "middleware"
+npx github:akiramei/function-indexer search "middleware"
 
 # コントローラーの複雑度をチェック
-function-indexer search "controller"
+npx github:akiramei/function-indexer search "controller"
 ```
 
 ### サンプルプロジェクト構造
@@ -254,10 +290,10 @@ src/
 ### クイック健全性チェック
 ```bash
 # API複雑度をチェック
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 
 # リファクタリング候補を見つける
-function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 ```
 
 </details>
@@ -265,11 +301,17 @@ function-indexer metrics --details
 <details>
 <summary>📱 <strong>React Nativeプロジェクト</strong></summary>
 
-### インストール
+### 前提条件
 ```bash
-npm install -g github:akiramei/function-indexer
+# Linuxでは事前にビルドツールが必要です
+sudo apt-get update
+sudo apt-get install build-essential python3-dev
+```
+
+### 実行
+```bash
 cd your-react-native-app
-function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ### React Native機能
@@ -282,13 +324,13 @@ function-indexer
 ### クイックコマンド
 ```bash
 # スクリーンコンポーネントを見つける
-function-indexer search "screen component"
+npx github:akiramei/function-indexer search "screen component"
 
 # ナビゲーション関数を見つける
-function-indexer search "navigation"
+npx github:akiramei/function-indexer search "navigation"
 
 # コンポーネントの複雑度をチェック
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 ```
 
 </details>
@@ -299,16 +341,16 @@ function-indexer metrics
 
 ```bash
 # 基本インデックス化
-function-indexer
+npx github:akiramei/function-indexer
 
 # コード品質概要
-function-indexer metrics
+npx github:akiramei/function-indexer metrics
 
 # 関数検索
-function-indexer search "your query"
+npx github:akiramei/function-indexer search "your query"
 
 # ヘルプ
-function-indexer --help
+npx github:akiramei/function-indexer --help
 ```
 
 ## 🎯 プロジェクト固有のヒント
@@ -316,28 +358,28 @@ function-indexer --help
 ### フロントエンドプロジェクト（React、Vue、Angular）
 ```bash
 # コンポーネントの複雑度に焦点
-function-indexer search "component" | head -20
+npx github:akiramei/function-indexer search "component" | head -20
 
 # イベントハンドラーを見つける
-function-indexer search "onClick onSubmit onChange"
+npx github:akiramei/function-indexer search "onClick onSubmit onChange"
 ```
 
 ### バックエンドプロジェクト（Node.js、Express）
 ```bash
 # API健全性チェック
-function-indexer search "route handler" 
+npx github:akiramei/function-indexer search "route handler" 
 
 # ミドルウェア解析
-function-indexer search "middleware auth"
+npx github:akiramei/function-indexer search "middleware auth"
 ```
 
 ### ライブラリプロジェクト
 ```bash
 # パブリックAPI概要
-function-indexer search "export" --context "public"
+npx github:akiramei/function-indexer search "export" --context "public"
 
 # 公開前の複雑度
-function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 ```
 
 ## ⚠️ トラブルシューティング
@@ -352,10 +394,10 @@ function-indexer metrics --details
 **解決方法:**
 ```bash
 # カスタムディレクトリを指定
-function-indexer --root ./your-custom-src
+npx github:akiramei/function-indexer --root ./your-custom-src
 
 # Function Indexerが検出した内容をチェック
-function-indexer --verbose
+npx github:akiramei/function-indexer --verbose
 ```
 
 </details>

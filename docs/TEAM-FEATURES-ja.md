@@ -22,13 +22,13 @@ Function Indexer v1.1では、開発チームがプロジェクト全体でコ�
 
 ```bash
 # 現在のブランチとmainを比較
-function-indexer diff main
+npx github:akiramei/function-indexer diff main
 
 # 2つのブランチを比較
-function-indexer diff main..feature/new-auth
+npx github:akiramei/function-indexer diff main..feature/new-auth
 
 # 特定のコミットを比較
-function-indexer diff abc123..def456
+npx github:akiramei/function-indexer diff abc123..def456
 ```
 
 ### オプション
@@ -65,13 +65,13 @@ Removed (1):
 
 ```bash
 # Markdownレポートを生成（デフォルト）
-function-indexer report
+npx github:akiramei/function-indexer report
 
 # HTMLレポートを生成
-function-indexer report --format html --output report.html
+npx github:akiramei/function-indexer report --format html --output report.html
 
 # カスタムテンプレートを使用
-function-indexer report --template ./my-template.hbs
+npx github:akiramei/function-indexer report --template ./my-template.hbs
 ```
 
 ### レポート内容
@@ -113,13 +113,13 @@ function-indexer report --template ./my-template.hbs
 
 ```bash
 # CI分析を実行
-function-indexer ci
+npx github:akiramei/function-indexer ci
 
 # PRコメントを生成
-function-indexer ci --comment --base origin/main
+npx github:akiramei/function-indexer ci --comment --base origin/main
 
 # CI系向けのカスタム形式
-function-indexer ci --format github  # または gitlab, json
+npx github:akiramei/function-indexer ci --format github  # または gitlab, json
 ```
 
 ### 終了コード
@@ -150,8 +150,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: npm install -g function-indexer
-      - run: function-indexer ci --format github --comment
+      - run: sudo apt-get update && sudo apt-get install -y build-essential python3-dev
+      - run: npx github:akiramei/function-indexer ci --format github --comment
 ```
 
 ### GitLab CI
@@ -160,8 +160,8 @@ jobs:
 code-quality:
   stage: test
   script:
-    - npm install -g function-indexer
-    - function-indexer ci --format gitlab --output code-quality.json
+    - apt-get update && apt-get install -y build-essential python3-dev
+    - npx github:akiramei/function-indexer ci --format gitlab --output code-quality.json
   artifacts:
     reports:
       codequality: code-quality.json
@@ -174,9 +174,9 @@ code-quality:
 # .husky/pre-commit
 
 # コミット前にコード品質をチェック
-function-indexer ci --fail-on-violation || {
+npx github:akiramei/function-indexer ci --fail-on-violation || {
   echo "❌ コード品質チェックに失敗しました！"
-  echo "'function-indexer metrics --details'を実行して問題を確認してください"
+  echo "'npx github:akiramei/function-indexer metrics --details'を実行して問題を確認してください"
   exit 1
 }
 ```
@@ -198,9 +198,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          npm install -g function-indexer
-          function-indexer
-          function-indexer report --output weekly-report.md
+          sudo apt-get update && sudo apt-get install -y build-essential python3-dev
+          npx github:akiramei/function-indexer
+          npx github:akiramei/function-indexer report --output weekly-report.md
       - uses: actions/create-issue@v2
         with:
           title: 週次コード品質レポート
@@ -233,10 +233,10 @@ jobs:
 
 ```bash
 # フェーズ1: 警告のみ
-function-indexer ci --no-fail-on-violation
+npx github:akiramei/function-indexer ci --no-fail-on-violation
 
 # フェーズ2: 基準を強制
-function-indexer ci --fail-on-violation
+npx github:akiramei/function-indexer ci --fail-on-violation
 ```
 
 ### 3. トレンドに焦点
@@ -245,11 +245,11 @@ diffを使用して改善を追跡：
 
 ```bash
 # PRがコード品質を改善するかチェック
-function-indexer diff $BASE_BRANCH..$HEAD_BRANCH
+npx github:akiramei/function-indexer diff $BASE_BRANCH..$HEAD_BRANCH
 
 # 時間の経過とともにメトリクスを追跡
-function-indexer collect-metrics --pr $PR_NUMBER
-function-indexer analyze-trends
+npx github:akiramei/function-indexer collect-metrics --pr $PR_NUMBER
+npx github:akiramei/function-indexer analyze-trends
 ```
 
 ### 4. コードレビューとの統合
@@ -258,7 +258,7 @@ PRテンプレートに追加：
 
 ```markdown
 ## コード品質チェックリスト
-- [ ] `function-indexer diff main`を実行 - 新しい違反なし
+- [ ] `npx github:akiramei/function-indexer diff main`を実行 - 新しい違反なし
 - [ ] 複雑な関数を文書化
 - [ ] メトリクスがチームしきい値内
 ```
@@ -284,7 +284,7 @@ PRテンプレートに追加：
 - diffのためにフルクローン（shallow以外）を確実に実行
 
 **Q: レポートが空**
-- 最初に`function-indexer`を実行してインデックスを生成
+- 最初に`npx github:akiramei/function-indexer`を実行してインデックスを生成
 - `.function-indexer/index.jsonl`が存在することを確認
 - 設定のファイルパターンを確認
 
