@@ -429,7 +429,7 @@ describe('ci command', () => {
         'ci-results.json',
         expect.stringContaining('"success": false')
       );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Results saved to ci-results.json')
       );
     });
@@ -495,6 +495,85 @@ describe('ci command', () => {
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining('Could not get diff information')
       );
+    });
+  });
+
+  describe('Commander.js workaround edge cases', () => {
+    it('should handle --output flag when it is the last argument', async () => {
+      const originalArgv = process.argv;
+      
+      try {
+        // Simulate the case where --output is the last argument (no value)
+        process.argv = ['node', 'test', 'ci', '--output'];
+        
+        const command = createCICommand();
+        await command.parseAsync(['node', 'test', '--no-fail-on-violation']);
+        
+        // Should not crash and output should remain undefined
+        expect(fs.writeFile).not.toHaveBeenCalled();
+      } finally {
+        process.argv = originalArgv;
+      }
+    });
+
+    it('should not parse another flag as output value', async () => {
+      const originalArgv = process.argv;
+      
+      try {
+        // Simulate the case where another flag follows --output
+        process.argv = ['node', 'test', 'ci', '--output', '--verbose'];
+        
+        const command = createCICommand();
+        await command.parseAsync(['node', 'test', '--no-fail-on-violation']);
+        
+        // Should not use --verbose as the output file
+        expect(fs.writeFile).not.toHaveBeenCalledWith(
+          '--verbose',
+          expect.any(String)
+        );
+      } finally {
+        process.argv = originalArgv;
+      }
+    });
+
+    it('should correctly parse output value when valid', async () => {
+      const originalArgv = process.argv;
+      
+      try {
+        // Simulate proper usage with a valid output file
+        process.argv = ['node', 'test', 'ci', '--output', 'test-output.json'];
+        
+        const command = createCICommand();
+        await command.parseAsync(['node', 'test', '--no-fail-on-violation']);
+        
+        // Should write to the correct file
+        expect(fs.writeFile).toHaveBeenCalledWith(
+          'test-output.json',
+          expect.any(String)
+        );
+      } finally {
+        process.argv = originalArgv;
+      }
+    });
+
+    it('should handle -o short flag with edge cases', async () => {
+      const originalArgv = process.argv;
+      
+      try {
+        // Test with -o followed by another flag
+        process.argv = ['node', 'test', 'ci', '-o', '--format', 'json'];
+        
+        const command = createCICommand();
+        await command.parseAsync(['node', 'test', '--no-fail-on-violation']);
+        
+        // Should not use --format as the output file
+        expect(fs.writeFile).not.toHaveBeenCalledWith(
+          '--format',
+          expect.any(String)
+        );
+      } finally {
+        process.argv = originalArgv;
+      }
     });
   });
 

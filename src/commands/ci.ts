@@ -132,18 +132,27 @@ async function executeCI(options: CIOptions) {
   await withErrorHandling(async () => {
     const startTime = Date.now();
     console.log(chalk.blue('🔄 Running CI analysis...'));
-    
-    // Workaround for Commander.js sub-command option parsing issue
+
+    // Improved workaround for Commander.js sub-command option parsing issue
     // When called through main CLI, options might not include all parsed values
+    // This adds validation to ensure we don't accidentally parse another flag as a value
     if (options.output === undefined && process.argv.includes('--output')) {
       const outputIndex = process.argv.indexOf('--output');
-      if (outputIndex !== -1 && outputIndex + 1 < process.argv.length) {
+      if (
+        outputIndex !== -1 &&
+        outputIndex + 1 < process.argv.length &&
+        !process.argv[outputIndex + 1].startsWith('-')
+      ) {
         options.output = process.argv[outputIndex + 1];
       }
     }
     if (options.output === undefined && process.argv.includes('-o')) {
       const outputIndex = process.argv.indexOf('-o');
-      if (outputIndex !== -1 && outputIndex + 1 < process.argv.length) {
+      if (
+        outputIndex !== -1 &&
+        outputIndex + 1 < process.argv.length &&
+        !process.argv[outputIndex + 1].startsWith('-')
+      ) {
         options.output = process.argv[outputIndex + 1];
       }
     }
@@ -295,18 +304,17 @@ async function executeCI(options: CIOptions) {
     
     if (options.output) {
       try {
-        // When outputting to file with non-JSON format, always write JSON to file
-        // This allows CI workflows to use the JSON data while still getting formatted output on stdout
+        // Strategy: Always write JSON to file for CI consumption, 
+        // while still providing formatted output on stdout when needed
+        // This allows CI workflows to use structured JSON data while still getting formatted annotations
         const fileContent = options.format !== 'json' ? JSON.stringify(result, null, 2) : output;
         await fs.writeFile(options.output, fileContent);
+        console.log(chalk.green(`✅ Results saved to ${options.output}`));
         
         // For non-terminal formats, also output to stdout for CI systems to pick up
         if (options.format !== 'terminal' && options.format !== 'json') {
           console.log(output);
         }
-        
-        // Log success message to stderr to avoid corrupting stdout output
-        console.error(chalk.green(`✅ Results saved to ${options.output}`));
       } catch (error) {
         throw createFileError('write', options.output, error instanceof Error ? error : undefined);
       }
@@ -318,7 +326,7 @@ async function executeCI(options: CIOptions) {
     }
 
     const executionTime = Date.now() - startTime;
-    console.error(chalk.gray(`\nExecution time: ${executionTime}ms`));
+    console.log(chalk.gray(`\nExecution time: ${executionTime}ms`));
 
     // Exit with appropriate code
     if (!result.success && options.failOnViolation) {
