@@ -21,6 +21,9 @@ When asked to "manage code quality using Function Indexer", follow these steps:
 ## Installation & Basic Usage
 
 ```bash
+# Prerequisites (Linux/WSL users only)
+sudo apt update && sudo apt install build-essential python3
+
 # Install globally
 npm install -g github:akiramei/function-indexer
 
@@ -222,6 +225,8 @@ Commands to run:
 # GitHub Actions Example
 - name: Analyze Code Quality
   run: |
+    # Install prerequisites for Linux/Ubuntu runners
+    sudo apt update && sudo apt install build-essential python3
     npm install -g github:akiramei/function-indexer
     function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
     function-indexer ci --format github
@@ -329,6 +334,9 @@ function-indexer search "similar function names or patterns"
 When setting up code quality management for a new project:
 
 ```bash
+# 1. Install prerequisites (Linux/WSL only)
+sudo apt update && sudo apt install build-essential python3
+
 # 1. Install and initialize
 npm install -g github:akiramei/function-indexer
 cd your-project
@@ -353,6 +361,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: npm install -g github:akiramei/function-indexer
+      - run: |
+          sudo apt update && sudo apt install build-essential python3
+          npm install -g github:akiramei/function-indexer
       - run: function-indexer ci --format github' > .github/workflows/code-quality.yml
 ```
