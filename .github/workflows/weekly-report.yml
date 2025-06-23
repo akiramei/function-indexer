@@ -22,17 +22,17 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Install function-indexer globally
-        run: npm install -g function-indexer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3-dev
+          npm ci
 
       - name: Generate function index
-        run: function-indexer --root ./src
+        run: npm run build && node dist/cli.js --root ./src
 
       - name: Generate report
         run: |
-          function-indexer report \
+          node dist/cli.js report \
             --format markdown \
             --output weekly-report.md
 

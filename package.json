@@ -1,5 +1,5 @@
 {
-  "name": "function-indexer",
+  "name": "@akiramei/function-indexer",
   "version": "1.1.0",
   "description": "A modern TypeScript function analyzer that helps you understand and maintain your codebase",
   "main": "dist/index.js",
@@ -55,6 +55,17 @@
   ],
   "author": "Your Name",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akiramei/function-indexer.git"
+  },
+  "homepage": "https://github.com/akiramei/function-indexer",
+  "bugs": {
+    "url": "https://github.com/akiramei/function-indexer/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist/",
     "src/",
