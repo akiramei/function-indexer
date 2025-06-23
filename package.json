@@ -12,7 +12,12 @@
     "start": "node dist/cli.js",
     "test": "jest",
     "postinstall": "npm run build",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "quality": "node dist/cli.js metrics",
+    "quality:detailed": "node dist/cli.js metrics --details",
+    "quality:collect": "node dist/cli.js collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl",
+    "quality:show": "node dist/cli.js show-metrics --list",
+    "quality:trends": "node dist/cli.js analyze-trends"
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",

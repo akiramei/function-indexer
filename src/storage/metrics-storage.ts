@@ -272,6 +272,36 @@ export class MetricsStorage {
   }
 
   /**
+   * 利用可能な関数の一覧を取得
+   */
+  getAvailableFunctions(): Array<{
+    functionId: string;
+    recordCount: number;
+    lastTimestamp: string;
+    latestComplexity: number;
+  }> {
+    const rows = this.db.prepare(`
+      SELECT 
+        function_id,
+        COUNT(*) as record_count,
+        MAX(timestamp) as last_timestamp,
+        (SELECT cyclomatic_complexity FROM function_metrics 
+         WHERE function_id = fm.function_id 
+         ORDER BY timestamp DESC LIMIT 1) as latest_complexity
+      FROM function_metrics fm
+      GROUP BY function_id
+      ORDER BY last_timestamp DESC
+    `).all();
+    
+    return rows.map((row: any) => ({
+      functionId: row.function_id,
+      recordCount: row.record_count,
+      lastTimestamp: row.last_timestamp,
+      latestComplexity: row.latest_complexity
+    }));
+  }
+
+  /**
    * データベースを閉じる
    */
   close(): void {

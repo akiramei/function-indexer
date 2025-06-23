@@ -745,10 +745,11 @@ program
   .command('collect-metrics')
   .description('Collect code metrics for commit/PR tracking')
   .option('-r, --root <path>', 'root directory to scan', './src')
+  .option('--metrics-output <file>', 'output JSONL file for metrics history')
   .option('--pr <number>', 'PR number for this metrics collection')
   .option('--commit <hash>', 'specific commit hash (defaults to current HEAD)')
   .option('--branch <name>', 'branch name (defaults to current branch)')
-  .option('-v, --verbose', 'verbose output', false)
+  .option('--verbose-metrics', 'verbose output for metrics collection')
   .action(async (options) => {
     try {
       console.log(chalk.blue('📊 Collecting function metrics...'));
@@ -765,10 +766,18 @@ program
         prNumber: options.pr ? parseInt(options.pr) : undefined,
         commitHash: options.commit,
         branchName: options.branch,
-        verbose: options.verbose
+        verbose: options.verboseMetrics,
+        outputFile: options.metricsOutput
       });
 
       console.log(chalk.green('✅ Metrics collection completed!'));
+      
+      if (options.metricsOutput) {
+        console.log(chalk.cyan(`📄 Metrics history saved to: ${options.metricsOutput}`));
+      } else {
+        console.log(chalk.cyan('📄 Metrics stored in SQLite database'));
+      }
+      
       metricsService.close();
     } catch (error) {
       console.error(chalk.red('❌ Metrics collection error:'), error instanceof Error ? error.message : String(error));
@@ -777,30 +786,59 @@ program
   });
 
 program
-  .command('show-metrics <functionId>')
-  .description('Show metrics history for a specific function')
+  .command('show-metrics [functionId]')
+  .description('Show metrics history for a specific function (or list available functions)')
   .option('-l, --limit <number>', 'limit number of history entries', '10')
+  .option('--list', 'list all functions with metrics data')
   .action(async (functionId, options) => {
     try {
-      console.log(chalk.blue(`📈 Metrics history for: ${functionId}`));
-      
       const metricsService = new MetricsService();
-      const history = metricsService.showFunctionMetrics(functionId, parseInt(options.limit));
       
-      if (history.length === 0) {
-        console.log(chalk.yellow('No metrics history found for this function'));
-      } else {
-        console.log(chalk.green(`Found ${history.length} metric entries:\n`));
+      if (!functionId || options.list) {
+        // 利用可能な関数の一覧を表示
+        console.log(chalk.blue('📊 Available functions with metrics data:\n'));
         
-        history.forEach((metric, index) => {
-          const date = new Date(metric.timestamp).toLocaleString();
-          console.log(chalk.cyan(`${index + 1}. ${date} (${metric.commitHash.substring(0, 8)})`));
-          console.log(chalk.gray(`   Branch: ${metric.branchName} | Change: ${metric.changeType}`));
-          if (metric.prNumber) console.log(chalk.gray(`   PR: #${metric.prNumber}`));
-          console.log(chalk.gray(`   Cyclomatic: ${metric.cyclomaticComplexity} | Cognitive: ${metric.cognitiveComplexity}`));
-          console.log(chalk.gray(`   LOC: ${metric.linesOfCode} | Nesting: ${metric.nestingDepth} | Params: ${metric.parameterCount}`));
-          console.log();
-        });
+        const availableFunctions = metricsService.listAvailableFunctions();
+        
+        if (availableFunctions.length === 0) {
+          console.log(chalk.yellow('No metrics data found'));
+          console.log(chalk.gray('💡 Run `function-indexer collect-metrics` first to collect data'));
+        } else {
+          console.log(chalk.green(`Found ${availableFunctions.length} functions with metrics:\n`));
+          
+          availableFunctions.forEach((func, index) => {
+            console.log(chalk.cyan(`${index + 1}. ${func.functionId}`));
+            console.log(chalk.gray(`   Last updated: ${new Date(func.lastTimestamp).toLocaleString()}`));
+            console.log(chalk.gray(`   Records: ${func.recordCount} | Latest complexity: ${func.latestComplexity}`));
+            console.log();
+          });
+          
+          console.log(chalk.blue('💡 Usage:'));
+          console.log(chalk.gray('   function-indexer show-metrics "src/file.ts:functionName"'));
+        }
+      } else {
+        // 特定の関数のメトリクス履歴を表示
+        console.log(chalk.blue(`📈 Metrics history for: ${functionId}`));
+        
+        const history = metricsService.showFunctionMetrics(functionId, parseInt(options.limit));
+        
+        if (history.length === 0) {
+          console.log(chalk.yellow('No metrics history found for this function'));
+          console.log(chalk.gray('💡 Make sure the function ID is correct'));
+          console.log(chalk.gray('💡 Run `function-indexer show-metrics --list` to see available functions'));
+        } else {
+          console.log(chalk.green(`Found ${history.length} metric entries:\n`));
+          
+          history.forEach((metric, index) => {
+            const date = new Date(metric.timestamp).toLocaleString();
+            console.log(chalk.cyan(`${index + 1}. ${date} (${metric.commitHash.substring(0, 8)})`));
+            console.log(chalk.gray(`   Branch: ${metric.branchName} | Change: ${metric.changeType}`));
+            if (metric.prNumber) console.log(chalk.gray(`   PR: #${metric.prNumber}`));
+            console.log(chalk.gray(`   Cyclomatic: ${metric.cyclomaticComplexity} | Cognitive: ${metric.cognitiveComplexity}`));
+            console.log(chalk.gray(`   LOC: ${metric.linesOfCode} | Nesting: ${metric.nestingDepth} | Params: ${metric.parameterCount}`));
+            console.log();
+          });
+        }
       }
       
       metricsService.close();

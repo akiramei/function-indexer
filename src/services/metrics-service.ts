@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
+import * as fs from 'fs';
 import { FunctionIndexer } from '../indexer';
 import { MetricsStorage } from '../storage/metrics-storage';
 import { FunctionMetricsHistory, MetricsCollectionOptions, MetricsThresholds, MetricsAnalysisResult, IndexerOptions } from '../types';
@@ -81,6 +82,14 @@ export class MetricsService {
     // データベースに保存
     this.storage.saveMetrics(metricsHistory);
     
+    // JSONLファイルの出力（オプション）
+    if (options.outputFile) {
+      if (options.verbose) {
+        console.log(`Saving metrics to JSONL file: ${options.outputFile}`);
+      }
+      await this.saveMetricsToJsonl(metricsHistory, options.outputFile);
+    }
+    
     if (options.verbose) {
       console.log(`Saved metrics for ${metricsHistory.length} functions`);
     }
@@ -91,6 +100,18 @@ export class MetricsService {
    */
   showFunctionMetrics(functionId: string, limit?: number): FunctionMetricsHistory[] {
     return this.storage.getMetricsHistory(functionId, limit);
+  }
+
+  /**
+   * 利用可能な関数の一覧を取得
+   */
+  listAvailableFunctions(): Array<{
+    functionId: string;
+    recordCount: number;
+    lastTimestamp: string;
+    latestComplexity: number;
+  }> {
+    return this.storage.getAvailableFunctions();
   }
 
   /**
@@ -176,6 +197,45 @@ export class MetricsService {
       Math.abs(currentMetrics.nestingDepth - previous.nestingDepth) > 1;
     
     return significantChange ? 'refactored' : 'modified';
+  }
+
+  /**
+   * メトリクス履歴をJSONLファイルに保存
+   */
+  private async saveMetricsToJsonl(metricsHistory: FunctionMetricsHistory[], outputFile: string): Promise<void> {
+    try {
+      // ディレクトリが存在しない場合は作成
+      const outputDir = path.dirname(outputFile);
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+
+      // 既存のファイルがあれば読み込み
+      let existingMetrics: FunctionMetricsHistory[] = [];
+      if (fs.existsSync(outputFile)) {
+        const content = fs.readFileSync(outputFile, 'utf-8');
+        existingMetrics = content
+          .trim()
+          .split('\n')
+          .filter(line => line)
+          .map(line => JSON.parse(line));
+      }
+
+      // 新しいメトリクスを追加
+      const allMetrics = [...existingMetrics, ...metricsHistory];
+      
+      // commitHashでソート（最新が最後になるように）
+      allMetrics.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+      // JSONLファイルに書き出し
+      const jsonlContent = allMetrics
+        .map(metric => JSON.stringify(metric))
+        .join('\n');
+      
+      fs.writeFileSync(outputFile, jsonlContent);
+    } catch (error) {
+      throw new Error(`Failed to save metrics to JSONL file: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   /**

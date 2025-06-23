@@ -123,23 +123,43 @@ Functions Above Threshold: 8
 ```bash
 npx github:akiramei/function-indexer collect-metrics --root <path> [options]
 ```
-**Purpose**: Store metrics in SQLite database for trend analysis
+**Purpose**: Store metrics in SQLite database for trend analysis (optionally export to JSONL)
 **Options**:
+- `--metrics-output <file>`: Output JSONL file for metrics history (optional)
+- `--verbose-metrics`: Verbose output for metrics collection
 - `--pr`: Associate with PR number
 - `--branch`: Git branch name
 - `--commit`: Specific commit hash
 
+**Examples**:
+```bash
+# Store in database only
+npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123
+
+# Store in database AND export to JSONL file
+npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl
+
+# With verbose output
+npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl --verbose-metrics
+```
+
 ### 5. `show-metrics` - View Function History
 ```bash
-npx github:akiramei/function-indexer show-metrics <function-path>
+npx github:akiramei/function-indexer show-metrics [function-path]
 ```
-**Purpose**: Display metric history for specific function
+**Purpose**: Display metric history for specific function or list all available functions
 **Format**: "file:functionName" or "file:className.methodName"
 **Options**:
 - `--limit, -l`: Limit number of history entries (default: 10)
+- `--list`: List all functions with metrics data
 
-**Example**:
+**Examples**:
 ```bash
+# List all functions with metrics data
+npx github:akiramei/function-indexer show-metrics
+npx github:akiramei/function-indexer show-metrics --list
+
+# Show history for specific function
 npx github:akiramei/function-indexer show-metrics "src/auth.ts:validateToken"
 ```
 
@@ -197,9 +217,13 @@ Commands to run:
 Before merging PR #123, analyze the code quality impact:
 
 Commands to run:
-1. npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123
+1. npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
 2. npx github:akiramei/function-indexer pr-metrics 123
 3. npx github:akiramei/function-indexer analyze-trends
+
+Or using npm scripts (if configured):
+1. npm run quality:collect
+2. npm run quality:trends
 ```
 
 ### Task 3: Find Similar Functions
@@ -347,8 +371,17 @@ npx github:akiramei/function-indexer collect-metrics --pr $PR_NUMBER
 # 4. Add to package.json scripts (optional)
 npm pkg set scripts.quality="npx github:akiramei/function-indexer metrics"
 npm pkg set scripts.quality:detailed="npx github:akiramei/function-indexer metrics --details"
+npm pkg set scripts.quality:collect="npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl"
+npm pkg set scripts.quality:show="npx github:akiramei/function-indexer show-metrics --list"
+npm pkg set scripts.quality:trends="npx github:akiramei/function-indexer analyze-trends"
 
-# 5. Create GitHub Action (save as .github/workflows/code-quality.yml)
+# 5. Use the quality scripts
+npm run quality          # Show code quality overview
+npm run quality:collect  # Collect metrics to .quality/metrics-history.jsonl
+npm run quality:show     # List all functions with metrics data
+npm run quality:trends   # Analyze trends and violations
+
+# 6. Create GitHub Action (save as .github/workflows/code-quality.yml)
 echo 'name: Code Quality Check
 on: [push, pull_request]
 jobs:

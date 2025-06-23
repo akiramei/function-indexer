@@ -100,6 +100,7 @@ export interface MetricsCollectionOptions {
   commitHash?: string;
   branchName?: string;
   verbose?: boolean;
+  outputFile?: string;
 }
 
 export interface MetricsThresholds {
