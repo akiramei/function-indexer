@@ -163,11 +163,11 @@ npx github:akiramei/function-indexer show-metrics --list
 npx github:akiramei/function-indexer show-metrics "src/auth.ts:validateToken"
 ```
 
-### 6. `diff` - Compare Functions Between Branches
+### 6. `diff` - Compare Functions Between Branches/Commits
 ```bash
 npx github:akiramei/function-indexer diff [base] [target]
 ```
-**Purpose**: Compare functions between Git branches or commits
+**Purpose**: Compare functions between Git branches or commits - **Perfect for Phase Management**
 **Arguments**:
 - `base`: Base branch or commit (default: main)
 - `target`: Target branch or commit (default: HEAD)
@@ -175,23 +175,96 @@ npx github:akiramei/function-indexer diff [base] [target]
 - `--root, -r`: Project root directory
 - `--output, -o`: Output file path
 - `--format, -f`: Output format (terminal, markdown, json)
-- `--thresholds`: Custom complexity thresholds as JSON
+- `--thresholds <json>`: Custom complexity thresholds as JSON
 
-### 7. `report` - Generate Comprehensive Reports
+**Examples**:
+```bash
+# Compare phase 1 vs phase 2 (using commit hashes)
+npx github:akiramei/function-indexer diff abc123f def456g --format markdown --output phase-comparison.md
+
+# Compare current branch with main
+npx github:akiramei/function-indexer diff main HEAD --format json
+
+# Compare with custom thresholds
+npx github:akiramei/function-indexer diff main HEAD --thresholds '{"cyclomaticComplexity":15,"linesOfCode":50}'
+```
+
+**Output includes**:
+- Added, modified, removed functions
+- Quality metric changes (complexity increases/decreases)  
+- Functions exceeding thresholds
+- Summary statistics
+
+### 7. `report` - Generate Comprehensive Code Quality Reports
 ```bash
 npx github:akiramei/function-indexer report [options]
 ```
-**Purpose**: Generate detailed code quality reports
+**Purpose**: Generate detailed, shareable code quality reports for stakeholders
 **Options**:
-- Various formatting and output options
+- `--template, -t <path>`: Custom Handlebars template path
+- `--output, -o <path>`: Output file path (default: stdout)
+- `--format, -f <format>`: Output format (markdown, html, json) (default: markdown)
+- `--thresholds <json>`: Custom complexity thresholds as JSON
+
+**Examples**:
+```bash
+# Generate Markdown report for phase review
+npx github:akiramei/function-indexer report --format markdown --output phase2-quality-report.md
+
+# Generate HTML report for management
+npx github:akiramei/function-indexer report --format html --output quality-dashboard.html
+
+# Generate JSON data for further analysis
+npx github:akiramei/function-indexer report --format json --output metrics-data.json
+
+# Custom thresholds for enterprise standards
+npx github:akiramei/function-indexer report --thresholds '{"cyclomaticComplexity":8,"cognitiveComplexity":12}'
+```
+
+**Report includes**:
+- Overall quality metrics summary
+- Functions exceeding complexity thresholds
+- Quality distribution charts (in HTML format)
+- Recommendations for improvement
+- File-by-file breakdown
 
 ### 8. `ci` - CI/CD Pipeline Integration
 ```bash
 npx github:akiramei/function-indexer ci [options]
 ```
-**Purpose**: Run analysis optimized for CI/CD pipelines
+**Purpose**: Run automated quality analysis in CI/CD pipelines with PR integration
 **Options**:
-- `--format`: Output format (github, json, etc.)
+- `--root, -r <path>`: Project root directory
+- `--base, -b <branch>`: Base branch for comparison
+- `--output, -o <path>`: Output file for results
+- `--format, -f <format>`: Output format (terminal, github, gitlab, json)
+- `--thresholds <json>`: Custom complexity thresholds as JSON
+- `--fail-on-violation`: Exit with error code if violations found
+- `--no-fail-on-violation`: Do not exit with error code if violations found
+- `--comment`: Generate PR comment (for GitHub/GitLab)
+- `--verbose, -v`: Enable verbose output
+
+**Examples**:
+```bash
+# GitHub Actions integration
+npx github:akiramei/function-indexer ci --format github --base main --fail-on-violation
+
+# GitLab CI with PR comments
+npx github:akiramei/function-indexer ci --format gitlab --comment --base main
+
+# Custom quality gates
+npx github:akiramei/function-indexer ci --thresholds '{"cyclomaticComplexity":10}' --fail-on-violation
+
+# JSON output for custom processing
+npx github:akiramei/function-indexer ci --format json --output ci-results.json
+```
+
+**Features**:
+- Automatic base branch detection
+- Quality gate enforcement (fail builds on violations)
+- PR comment generation with quality summary
+- Multiple CI platform support (GitHub, GitLab)
+- Integration with existing quality thresholds
 
 ### 9. Additional Commands
 - `npx github:akiramei/function-indexer analyze-trends`: Analyze metrics trends and violations
@@ -200,6 +273,55 @@ npx github:akiramei/function-indexer ci [options]
 - `npx github:akiramei/function-indexer validate <index>`: Validate index integrity
 - `npx github:akiramei/function-indexer backup <index>`: Create backup of index
 - `npx github:akiramei/function-indexer restore <backupId>`: Restore from backup
+
+## Phase Management Workflow
+
+Function Indexer is designed for **phase-based development quality management**. Here's how to track quality across development phases:
+
+### Phase Setup and Baseline Collection
+```bash
+# Phase 1 completion - establish baseline
+git tag phase-1-complete
+npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/phase1-metrics.jsonl
+npx github:akiramei/function-indexer report --format html --output .quality/phase1-quality-report.html
+```
+
+### Phase Transition and Comparison  
+```bash
+# Phase 2 completion - collect new metrics
+git tag phase-2-complete
+npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/phase2-metrics.jsonl
+
+# Compare phases directly using commits/tags
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output .quality/phase1-vs-phase2-comparison.md
+
+# Generate comprehensive phase 2 report
+npx github:akiramei/function-indexer report --format html --output .quality/phase2-quality-report.html
+```
+
+### Identifying Quality Changes
+```bash
+# Find functions with significant changes
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format json | jq '.modified[] | select(.metrics.cyclomaticComplexity.change > 5)'
+
+# Current violations analysis
+npx github:akiramei/function-indexer analyze-trends
+
+# Specific function history across phases
+npx github:akiramei/function-indexer show-metrics "src/core/processor.ts:processData" --limit 10
+```
+
+### Management Reporting
+```bash
+# Executive summary report (HTML with charts)
+npx github:akiramei/function-indexer report --format html --output executive-quality-summary.html
+
+# Technical team report (detailed Markdown)
+npx github:akiramei/function-indexer report --format markdown --output technical-quality-details.md
+
+# Data export for external tools
+npx github:akiramei/function-indexer report --format json --output quality-metrics.json
+```
 
 ## AI Task Templates
 
@@ -212,21 +334,36 @@ Commands to run:
 2. npx github:akiramei/function-indexer metrics --details
 ```
 
-### Task 2: Analyze Code Quality Before PR
+### Task 2: Phase Quality Comparison Analysis
+```
+Compare quality changes between development phases to identify areas of concern:
+
+Commands to run:
+1. npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output phase-comparison.md
+2. npx github:akiramei/function-indexer analyze-trends
+3. npx github:akiramei/function-indexer report --format html --output current-quality-dashboard.html
+
+Expected outputs:
+- Markdown comparison showing function-level changes
+- List of functions exceeding quality thresholds  
+- HTML dashboard for stakeholder presentation
+```
+
+### Task 3: PR Quality Gate Analysis
 ```
 Before merging PR #123, analyze the code quality impact:
 
 Commands to run:
-1. npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
-2. npx github:akiramei/function-indexer pr-metrics 123
-3. npx github:akiramei/function-indexer analyze-trends
+1. npx github:akiramei/function-indexer ci --base main --format github --fail-on-violation
+2. npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
+3. npx github:akiramei/function-indexer pr-metrics 123
 
 Or using npm scripts (if configured):
 1. npm run quality:collect
 2. npm run quality:trends
 ```
 
-### Task 3: Find Similar Functions
+### Task 4: Find Similar Functions
 ```
 Find all functions that handle database operations:
 
@@ -235,7 +372,7 @@ Commands to run:
 2. npx github:akiramei/function-indexer search "database" --context "async operations"
 ```
 
-### Task 4: Monitor Function Growth
+### Task 5: Monitor Function Growth
 ```
 Track how a specific function has grown over time:
 
@@ -332,11 +469,15 @@ npx github:akiramei/function-indexer search "similar function names or patterns"
 ## Quick Decision Guide
 
 - **Need to find a function?** → Use `search` command
-- **Want quality overview?** → Use `metrics` command
+- **Want quality overview?** → Use `metrics` command  
+- **Comparing phases/branches?** → Use `diff` command
+- **Need comprehensive reports?** → Use `report` command
 - **Building automation?** → Use main command + parse JSONL
-- **Tracking trends?** → Use `collect-metrics` + `analyze-trends`
-- **Reviewing code?** → Use `metrics --details` or `diff` command
+- **Tracking trends over time?** → Use `collect-metrics` + `analyze-trends`
+- **Reviewing code changes?** → Use `metrics --details` or `diff` command
 - **CI/CD integration?** → Use `ci` command
+- **Management reporting?** → Use `report --format html`
+- **Phase management?** → Use `diff` + `collect-metrics` + `report`
 
 ## Error Handling
 
@@ -352,6 +493,33 @@ npx github:akiramei/function-indexer search "similar function names or patterns"
 3. Combine multiple metrics for better insights
 4. Store JSONL output for advanced processing
 5. Use `--verbose` when debugging issues
+
+## Zero-Shot AI Assistant Guide
+
+When an AI assistant is asked to help with code quality management using Function Indexer, follow these patterns:
+
+### For Phase-Based Quality Management:
+1. **Establish Baseline**: `collect-metrics` + `report`
+2. **Compare Phases**: `diff [phase1-commit] [phase2-commit]`
+3. **Generate Reports**: `report --format html`
+4. **Track Changes**: `show-metrics` for specific functions
+
+### For PR/MR Quality Gates:
+1. **Quality Check**: `ci --base main --fail-on-violation`
+2. **Detailed Analysis**: `diff main HEAD --format markdown`
+3. **Collect Data**: `collect-metrics --pr [number]`
+
+### For General Quality Analysis:
+1. **Overview**: `metrics` or `metrics --details`
+2. **Find Issues**: `analyze-trends`
+3. **Search Functions**: `search [query] --context [context]`
+4. **Export Data**: `report --format json`
+
+### Key Commands by Use Case:
+- **Executive Reporting**: `report --format html`
+- **Technical Analysis**: `diff` + `metrics --details`
+- **CI/CD Integration**: `ci --format github`
+- **Historical Tracking**: `collect-metrics` + `show-metrics`
 
 ## Quick Setup for New Projects
 

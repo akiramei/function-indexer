@@ -148,3 +148,7 @@ dist
 
 # AI tools state
 ai-state/
+
+# Quality metrics (generated at runtime)
+.function-metrics/
+.quality/

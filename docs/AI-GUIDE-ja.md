@@ -32,7 +32,7 @@ npx github:akiramei/function-indexer
 npx github:akiramei/function-indexer --root ./src --output functions.jsonl
 
 # PRのメトリクスを収集
-npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123
+npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
 ```
 
 ## コマンドリファレンス
@@ -120,31 +120,51 @@ npx github:akiramei/function-indexer metrics [options]
 ```bash
 npx github:akiramei/function-indexer collect-metrics --root <path> [options]
 ```
-**目的**: SQLiteデータベースにメトリクスを保存しトレンド分析
+**目的**: SQLiteデータベースにメトリクスを保存しトレンド分析（オプションでJSONLエクスポート）
 **オプション**:
+- `--metrics-output <file>`: メトリクス履歴用JSONLファイル出力（オプション）
+- `--verbose-metrics`: メトリクス収集の詳細出力
 - `--pr`: PR番号と関連付け
 - `--branch`: Gitブランチ名
 - `--commit`: 特定のコミットハッシュ
 
+**使用例**:
+```bash
+# データベースのみに保存
+npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123
+
+# データベースとJSONLファイルの両方に保存
+npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl
+
+# 詳細出力付き
+npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl --verbose-metrics
+```
+
 ### 5. `show-metrics` - 関数履歴表示
 ```bash
-npx github:akiramei/function-indexer show-metrics <function-path>
+npx github:akiramei/function-indexer show-metrics [function-path]
 ```
-**目的**: 特定関数のメトリクス履歴を表示
+**目的**: 特定関数のメトリクス履歴を表示または利用可能な関数を一覧表示
 **形式**: "file:functionName" または "file:className.methodName"
 **オプション**:
 - `--limit, -l`: 履歴エントリ数の制限（デフォルト: 10）
+- `--list`: メトリクスデータを持つ全関数をリスト表示
 
-**例**:
+**使用例**:
 ```bash
+# メトリクスデータを持つ全関数をリスト表示
+npx github:akiramei/function-indexer show-metrics
+npx github:akiramei/function-indexer show-metrics --list
+
+# 特定関数の履歴表示
 npx github:akiramei/function-indexer show-metrics "src/auth.ts:validateToken"
 ```
 
-### 6. `diff` - ブランチ間の関数比較
+### 6. `diff` - ブランチ/コミット間の関数比較
 ```bash
 npx github:akiramei/function-indexer diff [base] [target]
 ```
-**目的**: Gitブランチまたはコミット間で関数を比較
+**目的**: Gitブランチまたはコミット間で関数を比較 - **フェーズ管理に最適**
 **引数**:
 - `base`: ベースブランチまたはコミット（デフォルト: main）
 - `target`: ターゲットブランチまたはコミット（デフォルト: HEAD）
@@ -152,20 +172,96 @@ npx github:akiramei/function-indexer diff [base] [target]
 - `--root, -r`: プロジェクトルートディレクトリ
 - `--output, -o`: 出力ファイルパス
 - `--format, -f`: 出力形式（terminal, markdown, json）
+- `--thresholds <json>`: カスタム複雑度閾値をJSON形式で指定
 
-### 7. `report` - 包括的レポート生成
+**使用例**:
+```bash
+# フェーズ1 vs フェーズ2の比較（コミットハッシュ使用）
+npx github:akiramei/function-indexer diff abc123f def456g --format markdown --output phase-comparison.md
+
+# 現在のブランチとmainブランチの比較
+npx github:akiramei/function-indexer diff main HEAD --format json
+
+# カスタム閾値での比較
+npx github:akiramei/function-indexer diff main HEAD --thresholds '{"cyclomaticComplexity":15,"linesOfCode":50}'
+```
+
+**出力内容**:
+- 追加、変更、削除された関数
+- 品質メトリクスの変化（複雑度の増減など）
+- 閾値を超えた関数
+- 要約統計
+
+### 7. `report` - 包括的コード品質レポート生成
 ```bash
 npx github:akiramei/function-indexer report [options]
 ```
-**目的**: 詳細なコード品質レポートを生成
+**目的**: ステークホルダー向けの詳細で共有可能なコード品質レポートを生成
+**オプション**:
+- `--template, -t <path>`: カスタムHandlebarsテンプレートパス
+- `--output, -o <path>`: 出力ファイルパス（デフォルト: 標準出力）
+- `--format, -f <format>`: 出力形式（markdown, html, json）（デフォルト: markdown）
+- `--thresholds <json>`: カスタム複雑度閾値をJSON形式で指定
+
+**使用例**:
+```bash
+# フェーズレビュー用Markdownレポート生成
+npx github:akiramei/function-indexer report --format markdown --output phase2-quality-report.md
+
+# 管理層向けHTMLレポート生成
+npx github:akiramei/function-indexer report --format html --output quality-dashboard.html
+
+# 更なる分析用JSONデータ生成
+npx github:akiramei/function-indexer report --format json --output metrics-data.json
+
+# 企業標準向けカスタム閾値
+npx github:akiramei/function-indexer report --thresholds '{"cyclomaticComplexity":8,"cognitiveComplexity":12}'
+```
+
+**レポート内容**:
+- 全体的な品質メトリクス概要
+- 複雑度閾値を超えた関数
+- 品質分布チャート（HTML形式）
+- 改善提案
+- ファイル別詳細分析
 
 ### 8. `ci` - CI/CDパイプライン統合
 ```bash
 npx github:akiramei/function-indexer ci [options]
 ```
-**目的**: CI/CDパイプラインに最適化された分析を実行
+**目的**: PR統合機能を備えたCI/CDパイプライン向け自動品質分析
 **オプション**:
-- `--format`: 出力形式（github, jsonなど）
+- `--root, -r <path>`: プロジェクトルートディレクトリ
+- `--base, -b <branch>`: 比較用ベースブランチ
+- `--output, -o <path>`: 結果出力ファイル
+- `--format, -f <format>`: 出力形式（terminal, github, gitlab, json）
+- `--thresholds <json>`: カスタム複雑度閾値をJSON形式で指定
+- `--fail-on-violation`: 違反検出時にエラーコードで終了
+- `--no-fail-on-violation`: 違反検出時もエラーコードで終了しない
+- `--comment`: PR/MRコメント生成（GitHub/GitLab用）
+- `--verbose, -v`: 詳細出力を有効化
+
+**使用例**:
+```bash
+# GitHub Actions統合
+npx github:akiramei/function-indexer ci --format github --base main --fail-on-violation
+
+# PRコメント付きGitLab CI
+npx github:akiramei/function-indexer ci --format gitlab --comment --base main
+
+# カスタム品質ゲート
+npx github:akiramei/function-indexer ci --thresholds '{"cyclomaticComplexity":10}' --fail-on-violation
+
+# カスタム処理用JSON出力
+npx github:akiramei/function-indexer ci --format json --output ci-results.json
+```
+
+**機能**:
+- 自動ベースブランチ検出
+- 品質ゲート強制（違反時のビルド失敗）
+- 品質概要付きPR/MRコメント生成
+- 複数CIプラットフォーム対応（GitHub, GitLab）
+- 既存品質閾値との統合
 
 ### 9. その他のコマンド
 - `analyze-trends`: メトリクストレンドと違反の分析
@@ -174,6 +270,55 @@ npx github:akiramei/function-indexer ci [options]
 - `validate <index>`: インデックスの整合性検証
 - `backup <index>`: インデックスのバックアップ作成
 - `restore <backupId>`: バックアップから復元
+
+## フェーズ管理ワークフロー
+
+Function Indexerは**フェーズベース開発における品質管理**のために設計されています。開発フェーズ間での品質追跡方法は以下の通りです：
+
+### フェーズセットアップとベースライン収集
+```bash
+# フェーズ1完了時 - ベースライン確立
+git tag phase-1-complete
+npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/phase1-metrics.jsonl
+npx github:akiramei/function-indexer report --format html --output .quality/phase1-quality-report.html
+```
+
+### フェーズ移行と比較
+```bash
+# フェーズ2完了時 - 新しいメトリクス収集
+git tag phase-2-complete
+npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/phase2-metrics.jsonl
+
+# コミット/タグを使用したフェーズの直接比較
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output .quality/phase1-vs-phase2-comparison.md
+
+# 包括的なフェーズ2レポート生成
+npx github:akiramei/function-indexer report --format html --output .quality/phase2-quality-report.html
+```
+
+### 品質変化の特定
+```bash
+# 大幅な変化のある関数を検索
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format json | jq '.modified[] | select(.metrics.cyclomaticComplexity.change > 5)'
+
+# 現在の違反分析
+npx github:akiramei/function-indexer analyze-trends
+
+# フェーズ間での特定関数の履歴
+npx github:akiramei/function-indexer show-metrics "src/core/processor.ts:processData" --limit 10
+```
+
+### 管理レポート作成
+```bash
+# エグゼクティブサマリーレポート（チャート付きHTML）
+npx github:akiramei/function-indexer report --format html --output executive-quality-summary.html
+
+# 技術チーム向けレポート（詳細Markdown）
+npx github:akiramei/function-indexer report --format markdown --output technical-quality-details.md
+
+# 外部ツール向けデータエクスポート
+npx github:akiramei/function-indexer report --format json --output quality-metrics.json
+```
 
 ## AIタスクテンプレート
 
@@ -186,18 +331,36 @@ function-indexerを使用して、src/ディレクトリ内の循環的複雑度
 2. npx github:akiramei/function-indexer metrics --details
 ```
 
-### タスク2: PR前のコード品質分析
+### タスク2: フェーズ品質比較分析
+```
+開発フェーズ間の品質変化を比較して、懸念すべき領域を特定してください：
+
+実行コマンド:
+1. npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output phase-comparison.md
+2. npx github:akiramei/function-indexer analyze-trends
+3. npx github:akiramei/function-indexer report --format html --output current-quality-dashboard.html
+
+期待される出力:
+- 関数レベルでの変更を示すMarkdown比較レポート
+- 品質閾値を超えた関数リスト
+- ステークホルダー向けHTMLダッシュボード
+```
+
+### タスク3: PR品質ゲート分析
 ```
 PR #123をマージする前に、コード品質への影響を分析してください：
 
 実行コマンド:
-1. npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123
-2. npx github:akiramei/function-indexer pr-metrics 123
-3. npx github:akiramei/function-indexer analyze-trends
-3. npx github:akiramei/function-indexer analyze-trends --days 30
+1. npx github:akiramei/function-indexer ci --base main --format github --fail-on-violation
+2. npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
+3. npx github:akiramei/function-indexer pr-metrics 123
+
+または、設定済みのnpmスクリプトを使用:
+1. npm run quality:collect
+2. npm run quality:trends
 ```
 
-### タスク3: 類似関数の検索
+### タスク4: 類似関数の検索
 ```
 データベース操作を処理する関数を見つけてください：
 
@@ -206,7 +369,7 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 2. npx github:akiramei/function-indexer search "database" --context "非同期操作"
 ```
 
-### タスク4: 関数の成長監視
+### タスク5: 関数の成長監視
 ```
 特定の関数が時間とともにどのように成長したかを追跡してください：
 
@@ -300,9 +463,14 @@ npx github:akiramei/function-indexer search "類似した関数名やパター�
 
 - **関数を見つけたい？** → `search`コマンド使用
 - **品質の概要が欲しい？** → `metrics`コマンド使用
-- **自動化を構築？** → `index`コマンド + JSONL解析
-- **トレンド追跡？** → `collect-metrics` + `analyze-trends`使用
-- **コードレビュー？** → `metrics --threshold`使用
+- **フェーズ/ブランチ比較？** → `diff`コマンド使用
+- **包括的レポートが必要？** → `report`コマンド使用
+- **自動化を構築？** → メインコマンド + JSONL解析
+- **時系列トレンド追跡？** → `collect-metrics` + `analyze-trends`使用
+- **コード変更レビュー？** → `metrics --details`または`diff`コマンド使用
+- **CI/CD統合？** → `ci`コマンド使用
+- **管理レポート作成？** → `report --format html`使用
+- **フェーズ管理？** → `diff` + `collect-metrics` + `report`使用
 
 ## エラー処理
 
@@ -318,6 +486,33 @@ npx github:akiramei/function-indexer search "類似した関数名やパター�
 3. 複数のメトリクスを組み合わせてより良い洞察を得る
 4. 高度な処理のためにJSONL出力を保存
 5. デバッグ時は`--verbose`を使用
+
+## ゼロショットAIアシスタント向けガイド
+
+AIアシスタントがFunction Indexerを使用したコード品質管理の支援を求められた場合、以下のパターンに従ってください：
+
+### フェーズベース品質管理の場合:
+1. **ベースライン確立**: `collect-metrics` + `report`
+2. **フェーズ比較**: `diff [phase1-commit] [phase2-commit]`
+3. **レポート生成**: `report --format html`
+4. **変更追跡**: 特定関数に対する`show-metrics`
+
+### PR/MR品質ゲートの場合:
+1. **品質チェック**: `ci --base main --fail-on-violation`
+2. **詳細分析**: `diff main HEAD --format markdown`
+3. **データ収集**: `collect-metrics --pr [number]`
+
+### 一般的な品質分析の場合:
+1. **概要**: `metrics`または`metrics --details`
+2. **問題発見**: `analyze-trends`
+3. **関数検索**: `search [query] --context [context]`
+4. **データエクスポート**: `report --format json`
+
+### 用途別主要コマンド:
+- **エグゼクティブレポート**: `report --format html`
+- **技術分析**: `diff` + `metrics --details`
+- **CI/CD統合**: `ci --format github`
+- **履歴追跡**: `collect-metrics` + `show-metrics`
 
 ## 新規プロジェクトのクイックセットアップ
 
