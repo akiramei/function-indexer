@@ -38,7 +38,7 @@ npm install --save-dev @akiramei/function-indexer
 npx function-indexer
 
 # Alternative: GitHub direct install (development version)
-npx @akiramei/function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ## Command Reference
@@ -387,13 +387,22 @@ Commands to run:
 
 ### CI/CD Pipeline Integration
 ```yaml
-# GitHub Actions Example
+# GitHub Actions Example (using npm package)
 - name: Analyze Code Quality
   run: |
     # Install prerequisites for Linux/Ubuntu runners
     sudo apt update && sudo apt install build-essential python3
     npx @akiramei/function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
     npx @akiramei/function-indexer ci --format github
+
+# Alternative: GitHub Actions with local build
+- name: Analyze Code Quality
+  run: |
+    sudo apt update && sudo apt install build-essential python3
+    npm ci
+    npm run build
+    node dist/cli.js collect-metrics --root ./src --pr ${{ github.event.number }}
+    node dist/cli.js ci --format github
 ```
 
 ### Pre-commit Hook
@@ -610,5 +619,6 @@ jobs:
       - uses: actions/setup-node@v3
       - run: |
           sudo apt update && sudo apt install build-essential python3
-          npx @akiramei/function-indexer ci --format github' > .github/workflows/code-quality.yml
+          npm ci && npm run build
+          node dist/cli.js ci --format github' > .github/workflows/code-quality.yml
 ```

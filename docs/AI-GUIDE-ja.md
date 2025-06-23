@@ -39,7 +39,7 @@ npm install --save-dev @akiramei/function-indexer
 npx function-indexer
 
 # 代替: GitHub直接インストール（開発版）
-npx @akiramei/function-indexer
+npx github:akiramei/function-indexer
 ```
 
 ## コマンドリファレンス
@@ -388,12 +388,21 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 
 ### CI/CDパイプライン統合
 ```yaml
-# GitHub Actions例
+# GitHub Actions例（npmパッケージ使用）
 - name: コード品質分析
   run: |
     sudo apt-get update && sudo apt-get install -y build-essential python3-dev
     npx @akiramei/function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
     npx @akiramei/function-indexer ci --format github
+
+# 代替: GitHub Actions（ローカルビルド）
+- name: コード品質分析
+  run: |
+    sudo apt-get update && sudo apt-get install -y build-essential python3-dev
+    npm ci
+    npm run build
+    node dist/cli.js collect-metrics --root ./src --pr ${{ github.event.number }}
+    node dist/cli.js ci --format github
 ```
 
 ### Pre-commitフック
@@ -607,5 +616,6 @@ jobs:
       - uses: actions/setup-node@v3
       - run: |
           sudo apt-get update && sudo apt-get install -y build-essential python3-dev
-          npx @akiramei/function-indexer ci --format github' > .github/workflows/code-quality.yml
+          npm ci && npm run build
+          node dist/cli.js ci --format github' > .github/workflows/code-quality.yml
 ```
