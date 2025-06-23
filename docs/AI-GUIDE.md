@@ -521,6 +521,47 @@ When an AI assistant is asked to help with code quality management using Functio
 - **CI/CD Integration**: `ci --format github`
 - **Historical Tracking**: `collect-metrics` + `show-metrics`
 
+## Configuration File Support
+
+Function Indexer supports **project-specific configuration** through a JSON configuration file:
+
+**File Location**: `.function-indexer/config.json` (automatically created on first run)
+
+**Example Configuration**:
+```json
+{
+  "version": "1.0.0",
+  "root": "src",
+  "output": ".function-indexer/index.jsonl",
+  "domain": "main",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
+  "metrics": {
+    "thresholds": {
+      "cyclomaticComplexity": 8,
+      "cognitiveComplexity": 12,
+      "linesOfCode": 30,
+      "nestingDepth": 3,
+      "parameterCount": 3
+    }
+  }
+}
+```
+
+**Configuration Features**:
+- **Custom Quality Thresholds**: Set project-specific complexity, lines of code, and other metric limits
+- **Include/Exclude Patterns**: Define which files to scan or ignore using glob patterns
+- **Root Directory**: Set the default scanning directory
+- **Output Path**: Customize where function indexes are saved
+- **Automatic Integration**: All commands respect the configuration file settings
+
+**Default Thresholds**:
+- Cyclomatic Complexity: 10
+- Cognitive Complexity: 15
+- Lines of Code: 50
+- Nesting Depth: 4
+- Parameter Count: 4
+
 ## Quick Setup for New Projects
 
 When setting up code quality management for a new project:
@@ -529,27 +570,33 @@ When setting up code quality management for a new project:
 # 1. Install prerequisites (Linux/WSL only)
 sudo apt update && sudo apt install build-essential python3
 
-# 2. Check current quality status
+# 2. Initialize project (creates .function-indexer/config.json automatically)
 cd your-project
+npx github:akiramei/function-indexer
+
+# 3. Customize configuration (optional)
+# Edit .function-indexer/config.json with your preferred thresholds and patterns
+
+# 4. Check current quality status
 npx github:akiramei/function-indexer metrics --details
 
-# 3. Set up continuous monitoring
+# 5. Set up continuous monitoring
 npx github:akiramei/function-indexer collect-metrics --pr $PR_NUMBER
 
-# 4. Add to package.json scripts (optional)
+# 6. Add to package.json scripts (optional)
 npm pkg set scripts.quality="npx github:akiramei/function-indexer metrics"
 npm pkg set scripts.quality:detailed="npx github:akiramei/function-indexer metrics --details"
 npm pkg set scripts.quality:collect="npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl"
 npm pkg set scripts.quality:show="npx github:akiramei/function-indexer show-metrics --list"
 npm pkg set scripts.quality:trends="npx github:akiramei/function-indexer analyze-trends"
 
-# 5. Use the quality scripts
+# 7. Use the quality scripts
 npm run quality          # Show code quality overview
 npm run quality:collect  # Collect metrics to .quality/metrics-history.jsonl
 npm run quality:show     # List all functions with metrics data
 npm run quality:trends   # Analyze trends and violations
 
-# 6. Create GitHub Action (save as .github/workflows/code-quality.yml)
+# 8. Create GitHub Action (save as .github/workflows/code-quality.yml)
 echo 'name: Code Quality Check
 on: [push, pull_request]
 jobs:

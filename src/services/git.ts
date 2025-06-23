@@ -193,4 +193,54 @@ export class GitService {
       ...status.renamed.map(r => r.to)
     ].filter(file => file.endsWith('.ts') || file.endsWith('.tsx'));
   }
+
+  async getFilesAtRevision(revision: string, patterns: string[] = ['*.ts', '*.tsx']): Promise<string[]> {
+    try {
+      // Use git ls-tree to get files at specific revision
+      const result = await this.git.raw([
+        'ls-tree',
+        '-r',
+        '--name-only',
+        revision
+      ]);
+      
+      return result
+        .split('\n')
+        .filter(file => file.trim().length > 0)
+        .filter(file => file.endsWith('.ts') || file.endsWith('.tsx'));
+    } catch (error) {
+      console.warn(`Warning: Could not use git ls-tree for revision ${revision}, using fallback method`);
+      
+      // Fallback: try to get current files and filter those that exist at the revision
+      try {
+        const currentFiles = await this.git.raw(['ls-files']);
+        const files = currentFiles
+          .split('\n')
+          .filter(file => file.trim().length > 0)
+          .filter(file => file.endsWith('.ts') || file.endsWith('.tsx'));
+        
+        // Filter files that exist at the given revision
+        const existingFiles: string[] = [];
+        for (const file of files) {
+          const content = await this.getFileAtRevision(file, revision);
+          if (content !== null) {
+            existingFiles.push(file);
+          }
+        }
+        
+        return existingFiles;
+      } catch (fallbackError) {
+        throw new Error(`Failed to get files at revision ${revision}: ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`);
+      }
+    }
+  }
+
+  async revisionExists(revision: string): Promise<boolean> {
+    try {
+      await this.git.revparse([revision]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

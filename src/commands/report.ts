@@ -308,33 +308,23 @@ async function generateMarkdownReport(data: ReportData, templatePath?: string): 
 }
 
 async function generateHTMLReport(data: ReportData, templatePath?: string): Promise<string> {
-  // For now, convert markdown to basic HTML
-  const markdown = await generateMarkdownReport(data, templatePath);
+  let template: string;
   
-  // Basic markdown to HTML conversion
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Function Index Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        h1, h2, h3 { color: #333; }
-        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
-        .low { color: #28a745; }
-        .medium { color: #ffc107; }
-        .high { color: #dc3545; }
-    </style>
-</head>
-<body>
-    <pre>${markdown}</pre>
-</body>
-</html>`;
+  if (templatePath) {
+    template = await fs.readFile(templatePath, 'utf-8');
+  } else {
+    // Use default HTML template
+    const defaultTemplatePath = path.join(__dirname, '..', 'templates', 'report-html.hbs');
+    template = await fs.readFile(defaultTemplatePath, 'utf-8');
+  }
   
-  return html;
+  // Register Handlebars helpers
+  Handlebars.registerHelper('gt', function(a: number, b: number) {
+    return a > b;
+  });
+  
+  const compiledTemplate = Handlebars.compile(template);
+  return compiledTemplate(data);
 }
 
 // Helper functions for executeReport

@@ -514,27 +514,82 @@ AIアシスタントがFunction Indexerを使用したコード品質管理の�
 - **CI/CD統合**: `ci --format github`
 - **履歴追跡**: `collect-metrics` + `show-metrics`
 
+## 設定ファイルサポート
+
+Function Indexer は **プロジェクト固有の設定** をJSONファイルでサポートしています：
+
+**ファイル場所**: `.function-indexer/config.json` (初回実行時に自動作成)
+
+**設定例**:
+```json
+{
+  "version": "1.0.0",
+  "root": "src",
+  "output": ".function-indexer/index.jsonl",
+  "domain": "main",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
+  "metrics": {
+    "thresholds": {
+      "cyclomaticComplexity": 8,
+      "cognitiveComplexity": 12,
+      "linesOfCode": 30,
+      "nestingDepth": 3,
+      "parameterCount": 3
+    }
+  }
+}
+```
+
+**設定機能**:
+- **カスタム品質閾値**: プロジェクト固有の複雑度、コード行数、その他メトリクス制限を設定
+- **Include/Excludeパターン**: スキャンするファイルや無視するファイルをGlobパターンで定義
+- **ルートディレクトリ**: デフォルトスキャンディレクトリを設定
+- **出力パス**: 関数インデックスの保存場所をカスタマイズ
+- **自動統合**: すべてのコマンドが設定ファイルの設定を尊重
+
+**デフォルト閾値**:
+- 循環的複雑度: 10
+- 認知的複雑度: 15
+- コード行数: 50
+- ネスト深度: 4
+- パラメータ数: 4
+
 ## 新規プロジェクトのクイックセットアップ
 
 新しいプロジェクトのコード品質管理を設定する場合：
 
 ```bash
-# 1. 前提条件と初期化
+# 1. 前提条件インストール（Linux/WSLのみ）
 sudo apt-get update && sudo apt-get install -y build-essential python3-dev
+
+# 2. プロジェクト初期化（.function-indexer/config.jsonを自動作成）
 cd your-project
 npx github:akiramei/function-indexer
 
-# 2. 現在の品質状態を確認
+# 3. 設定のカスタマイズ（オプション）
+# .function-indexer/config.json を編集して希望する閾値とパターンを設定
+
+# 4. 現在の品質状態を確認
 npx github:akiramei/function-indexer metrics --details
 
-# 3. 継続的な監視を設定
+# 5. 継続的な監視を設定
 npx github:akiramei/function-indexer collect-metrics --pr $PR_NUMBER
 
-# 4. package.jsonスクリプトに追加
+# 6. package.jsonスクリプトに追加（オプション）
 npm pkg set scripts.quality="npx github:akiramei/function-indexer metrics"
 npm pkg set scripts.quality:detailed="npx github:akiramei/function-indexer metrics --details"
+npm pkg set scripts.quality:collect="npx github:akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl"
+npm pkg set scripts.quality:show="npx github:akiramei/function-indexer show-metrics --list"
+npm pkg set scripts.quality:trends="npx github:akiramei/function-indexer analyze-trends"
 
-# 5. GitHub Actionを作成（.github/workflows/code-quality.ymlとして保存）
+# 7. 品質スクリプトの使用
+npm run quality          # コード品質概要を表示
+npm run quality:collect  # .quality/metrics-history.jsonl にメトリクス収集
+npm run quality:show     # メトリクスデータ付きの全関数を一覧表示
+npm run quality:trends   # トレンドと違反を分析
+
+# 8. GitHub Actionを作成（.github/workflows/code-quality.ymlとして保存）
 echo 'name: Code Quality Check
 on: [push, pull_request]
 jobs:
@@ -543,6 +598,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: sudo apt-get update && sudo apt-get install -y build-essential python3-dev
-      - run: npx github:akiramei/function-indexer ci --format github' > .github/workflows/code-quality.yml
+      - run: |
+          sudo apt-get update && sudo apt-get install -y build-essential python3-dev
+          npx github:akiramei/function-indexer ci --format github' > .github/workflows/code-quality.yml
 ```

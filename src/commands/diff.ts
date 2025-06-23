@@ -201,14 +201,66 @@ async function generateIndexForRevision(
     return;
   }
 
-  // For other revisions, we need to generate the index from that revision
-  // This is a simplified approach - we'll just use the current working directory
-  // In a production environment, we might use git worktree or sparse checkout
-  console.warn(chalk.yellow(`Note: Diff functionality for historical revisions is limited in this version`));
-  console.warn(chalk.yellow(`Only comparing current working directory state`));
-  
-  // For now, just run the indexer on current state
-  await indexer.run();
+  // Check if revision exists
+  const revisionExists = await gitService.revisionExists(revision);
+  if (!revisionExists) {
+    throw new Error(`Revision '${revision}' does not exist`);
+  }
+
+  // Create temporary directory for historical files
+  const tempDir = path.join(path.dirname(outputPath), `temp-${revision}-${Date.now()}`);
+  await fs.mkdir(tempDir, { recursive: true });
+
+  try {
+    console.log(chalk.gray(`🔍 Getting files for revision ${revision}...`));
+    
+    // Get files that existed at the specified revision
+    const files = await gitService.getFilesAtRevision(revision);
+    
+    console.log(chalk.gray(`📋 Found ${files.length} TypeScript files at revision ${revision}`));
+    
+    if (files.length === 0) {
+      console.warn(chalk.yellow(`⚠️ No TypeScript files found at revision ${revision}`));
+      return;
+    }
+
+    console.log(chalk.gray(`📁 Checking out ${files.length} files from revision ${revision}...`));
+
+    // Fetch file contents from the specified revision and write to temp directory
+    for (const file of files) {
+      const content = await gitService.getFileAtRevision(file, revision);
+      if (content !== null) {
+        const tempFilePath = path.join(tempDir, file);
+        
+        // Ensure directory exists
+        await fs.mkdir(path.dirname(tempFilePath), { recursive: true });
+        
+        // Write file content
+        await fs.writeFile(tempFilePath, content, 'utf-8');
+      }
+    }
+
+    // Create a new indexer instance for the temporary directory
+    const tempConfig = {
+      root: tempDir,
+      output: outputPath,
+      domain: 'diff-analysis',
+      verbose: false
+    };
+    
+    const tempIndexer = new FunctionIndexer(tempConfig);
+    await tempIndexer.run();
+
+    console.log(chalk.gray(`✅ Generated index for revision ${revision}`));
+
+  } finally {
+    // Clean up temporary directory
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (error) {
+      console.warn(chalk.yellow(`⚠️ Could not clean up temporary files: ${tempDir}`));
+    }
+  }
 }
 
 function formatDiffResult(
