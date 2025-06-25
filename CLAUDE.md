@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📖 For Comprehensive AI Assistant Guide
+
+**For detailed AI assistant guidance, see:**
+- **[AI Master Guide (English)](docs/AI-MASTER-GUIDE.md)** - Complete reference for AI assistants
+- **[AI Master Guide (Japanese)](docs/AI-MASTER-GUIDE-ja.md)** - AIアシスタント向け完全ガイド
+
+This CLAUDE.md provides essential technical context. The AI Master Guides provide comprehensive workflow patterns, command references, and best practices for AI-assisted development.
+
 ## Project Overview
 
 Function Indexer is a TypeScript CLI tool that scans TypeScript/TSX codebases and generates a comprehensive index of all functions, methods, and arrow functions in JSONL format. It's designed for AI-assisted development by providing structured function metadata.
