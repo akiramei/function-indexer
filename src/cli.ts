@@ -9,7 +9,7 @@ import { AIService } from './ai-service';
 import { UpdateService } from './services/update-service';
 import { FileSystemStorage } from './storage/filesystem-storage';
 import { MetricsService } from './services/metrics-service';
-import { ConfigService } from './services/config-service';
+import { ConfigService } from './services/unified-config-service';
 import { ProjectDetector } from './utils/project-detector';
 import { createDiffCommand } from './commands/diff';
 import { createReportCommand } from './commands/report';
