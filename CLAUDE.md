@@ -24,11 +24,12 @@ npm start -- --root ./src --output function-index.jsonl
 # Run tests
 npm test
 
-# Metrics collection commands
-function-indexer collect-metrics --root ./src --pr 123 --verbose
-function-indexer show-metrics "src/indexer.ts:FunctionIndexer.run"
-function-indexer analyze-trends
-function-indexer pr-metrics 123
+# Metrics commands (reorganized with subcommands)
+function-indexer metrics                                    # View code quality overview
+function-indexer metrics collect --root ./src --pr 123     # Collect metrics for tracking
+function-indexer metrics show "src/indexer.ts:FunctionIndexer.run"  # Show function history
+function-indexer metrics trends                             # Analyze trends and violations
+function-indexer metrics pr 123                             # Show PR-specific metrics
 ```
 
 ## Architecture
@@ -100,16 +101,16 @@ The enhanced metrics system tracks code quality over time using commit-based his
 ### CLI Commands
 ```bash
 # Collect metrics for current state
-function-indexer collect-metrics --root ./src --pr 123
+function-indexer metrics collect --root ./src --pr 123
 
 # View function history
-function-indexer show-metrics "src/file.ts:functionName" --limit 5
+function-indexer metrics show "src/file.ts:functionName" --limit 5
 
 # Analyze trends and violations
-function-indexer analyze-trends
+function-indexer metrics trends
 
 # View PR-specific metrics
-function-indexer pr-metrics 123
+function-indexer metrics pr 123
 ```
 
 ## Important Implementation Details
