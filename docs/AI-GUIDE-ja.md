@@ -56,6 +56,8 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 
 **注意**: Function Indexerは設定不要で動作します - `npx @akiramei/function-indexer` を実行するだけで開始できます！
 
+**出力場所**: プロジェクトルートの`function-index.jsonl`（可視的でアクセス可能！）
+
 **出力形式**（JSONL、1行1オブジェクト）:
 ```json
 {
@@ -79,6 +81,8 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
   "domain": "backend"
 }
 ```
+
+**主要改善**: インデックスファイルが可視性向上のためプロジェクトルートに作成されるようになりました！
 
 ### 2. `search` - 関数検索
 ```bash

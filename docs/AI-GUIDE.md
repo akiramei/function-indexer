@@ -55,6 +55,8 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 
 **Note**: Function Indexer now works with zero configuration - just run `npx @akiramei/function-indexer` to get started!
 
+**Output Location**: `function-index.jsonl` in project root (visible and accessible!)
+
 **Output Format** (JSONL, one object per line):
 ```json
 {
@@ -78,6 +80,8 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
   "domain": "backend"
 }
 ```
+
+**Key Improvement**: Index file now created in project root for better visibility!
 
 ### 2. `search` - Find Functions
 ```bash
