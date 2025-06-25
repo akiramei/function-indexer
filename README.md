@@ -86,31 +86,44 @@ No configuration needed! Function Indexer will:
 ```bash
 # Index your codebase (first time or update)
 npx github:akiramei/function-indexer
+# Or use the shorter 'fx' command:
+fx
 
 # Search for functions using natural language
-npx github:akiramei/function-indexer search "authentication"
+fx search "authentication"
+fx s "authentication"  # Short alias
+
+# List all functions
+fx list
+fx ls  # Short alias
 
 # View code quality metrics
-npx github:akiramei/function-indexer metrics
+fx metrics
+fx m  # Short alias
+
+# Collect detailed metrics
+fx metrics collect --root ./src
 
 # Compare functions between branches (NEW!)
-npx github:akiramei/function-indexer diff main feature
+fx diff main feature
+fx d main feature  # Short alias
 
 # Generate comprehensive reports (NEW!)
-npx github:akiramei/function-indexer report --format markdown
+fx report --format markdown
+fx r --format markdown  # Short alias
 ```
 
 ### Working with Specific Directories
 
 ```bash
 # Scan a specific directory
-npx github:akiramei/function-indexer -r ./src/services
+fx -r ./src/services
 
 # Or install locally and use shorter commands
 npm install --save-dev github:akiramei/function-indexer
-npx function-indexer add frontend ./src/frontend
-npx function-indexer add backend ./src/backend
-npx function-indexer update  # Update all projects
+fx -r ./src/frontend
+fx -r ./src/backend
+fx update  # Update existing indexes
 ```
 
 ### CI/CD Integration
@@ -120,13 +133,16 @@ npx function-indexer update  # Update all projects
 sudo apt update && sudo apt install build-essential python3
 
 # In your CI pipeline (NEW!)
-npx github:akiramei/function-indexer ci --format github
+fx ci --format github
 
-# Compare branches for PR analysis
-npx github:akiramei/function-indexer diff origin/main HEAD
+# Compare branches for PR analysis  
+fx diff origin/main HEAD
+
+# Collect metrics for PR tracking
+fx metrics collect --pr 123
 
 # Pre-commit hook (with Husky)
-npx github:akiramei/function-indexer metrics
+fx metrics
 ```
 
 📋 **[Full Integration Guide](docs/INTEGRATIONS.md)** - GitHub Actions, GitLab CI, pre-commit hooks, and more
