@@ -227,7 +227,7 @@ fx ls --json | jq '[.[] | {
 # Create annotated tree
 find src -type f -name "*.ts" -o -name "*.tsx" | while read file; do
   count=$(fx ls --filter "$file" --json 2>/dev/null | jq length)
-  complexity=$(fx ls --filter "$file" --json 2>/dev/null | jq '[.[] | .metrics.cyclomaticComplexity] | add')
+  complexity=$(fx ls --filter "$file" --json 2>/dev/null | jq '[.[] | .metrics.cyclomaticComplexity] | add // 0')
   echo "$file: $count functions, total complexity: $complexity"
 done | sort
 ```
