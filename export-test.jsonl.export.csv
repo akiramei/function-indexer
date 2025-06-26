@@ -1,0 +1,2 @@
+file,identifier,signature,startLine,endLine,hash_function,hash_file,exported,async,linesOfCode,parameterCount,hasReturnType,domain
+test.ts,testFunction,"function testFunction(): void",1,3,abc123,def456,true,false,3,,,test
