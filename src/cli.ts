@@ -243,18 +243,22 @@ program
       const searchService = new SearchService();
       searchService.loadFunctionIndex(config.output);
 
+      const determineLimitValue = (options: any): number | undefined => {
+        if (options.all) return undefined;
+        
+        const parsed = parseInt(options.limit);
+        if (isNaN(parsed) || parsed < 1) {
+          console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 100`));
+          return 100;
+        }
+        return Math.max(1, parsed);
+      };
+
       const results = searchService.search({
         query,
         context: options.context,
         saveHistory: options.saveHistory !== false,
-        limit: options.all ? undefined : (() => {
-          const parsed = parseInt(options.limit);
-          if (isNaN(parsed) || parsed < 1) {
-            console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 100`));
-            return 100;
-          }
-          return Math.max(1, parsed);
-        })()
+        limit: determineLimitValue(options)
       });
 
       if (results.length === 0) {
