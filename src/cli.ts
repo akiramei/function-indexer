@@ -385,6 +385,7 @@ program
             if (fileCompare !== 0) return fileCompare;
             return a.startLine - b.startLine;
           });
+          break;
       }
 
       // Output results
@@ -403,7 +404,7 @@ program
             break;
           
           case 'default':
-          default:
+          default: {
             console.log(chalk.green(`\nFound ${functions.length} function${functions.length > 1 ? 's' : ''}:\n`));
             
             let currentFile = '';
@@ -430,6 +431,8 @@ program
               }
             });
             console.log();
+            break;
+          }
         }
         
         // Summary statistics
