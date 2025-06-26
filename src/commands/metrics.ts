@@ -331,6 +331,80 @@ async function collectMetrics(options: MetricsOptions): Promise<void> {
 }
 
 /**
+ * Display available functions with metrics data
+ */
+function displayAvailableFunctions(metricsService: any): void {
+  console.log(chalk.blue('📊 Available functions with metrics data:\n'));
+  
+  const availableFunctions = metricsService.listAvailableFunctions();
+  
+  if (availableFunctions.length === 0) {
+    console.log(chalk.yellow('No metrics data found'));
+    console.log(chalk.gray('💡 Run `fx metrics collect` or `fx cm` to collect data'));
+  } else {
+    console.log(chalk.green(`Found ${availableFunctions.length} functions with metrics:\n`));
+    
+    availableFunctions.forEach((func: any, index: number) => {
+      console.log(chalk.cyan(`${index + 1}. ${func.functionId}`));
+      console.log(chalk.gray(`   Last updated: ${new Date(func.lastTimestamp).toLocaleString()}`));
+      console.log(chalk.gray(`   Records: ${func.recordCount} | Latest complexity: ${func.latestComplexity}`));
+      console.log();
+    });
+    
+    console.log(chalk.blue('💡 Usage:'));
+    console.log(chalk.gray('   fx metrics show "src/file.ts:functionName"'));
+    console.log(chalk.gray('   fx sm "src/file.ts:functionName"'));
+  }
+}
+
+/**
+ * Display metrics history for a specific function
+ */
+function displayFunctionHistory(metricsService: any, functionId: string, limit: number): void {
+  console.log(chalk.blue(`📈 Metrics history for: ${functionId}`));
+  
+  const history = metricsService.showFunctionMetrics(functionId, limit);
+  
+  if (history.length === 0) {
+    console.log(chalk.yellow('No metrics history found for this function'));
+    console.log(chalk.gray('💡 Make sure the function ID is correct'));
+    console.log(chalk.gray('💡 Run `fx metrics show --list` to see available functions'));
+  } else {
+    console.log(chalk.green(`Found ${history.length} metric entries:\n`));
+    
+    history.forEach((metric: any, index: number) => {
+      const date = new Date(metric.timestamp).toLocaleString();
+      console.log(chalk.cyan(`${index + 1}. ${date} (${metric.commitHash.substring(0, 8)})`));
+      console.log(chalk.gray(`   Branch: ${metric.branchName} | Change: ${metric.changeType}`));
+      if (metric.prNumber) console.log(chalk.gray(`   PR: #${metric.prNumber}`));
+      console.log(chalk.gray(`   Cyclomatic: ${metric.cyclomaticComplexity} | Cognitive: ${metric.cognitiveComplexity}`));
+      console.log(chalk.gray(`   LOC: ${metric.linesOfCode} | Nesting: ${metric.nestingDepth} | Params: ${metric.parameterCount}`));
+      console.log();
+    });
+  }
+}
+
+/**
+ * Validate and parse limit parameter
+ */
+function validateLimit(limit: string | undefined): number {
+  const defaultLimit = 10;
+  
+  if (!limit) {
+    return defaultLimit;
+  }
+  
+  const parsedLimit = parseInt(limit);
+  if (isNaN(parsedLimit) || parsedLimit <= 0) {
+    console.error(chalk.red(`❌ Invalid limit value: ${limit}`));
+    console.log(chalk.gray('💡 Limit must be a positive integer'));
+    process.exit(1);
+  }
+  
+  return parsedLimit;
+}
+
+/**
  * Show function metrics implementation
  */
 async function showFunctionMetrics(functionId: string | undefined, options: MetricsOptions): Promise<void> {
@@ -338,51 +412,10 @@ async function showFunctionMetrics(functionId: string | undefined, options: Metr
     const metricsService = new MetricsService();
     
     if (!functionId || options.list) {
-      // Show available functions
-      console.log(chalk.blue('📊 Available functions with metrics data:\n'));
-      
-      const availableFunctions = metricsService.listAvailableFunctions();
-      
-      if (availableFunctions.length === 0) {
-        console.log(chalk.yellow('No metrics data found'));
-        console.log(chalk.gray('💡 Run `fx metrics collect` or `fx cm` to collect data'));
-      } else {
-        console.log(chalk.green(`Found ${availableFunctions.length} functions with metrics:\n`));
-        
-        availableFunctions.forEach((func, index) => {
-          console.log(chalk.cyan(`${index + 1}. ${func.functionId}`));
-          console.log(chalk.gray(`   Last updated: ${new Date(func.lastTimestamp).toLocaleString()}`));
-          console.log(chalk.gray(`   Records: ${func.recordCount} | Latest complexity: ${func.latestComplexity}`));
-          console.log();
-        });
-        
-        console.log(chalk.blue('💡 Usage:'));
-        console.log(chalk.gray('   fx metrics show "src/file.ts:functionName"'));
-        console.log(chalk.gray('   fx sm "src/file.ts:functionName"'));
-      }
+      displayAvailableFunctions(metricsService);
     } else if (functionId) {
-      // Show specific function metrics
-      console.log(chalk.blue(`📈 Metrics history for: ${functionId}`));
-      
-      const history = metricsService.showFunctionMetrics(functionId, parseInt(options.limit || '10'));
-      
-      if (history.length === 0) {
-        console.log(chalk.yellow('No metrics history found for this function'));
-        console.log(chalk.gray('💡 Make sure the function ID is correct'));
-        console.log(chalk.gray('💡 Run `fx metrics show --list` to see available functions'));
-      } else {
-        console.log(chalk.green(`Found ${history.length} metric entries:\n`));
-        
-        history.forEach((metric, index) => {
-          const date = new Date(metric.timestamp).toLocaleString();
-          console.log(chalk.cyan(`${index + 1}. ${date} (${metric.commitHash.substring(0, 8)})`));
-          console.log(chalk.gray(`   Branch: ${metric.branchName} | Change: ${metric.changeType}`));
-          if (metric.prNumber) console.log(chalk.gray(`   PR: #${metric.prNumber}`));
-          console.log(chalk.gray(`   Cyclomatic: ${metric.cyclomaticComplexity} | Cognitive: ${metric.cognitiveComplexity}`));
-          console.log(chalk.gray(`   LOC: ${metric.linesOfCode} | Nesting: ${metric.nestingDepth} | Params: ${metric.parameterCount}`));
-          console.log();
-        });
-      }
+      const limit = validateLimit(options.limit);
+      displayFunctionHistory(metricsService, functionId, limit);
     } else {
       console.log(chalk.yellow('No function ID provided'));
       console.log(chalk.gray('💡 Use --list to see available functions or provide a function ID'));
