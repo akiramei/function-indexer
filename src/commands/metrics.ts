@@ -5,6 +5,30 @@ import * as path from 'path';
 import { MetricsService } from '../services/metrics-service';
 import { ConfigService } from '../services/config-service';
 import { ProjectDetector } from '../utils/project-detector';
+import { FunctionInfo } from '../types';
+
+interface MetricsViolation {
+  func: FunctionInfo;
+  issues: string[];
+}
+
+interface ComplexityDistribution {
+  low: number;
+  medium: number;
+  high: number;
+}
+
+interface MetricsOptions {
+  details?: boolean;
+  pr?: string;
+  root?: string;
+  output?: string;
+  commit?: string;
+  branch?: string;
+  verbose?: boolean;
+  limit?: string;
+  list?: boolean;
+}
 
 /**
  * Initialize and validate project for metrics
@@ -39,9 +63,9 @@ function initializeMetricsProject(): { config: any } {
 /**
  * Load functions from index file for metrics analysis
  */
-function loadFunctionsForMetrics(indexPath: string): any[] {
+function loadFunctionsForMetrics(indexPath: string): FunctionInfo[] {
   const indexContent = fs.readFileSync(indexPath, 'utf-8');
-  const functions: any[] = [];
+  const functions: FunctionInfo[] = [];
   
   for (const line of indexContent.trim().split('\n').filter(line => line)) {
     try {
@@ -57,8 +81,8 @@ function loadFunctionsForMetrics(indexPath: string): any[] {
 /**
  * Calculate metrics violations for functions
  */
-function calculateViolations(functions: any[], thresholds: any): Array<{ func: any; issues: string[] }> {
-  const violations: Array<{ func: any; issues: string[] }> = [];
+function calculateViolations(functions: FunctionInfo[], thresholds: Record<string, number>): MetricsViolation[] {
+  const violations: MetricsViolation[] = [];
   
   functions.forEach(func => {
     const metrics = func.metrics || {};
@@ -74,8 +98,10 @@ function calculateViolations(functions: any[], thresholds: any): Array<{ func: a
     ] as const;
     
     for (const { key, label } of metricChecks) {
-      if (metrics[key] > thresholds[key]) {
-        issues.push(`${label}: ${metrics[key]} (>${thresholds[key]})`);
+      const metricValue = metrics[key];
+      const threshold = thresholds[key];
+      if (metricValue !== undefined && metricValue > threshold) {
+        issues.push(`${label}: ${metricValue} (>${threshold})`);
       }
     }
     
@@ -90,8 +116,8 @@ function calculateViolations(functions: any[], thresholds: any): Array<{ func: a
 /**
  * Calculate complexity distribution
  */
-function calculateComplexityDistribution(functions: any[], violations: Array<{ func: any; issues: string[] }>): { low: number; medium: number; high: number } {
-  const distribution = { low: 0, medium: 0, high: 0 };
+function calculateComplexityDistribution(functions: FunctionInfo[], violations: MetricsViolation[]): ComplexityDistribution {
+  const distribution: ComplexityDistribution = { low: 0, medium: 0, high: 0 };
   
   functions.forEach(func => {
     const violation = violations.find(v => v.func === func);
@@ -113,15 +139,22 @@ function calculateComplexityDistribution(functions: any[], violations: Array<{ f
  * Display metrics summary
  */
 function displayMetricsSummary(
-  functions: any[], 
-  complexityDistribution: { low: number; medium: number; high: number }, 
-  violations: Array<{ func: any; issues: string[] }>,
-  options: any
+  functions: FunctionInfo[], 
+  complexityDistribution: ComplexityDistribution, 
+  violations: MetricsViolation[],
+  options: MetricsOptions
 ): void {
   const totalFunctions = functions.length;
   
   console.log(chalk.cyan('📈 Summary'));
   console.log(chalk.gray(`   Total Functions: ${totalFunctions}`));
+  
+  // Prevent division by zero
+  if (totalFunctions === 0) {
+    console.log(chalk.gray('   No functions found to analyze'));
+    return;
+  }
+  
   console.log(chalk.green(`   🟢 Low Risk: ${complexityDistribution.low} (${Math.round(complexityDistribution.low / totalFunctions * 100)}%)`));
   console.log(chalk.yellow(`   🟡 Medium Risk: ${complexityDistribution.medium} (${Math.round(complexityDistribution.medium / totalFunctions * 100)}%)`));
   console.log(chalk.red(`   🔴 High Risk: ${complexityDistribution.high} (${Math.round(complexityDistribution.high / totalFunctions * 100)}%)`));
@@ -207,7 +240,7 @@ export function createMetricsCommand(): Command {
 /**
  * Show metrics overview (default action)
  */
-async function showMetricsOverview(options: any): Promise<void> {
+async function showMetricsOverview(options: MetricsOptions): Promise<void> {
   try {
     const { config } = initializeMetricsProject();
 
@@ -242,17 +275,19 @@ async function showMetricsOverview(options: any): Promise<void> {
 /**
  * Collect metrics implementation
  */
-async function collectMetrics(options: any): Promise<void> {
+async function collectMetrics(options: MetricsOptions): Promise<void> {
+  let metricsService: MetricsService | null = null;
+  
   try {
     console.log(chalk.blue('📊 Collecting function metrics...'));
     
-    const rootPath = path.resolve(options.root);
+    const rootPath = path.resolve(options.root || './src');
     if (!fs.existsSync(rootPath)) {
       console.error(chalk.red(`❌ Root directory does not exist: ${rootPath}`));
       process.exit(1);
     }
 
-    const metricsService = new MetricsService();
+    metricsService = new MetricsService();
     
     // Validate PR number if provided
     let prNumber: number | undefined;
@@ -285,7 +320,9 @@ async function collectMetrics(options: any): Promise<void> {
       console.error(chalk.red('❌ Metrics collection failed:'), metricsError instanceof Error ? metricsError.message : String(metricsError));
       throw metricsError;
     } finally {
-      metricsService.close();
+      if (metricsService) {
+        metricsService.close();
+      }
     }
   } catch (error) {
     console.error(chalk.red('❌ Metrics collection error:'), error instanceof Error ? error.message : String(error));
@@ -296,7 +333,7 @@ async function collectMetrics(options: any): Promise<void> {
 /**
  * Show function metrics implementation
  */
-async function showFunctionMetrics(functionId: string | undefined, options: any): Promise<void> {
+async function showFunctionMetrics(functionId: string | undefined, options: MetricsOptions): Promise<void> {
   try {
     const metricsService = new MetricsService();
     
@@ -323,11 +360,11 @@ async function showFunctionMetrics(functionId: string | undefined, options: any)
         console.log(chalk.gray('   fx metrics show "src/file.ts:functionName"'));
         console.log(chalk.gray('   fx sm "src/file.ts:functionName"'));
       }
-    } else {
+    } else if (functionId) {
       // Show specific function metrics
       console.log(chalk.blue(`📈 Metrics history for: ${functionId}`));
       
-      const history = metricsService.showFunctionMetrics(functionId, parseInt(options.limit));
+      const history = metricsService.showFunctionMetrics(functionId, parseInt(options.limit || '10'));
       
       if (history.length === 0) {
         console.log(chalk.yellow('No metrics history found for this function'));
@@ -346,6 +383,9 @@ async function showFunctionMetrics(functionId: string | undefined, options: any)
           console.log();
         });
       }
+    } else {
+      console.log(chalk.yellow('No function ID provided'));
+      console.log(chalk.gray('💡 Use --list to see available functions or provide a function ID'));
     }
     
     metricsService.close();
