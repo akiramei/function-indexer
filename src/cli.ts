@@ -114,7 +114,25 @@ program
         console.log(chalk.gray('  • Run `function-indexer` again to update the index'));
         
       } else {
-        // Already initialized - Update
+        // Already initialized - Check for migration first
+        if (ConfigService.needsMigration(projectInfo.root)) {
+          ConfigService.migrateIndexFile(projectInfo.root);
+          
+          // Update config to use new default path if it's still pointing to the old path
+          const config = ConfigService.loadConfig(projectInfo.root);
+          const legacyPath = ConfigService.getLegacyIndexPath(projectInfo.root);
+          if (config.output === legacyPath || config.output.endsWith('.function-indexer/index.jsonl')) {
+            const newIndexPath = ConfigService.getDefaultIndexPath(projectInfo.root);
+            const updatedConfig = {
+              ...config,
+              output: newIndexPath
+            };
+            ConfigService.saveConfig(updatedConfig, projectInfo.root);
+            console.log(chalk.gray('📝 Updated configuration to use new index location'));
+          }
+        }
+        
+        // Update existing index
         console.log(chalk.blue('🔄 Updating function index...'));
         
         let finalConfig = ConfigService.loadConfig(projectInfo.root);
@@ -141,34 +159,53 @@ program
           console.log(chalk.cyan(`🔧 Functions found: ${result.totalFunctions}`));
           
         } else {
-          // Update existing index
+          // Check if we have proper metadata for the update service
           const storage = new FileSystemStorage(path.dirname(finalConfig.output));
-          const updateService = new UpdateService(storage, options.verbose);
+          const indexName = path.basename(finalConfig.output);
           
-          const result = await updateService.updateIndex(path.basename(finalConfig.output), {
-            autoBackup: true,
-            verbose: options.verbose
-          });
+          try {
+            // Try to get metadata first
+            await storage.loadMetadata(indexName);
+            
+            // If metadata exists, do normal update
+            const updateService = new UpdateService(storage, options.verbose);
+            const result = await updateService.updateIndex(indexName, {
+              autoBackup: true,
+              verbose: options.verbose
+            });
           
-          console.log(chalk.green('✅ Update completed!'));
-          
-          if (result.added > 0 || result.updated > 0 || result.deleted > 0) {
-            console.log(chalk.cyan(`➕ Added: ${result.added} functions`));
-            console.log(chalk.cyan(`🔄 Updated: ${result.updated} functions`));
-            console.log(chalk.cyan(`➖ Deleted: ${result.deleted} functions`));
-          } else {
-            console.log(chalk.gray('No changes detected'));
-          }
-          
-          console.log(chalk.cyan(`⏱️  Execution time: ${result.executionTime}ms`));
-          
-          if (result.errors.length > 0) {
-            console.log(chalk.yellow(`⚠️  Warnings: ${result.errors.length}`));
-            if (options.verbose) {
-              result.errors.forEach(error => {
-                console.log(chalk.gray(`  ⚠️  ${error}`));
-              });
+            console.log(chalk.green('✅ Update completed!'));
+            
+            if (result.added > 0 || result.updated > 0 || result.deleted > 0) {
+              console.log(chalk.cyan(`➕ Added: ${result.added} functions`));
+              console.log(chalk.cyan(`🔄 Updated: ${result.updated} functions`));
+              console.log(chalk.cyan(`➖ Deleted: ${result.deleted} functions`));
+            } else {
+              console.log(chalk.gray('No changes detected'));
             }
+            
+            console.log(chalk.cyan(`⏱️  Execution time: ${result.executionTime}ms`));
+            
+            if (result.errors.length > 0) {
+              console.log(chalk.yellow(`⚠️  Warnings: ${result.errors.length}`));
+              if (options.verbose) {
+                result.errors.forEach(error => {
+                  console.log(chalk.gray(`  ⚠️  ${error}`));
+                });
+              }
+            }
+          
+          } catch (error) {
+            // Metadata doesn't exist or is corrupted (likely after migration)
+            // Recreate the entire index
+            console.log(chalk.yellow('⚠️  Index metadata missing or corrupted, recreating index...'));
+            
+            const indexer = new FunctionIndexer(finalConfig);
+            const result = await indexer.run();
+            
+            console.log(chalk.green('✅ Index recreated!'));
+            console.log(chalk.cyan(`📁 Files processed: ${result.totalFiles}`));
+            console.log(chalk.cyan(`🔧 Functions found: ${result.totalFunctions}`));
           }
         }
         
