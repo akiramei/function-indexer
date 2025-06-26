@@ -3,17 +3,18 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { FunctionIndexer } from './indexer';
-import { IndexerOptions } from './types';
+import { IndexerOptions, FunctionInfo } from './types';
 import { SearchService } from './search';
 import { AIService } from './ai-service';
 import { UpdateService } from './services/update-service';
 import { FileSystemStorage } from './storage/filesystem-storage';
 import { MetricsService } from './services/metrics-service';
-import { ConfigService } from './services/config-service';
+import { ConfigService } from './services/unified-config-service';
 import { ProjectDetector } from './utils/project-detector';
 import { createDiffCommand } from './commands/diff';
 import { createReportCommand } from './commands/report';
 import { createCICommand } from './commands/ci';
+import { createMetricsCommand } from './commands/metrics';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
@@ -110,11 +111,30 @@ program
         console.log(chalk.blue('💡 Next steps:'));
         console.log(chalk.gray('  • Run `function-indexer search <query>` to search functions'));
         console.log(chalk.gray('  • Run `function-indexer metrics` to view code quality'));
+        console.log(chalk.gray('  • Run `function-indexer metrics collect` to track code metrics'));
         console.log(chalk.gray('  • Run `function-indexer diff` to compare branches'));
         console.log(chalk.gray('  • Run `function-indexer` again to update the index'));
         
       } else {
-        // Already initialized - Update
+        // Already initialized - Check for migration first
+        if (ConfigService.needsMigration(projectInfo.root)) {
+          ConfigService.migrateIndexFile(projectInfo.root);
+          
+          // Update config to use new default path if it's still pointing to the old path
+          const config = ConfigService.loadConfig(projectInfo.root);
+          const legacyPath = ConfigService.getLegacyIndexPath(projectInfo.root);
+          if (config.output === legacyPath || config.output.endsWith('.function-indexer/index.jsonl')) {
+            const newIndexPath = ConfigService.getDefaultIndexPath(projectInfo.root);
+            const updatedConfig = {
+              ...config,
+              output: newIndexPath
+            };
+            ConfigService.saveConfig(updatedConfig, projectInfo.root);
+            console.log(chalk.gray('📝 Updated configuration to use new index location'));
+          }
+        }
+        
+        // Update existing index
         console.log(chalk.blue('🔄 Updating function index...'));
         
         let finalConfig = ConfigService.loadConfig(projectInfo.root);
@@ -141,34 +161,53 @@ program
           console.log(chalk.cyan(`🔧 Functions found: ${result.totalFunctions}`));
           
         } else {
-          // Update existing index
+          // Check if we have proper metadata for the update service
           const storage = new FileSystemStorage(path.dirname(finalConfig.output));
-          const updateService = new UpdateService(storage, options.verbose);
+          const indexName = path.basename(finalConfig.output);
           
-          const result = await updateService.updateIndex(path.basename(finalConfig.output), {
-            autoBackup: true,
-            verbose: options.verbose
-          });
+          try {
+            // Try to get metadata first
+            await storage.loadMetadata(indexName);
+            
+            // If metadata exists, do normal update
+            const updateService = new UpdateService(storage, options.verbose);
+            const result = await updateService.updateIndex(indexName, {
+              autoBackup: true,
+              verbose: options.verbose
+            });
           
-          console.log(chalk.green('✅ Update completed!'));
-          
-          if (result.added > 0 || result.updated > 0 || result.deleted > 0) {
-            console.log(chalk.cyan(`➕ Added: ${result.added} functions`));
-            console.log(chalk.cyan(`🔄 Updated: ${result.updated} functions`));
-            console.log(chalk.cyan(`➖ Deleted: ${result.deleted} functions`));
-          } else {
-            console.log(chalk.gray('No changes detected'));
-          }
-          
-          console.log(chalk.cyan(`⏱️  Execution time: ${result.executionTime}ms`));
-          
-          if (result.errors.length > 0) {
-            console.log(chalk.yellow(`⚠️  Warnings: ${result.errors.length}`));
-            if (options.verbose) {
-              result.errors.forEach(error => {
-                console.log(chalk.gray(`  ⚠️  ${error}`));
-              });
+            console.log(chalk.green('✅ Update completed!'));
+            
+            if (result.added > 0 || result.updated > 0 || result.deleted > 0) {
+              console.log(chalk.cyan(`➕ Added: ${result.added} functions`));
+              console.log(chalk.cyan(`🔄 Updated: ${result.updated} functions`));
+              console.log(chalk.cyan(`➖ Deleted: ${result.deleted} functions`));
+            } else {
+              console.log(chalk.gray('No changes detected'));
             }
+            
+            console.log(chalk.cyan(`⏱️  Execution time: ${result.executionTime}ms`));
+            
+            if (result.errors.length > 0) {
+              console.log(chalk.yellow(`⚠️  Warnings: ${result.errors.length}`));
+              if (options.verbose) {
+                result.errors.forEach(error => {
+                  console.log(chalk.gray(`  ⚠️  ${error}`));
+                });
+              }
+            }
+          
+          } catch (error) {
+            // Metadata doesn't exist or is corrupted (likely after migration)
+            // Recreate the entire index
+            console.log(chalk.yellow('⚠️  Index metadata missing or corrupted, recreating index...'));
+            
+            const indexer = new FunctionIndexer(finalConfig);
+            const result = await indexer.run();
+            
+            console.log(chalk.green('✅ Index recreated!'));
+            console.log(chalk.cyan(`📁 Files processed: ${result.totalFiles}`));
+            console.log(chalk.cyan(`🔧 Functions found: ${result.totalFunctions}`));
           }
         }
         
@@ -207,7 +246,8 @@ program
   .description('Search for functions using natural language')
   .option('-c, --context <context>', 'provide context for the search')
   .option('--no-save-history', 'do not save search to history')
-  .option('-l, --limit <number>', 'limit number of results', '10')
+  .option('-l, --limit <number>', 'limit number of results', '100')
+  .option('--all', 'show all results (no limit)')
   .action(async (query, options) => {
     try {
       // Auto-detect project and load config with error handling
@@ -242,18 +282,22 @@ program
       const searchService = new SearchService();
       searchService.loadFunctionIndex(config.output);
 
+      const determineLimitValue = (options: any): number | undefined => {
+        if (options.all) return undefined;
+        
+        const parsed = parseInt(options.limit);
+        if (isNaN(parsed) || parsed < 1) {
+          console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 100`));
+          return 100;
+        }
+        return Math.max(1, parsed);
+      };
+
       const results = searchService.search({
         query,
         context: options.context,
         saveHistory: options.saveHistory !== false,
-        limit: (() => {
-          const parsed = parseInt(options.limit);
-          if (isNaN(parsed) || parsed < 1) {
-            console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 10`));
-            return 10;
-          }
-          return Math.max(1, parsed);
-        })()
+        limit: determineLimitValue(options)
       });
 
       if (results.length === 0) {
@@ -263,7 +307,16 @@ program
         console.log(chalk.gray('  • Being more specific'));
         console.log(chalk.gray('  • Adding context with --context'));
       } else {
-        console.log(chalk.green(`\nFound ${results.length} matching function${results.length > 1 ? 's' : ''}:\n`));
+        // Get the total results count for display
+        const totalResults = searchService.getLastSearchTotalCount();
+        const isLimited = !options.all && totalResults > results.length;
+        
+        if (isLimited) {
+          console.log(chalk.green(`\nFound ${totalResults} matching functions (showing first ${results.length}):\n`));
+          console.log(chalk.gray(`💡 Use --all to see all results or --limit <n> to adjust\n`));
+        } else {
+          console.log(chalk.green(`\nFound ${results.length} matching function${results.length > 1 ? 's' : ''}:\n`));
+        }
         
         results.forEach((func, index) => {
           console.log(chalk.cyan(`${index + 1}. ${func.identifier}`) + 
@@ -294,6 +347,161 @@ program
     }
   });
 
+program
+  .command('list')
+  .description('List all functions in the codebase without limit')
+  .option('-f, --format <format>', 'output format (default, simple, json)', 'default')
+  .option('--file <pattern>', 'filter by file pattern (glob supported)')
+  .option('--exported', 'show only exported functions')
+  .option('--async', 'show only async functions')
+  .option('-s, --sort <field>', 'sort by field (name, file, complexity)', 'file')
+  .action(async (options) => {
+    try {
+      // Auto-detect project and load config
+      const projectInfo = (() => {
+        try {
+          return ProjectDetector.detectProject();
+        } catch (error) {
+          console.error(chalk.red('❌ Failed to detect project structure'));
+          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
+        }
+      })();
+      
+      if (!ConfigService.isInitialized(projectInfo.root)) {
+        console.error(chalk.red('❌ Project not initialized'));
+        console.log(chalk.yellow('💡 Run `function-indexer` first to initialize the project'));
+        process.exit(1);
+      }
+      
+      const config = ConfigService.loadConfig(projectInfo.root);
+      
+      if (!fs.existsSync(config.output)) {
+        console.error(chalk.red('❌ Index file not found'));
+        console.log(chalk.yellow('💡 Run `function-indexer` to create the index'));
+        process.exit(1);
+      }
+
+      // Load all functions from index
+      const content = fs.readFileSync(config.output, 'utf-8');
+      let functions: FunctionInfo[] = content
+        .trim()
+        .split('\n')
+        .filter(line => line)
+        .map((line, index) => {
+          try {
+            return JSON.parse(line);
+          } catch (error) {
+            console.error(chalk.yellow(`⚠️  Invalid JSON at line ${index + 1}, skipping...`));
+            return null;
+          }
+        })
+        .filter(func => func !== null) as FunctionInfo[];
+
+      // Apply filters
+      if (options.file) {
+        const pattern = options.file.toLowerCase();
+        functions = functions.filter(func => {
+          const filePath = func.file.toLowerCase();
+          // Simple glob pattern matching
+          if (pattern.includes('*')) {
+            const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+            return regex.test(filePath);
+          }
+          return filePath.includes(pattern);
+        });
+      }
+
+      if (options.exported) {
+        functions = functions.filter(func => func.exported);
+      }
+
+      if (options.async) {
+        functions = functions.filter(func => func.async);
+      }
+
+      // Sort functions
+      switch (options.sort) {
+        case 'name':
+          functions.sort((a, b) => a.identifier.localeCompare(b.identifier));
+          break;
+        case 'complexity':
+          functions.sort((a, b) => {
+            const aComplexity = a.metrics?.cyclomaticComplexity || 0;
+            const bComplexity = b.metrics?.cyclomaticComplexity || 0;
+            return bComplexity - aComplexity;
+          });
+          break;
+        default:
+          functions.sort((a, b) => {
+            const fileCompare = a.file.localeCompare(b.file);
+            if (fileCompare !== 0) return fileCompare;
+            return a.startLine - b.startLine;
+          });
+          break;
+      }
+
+      // Output results
+      if (functions.length === 0) {
+        console.log(chalk.yellow('No functions found matching the criteria'));
+      } else {
+        switch (options.format) {
+          case 'json':
+            console.log(JSON.stringify(functions, null, 2));
+            break;
+          
+          case 'simple':
+            functions.forEach(func => {
+              console.log(`${func.file}:${func.startLine}:${func.identifier}`);
+            });
+            break;
+          
+          default: {
+            console.log(chalk.green(`\nFound ${functions.length} function${functions.length > 1 ? 's' : ''}:\n`));
+            
+            let currentFile = '';
+            functions.forEach((func, index) => {
+              // Group by file
+              if (func.file !== currentFile) {
+                if (currentFile !== '') console.log(); // Add spacing between files
+                console.log(chalk.blue(`📁 ${func.file}`));
+                currentFile = func.file;
+              }
+              
+              // Function info
+              console.log(
+                chalk.gray('  ') + 
+                chalk.cyan(`${func.identifier}`) + 
+                (func.exported ? chalk.green(' ✓') : '') +
+                (func.async ? chalk.blue(' ⚡') : '') +
+                chalk.gray(` (line ${func.startLine})`)
+              );
+              
+              // Show metrics if requested
+              if (func.metrics?.cyclomaticComplexity && func.metrics.cyclomaticComplexity > 10) {
+                console.log(chalk.yellow(`     ⚠️  Complexity: ${func.metrics.cyclomaticComplexity}`));
+              }
+            });
+            console.log();
+            break;
+          }
+        }
+        
+        // Summary statistics
+        if (options.format === 'default') {
+          const exportedCount = functions.filter(f => f.exported).length;
+          const asyncCount = functions.filter(f => f.async).length;
+          console.log(chalk.gray('─'.repeat(50)));
+          console.log(chalk.gray(`Total: ${functions.length} functions`));
+          console.log(chalk.gray(`Exported: ${exportedCount} | Async: ${asyncCount}`));
+        }
+      }
+
+    } catch (error) {
+      console.error(chalk.red('❌ List error:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
 // Add the diff command
 program.addCommand(createDiffCommand());
 
@@ -302,6 +510,9 @@ program.addCommand(createReportCommand());
 
 // Add the CI command
 program.addCommand(createCICommand());
+
+// Add the metrics command with subcommands
+program.addCommand(createMetricsCommand());
 
 program
   .command('generate-descriptions')
@@ -593,348 +804,10 @@ program
     }
   });
 
-program
-  .command('metrics')
-  .description('Show code quality metrics and complexity overview')
-  .option('-d, --details', 'show detailed function-level metrics')
-  .action(async (options) => {
-    try {
-      // Auto-detect project and load config with error handling
-      const projectInfo = (() => {
-        try {
-          return ProjectDetector.detectProject();
-        } catch (error) {
-          console.error(chalk.red('❌ Failed to detect project structure'));
-          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
-        }
-      })();
-      
-      if (!ConfigService.isInitialized(projectInfo.root)) {
-        console.error(chalk.red('❌ Project not initialized'));
-        console.log(chalk.yellow('💡 Run `function-indexer` first to initialize the project'));
-        process.exit(1);
-      }
-      
-      const config = ConfigService.loadConfig(projectInfo.root);
-      
-      if (!fs.existsSync(config.output)) {
-        console.error(chalk.red('❌ Index file not found'));
-        console.log(chalk.yellow('💡 Run `function-indexer` to create the index'));
-        process.exit(1);
-      }
 
-      console.log(chalk.blue('📊 Code Quality Metrics\n'));
 
-      // Load and analyze functions from index
-      const indexContent = fs.readFileSync(config.output, 'utf-8');
-      const functions: any[] = [];
-      
-      for (const line of indexContent.trim().split('\n').filter(line => line)) {
-        try {
-          functions.push(JSON.parse(line));
-        } catch (error) {
-          console.warn(chalk.yellow(`⚠️  Skipping malformed JSON line: ${line.substring(0, 50)}...`));
-          continue;
-        }
-      }
 
-      // Calculate summary statistics
-      const totalFunctions = functions.length;
-      const complexityDistribution = {
-        low: 0,
-        medium: 0,
-        high: 0
-      };
 
-      const defaultThresholds = {
-        cyclomaticComplexity: 10,
-        cognitiveComplexity: 15,
-        linesOfCode: 50,
-        nestingDepth: 4,
-        parameterCount: 4
-      };
-      
-      const thresholds = {
-        ...defaultThresholds,
-        ...(config.metrics?.thresholds || {})
-      };
-
-      const violations: Array<{ func: any; issues: string[] }> = [];
-
-      functions.forEach(func => {
-        const metrics = func.metrics || {};
-        const issues: string[] = [];
-        
-        // Check violations using refactored approach
-        const metricChecks = [
-          { key: 'cyclomaticComplexity', label: 'Cyclomatic complexity' },
-          { key: 'cognitiveComplexity', label: 'Cognitive complexity' },
-          { key: 'linesOfCode', label: 'Lines of code' },
-          { key: 'nestingDepth', label: 'Nesting depth' },
-          { key: 'parameterCount', label: 'Parameter count' }
-        ] as const;
-        
-        for (const { key, label } of metricChecks) {
-          if (metrics[key] > thresholds[key]) {
-            issues.push(`${label}: ${metrics[key]} (>${thresholds[key]})`);
-          }
-        }
-
-        // Categorize by risk level
-        if (issues.length >= 3) {
-          complexityDistribution.high++;
-        } else if (issues.length >= 1) {
-          complexityDistribution.medium++;
-        } else {
-          complexityDistribution.low++;
-        }
-
-        if (issues.length > 0) {
-          violations.push({ func, issues });
-        }
-      });
-
-      // Display summary
-      console.log(chalk.cyan('📈 Summary'));
-      console.log(chalk.gray(`   Total Functions: ${totalFunctions}`));
-      console.log(chalk.green(`   🟢 Low Risk: ${complexityDistribution.low} (${Math.round(complexityDistribution.low / totalFunctions * 100)}%)`));
-      console.log(chalk.yellow(`   🟡 Medium Risk: ${complexityDistribution.medium} (${Math.round(complexityDistribution.medium / totalFunctions * 100)}%)`));
-      console.log(chalk.red(`   🔴 High Risk: ${complexityDistribution.high} (${Math.round(complexityDistribution.high / totalFunctions * 100)}%)`));
-
-      if (violations.length > 0) {
-        console.log('\n' + chalk.yellow('⚠️  Functions exceeding thresholds:'));
-        
-        // Sort by number of violations
-        violations.sort((a, b) => b.issues.length - a.issues.length);
-        
-        const showCount = options.details ? violations.length : Math.min(5, violations.length);
-        
-        violations.slice(0, showCount).forEach((violation, index) => {
-          const riskIcon = violation.issues.length >= 3 ? '🔴' : '🟡';
-          console.log(`\n${riskIcon} ${index + 1}. ${chalk.cyan(violation.func.identifier)}`);
-          console.log(chalk.gray(`   ${violation.func.file}:${violation.func.startLine}`));
-          violation.issues.forEach(issue => {
-            console.log(chalk.gray(`   • ${issue}`));
-          });
-        });
-        
-        if (!options.details && violations.length > showCount) {
-          console.log(chalk.gray(`\n   ... and ${violations.length - showCount} more functions`));
-          console.log(chalk.gray('   Use --details to see all functions'));
-        }
-      } else {
-        console.log('\n' + chalk.green('✅ All functions are within quality thresholds!'));
-      }
-
-      // Suggestions
-      if (violations.length > 0) {
-        console.log('\n' + chalk.blue('💡 Suggestions:'));
-        console.log(chalk.gray('   • Consider breaking down complex functions'));
-        console.log(chalk.gray('   • Reduce nesting levels with early returns'));
-        console.log(chalk.gray('   • Extract helper functions for readability'));
-        console.log(chalk.gray('   • Use function-indexer search to find similar patterns'));
-      }
-
-    } catch (error) {
-      console.error(chalk.red('❌ Metrics error:'), error instanceof Error ? error.message : error);
-      process.exit(1);
-    }
-  });
-
-program
-  .command('collect-metrics')
-  .description('Collect code metrics for commit/PR tracking')
-  .option('-r, --root <path>', 'root directory to scan', './src')
-  .option('--metrics-output <file>', 'output JSONL file for metrics history')
-  .option('--pr <number>', 'PR number for this metrics collection')
-  .option('--commit <hash>', 'specific commit hash (defaults to current HEAD)')
-  .option('--branch <name>', 'branch name (defaults to current branch)')
-  .option('--verbose-metrics', 'verbose output for metrics collection')
-  .action(async (options) => {
-    try {
-      console.log(chalk.blue('📊 Collecting function metrics...'));
-      
-      const rootPath = path.resolve(options.root);
-      if (!fs.existsSync(rootPath)) {
-        console.error(chalk.red(`❌ Root directory does not exist: ${rootPath}`));
-        process.exit(1);
-      }
-
-      const metricsService = new MetricsService();
-      
-      await metricsService.collectMetrics(rootPath, {
-        prNumber: options.pr ? parseInt(options.pr) : undefined,
-        commitHash: options.commit,
-        branchName: options.branch,
-        verbose: options.verboseMetrics,
-        outputFile: options.metricsOutput
-      });
-
-      console.log(chalk.green('✅ Metrics collection completed!'));
-      
-      if (options.metricsOutput) {
-        console.log(chalk.cyan(`📄 Metrics history saved to: ${options.metricsOutput}`));
-      } else {
-        console.log(chalk.cyan('📄 Metrics stored in SQLite database'));
-      }
-      
-      metricsService.close();
-    } catch (error) {
-      console.error(chalk.red('❌ Metrics collection error:'), error instanceof Error ? error.message : String(error));
-      process.exit(1);
-    }
-  });
-
-program
-  .command('show-metrics [functionId]')
-  .description('Show metrics history for a specific function (or list available functions)')
-  .option('-l, --limit <number>', 'limit number of history entries', '10')
-  .option('--list', 'list all functions with metrics data')
-  .action(async (functionId, options) => {
-    try {
-      const metricsService = new MetricsService();
-      
-      if (!functionId || options.list) {
-        // 利用可能な関数の一覧を表示
-        console.log(chalk.blue('📊 Available functions with metrics data:\n'));
-        
-        const availableFunctions = metricsService.listAvailableFunctions();
-        
-        if (availableFunctions.length === 0) {
-          console.log(chalk.yellow('No metrics data found'));
-          console.log(chalk.gray('💡 Run `function-indexer collect-metrics` first to collect data'));
-        } else {
-          console.log(chalk.green(`Found ${availableFunctions.length} functions with metrics:\n`));
-          
-          availableFunctions.forEach((func, index) => {
-            console.log(chalk.cyan(`${index + 1}. ${func.functionId}`));
-            console.log(chalk.gray(`   Last updated: ${new Date(func.lastTimestamp).toLocaleString()}`));
-            console.log(chalk.gray(`   Records: ${func.recordCount} | Latest complexity: ${func.latestComplexity}`));
-            console.log();
-          });
-          
-          console.log(chalk.blue('💡 Usage:'));
-          console.log(chalk.gray('   function-indexer show-metrics "src/file.ts:functionName"'));
-        }
-      } else {
-        // 特定の関数のメトリクス履歴を表示
-        console.log(chalk.blue(`📈 Metrics history for: ${functionId}`));
-        
-        const history = metricsService.showFunctionMetrics(functionId, parseInt(options.limit));
-        
-        if (history.length === 0) {
-          console.log(chalk.yellow('No metrics history found for this function'));
-          console.log(chalk.gray('💡 Make sure the function ID is correct'));
-          console.log(chalk.gray('💡 Run `function-indexer show-metrics --list` to see available functions'));
-        } else {
-          console.log(chalk.green(`Found ${history.length} metric entries:\n`));
-          
-          history.forEach((metric, index) => {
-            const date = new Date(metric.timestamp).toLocaleString();
-            console.log(chalk.cyan(`${index + 1}. ${date} (${metric.commitHash.substring(0, 8)})`));
-            console.log(chalk.gray(`   Branch: ${metric.branchName} | Change: ${metric.changeType}`));
-            if (metric.prNumber) console.log(chalk.gray(`   PR: #${metric.prNumber}`));
-            console.log(chalk.gray(`   Cyclomatic: ${metric.cyclomaticComplexity} | Cognitive: ${metric.cognitiveComplexity}`));
-            console.log(chalk.gray(`   LOC: ${metric.linesOfCode} | Nesting: ${metric.nestingDepth} | Params: ${metric.parameterCount}`));
-            console.log();
-          });
-        }
-      }
-      
-      metricsService.close();
-    } catch (error) {
-      console.error(chalk.red('❌ Show metrics error:'), error instanceof Error ? error.message : String(error));
-      process.exit(1);
-    }
-  });
-
-program
-  .command('analyze-trends')
-  .description('Analyze metrics trends and violations')
-  .action(async () => {
-    try {
-      console.log(chalk.blue('📊 Analyzing metrics trends...'));
-      
-      const metricsService = new MetricsService();
-      const analysis = metricsService.analyzeTrends();
-      
-      if (analysis.length === 0) {
-        console.log(chalk.yellow('No metrics data found for analysis'));
-      } else {
-        console.log(chalk.green(`Analysis results for ${analysis.length} functions:\n`));
-        
-        const highRisk = analysis.filter(a => a.riskLevel === 'high');
-        const mediumRisk = analysis.filter(a => a.riskLevel === 'medium');
-        const lowRisk = analysis.filter(a => a.riskLevel === 'low');
-        
-        console.log(chalk.red(`🔴 High Risk: ${highRisk.length} functions`));
-        console.log(chalk.yellow(`🟡 Medium Risk: ${mediumRisk.length} functions`));
-        console.log(chalk.green(`🟢 Low Risk: ${lowRisk.length} functions\n`));
-        
-        // Show high risk functions
-        if (highRisk.length > 0) {
-          console.log(chalk.red('🔴 High Risk Functions:'));
-          highRisk.forEach(func => {
-            console.log(chalk.red(`  ❌ ${func.functionId} (${func.trend})`));
-            func.violations.forEach(v => {
-              console.log(chalk.gray(`     ${v.metric}: ${v.value} (threshold: ${v.threshold})`));
-            });
-          });
-          console.log();
-        }
-        
-        // Show medium risk functions (limited)
-        if (mediumRisk.length > 0) {
-          console.log(chalk.yellow('🟡 Medium Risk Functions (showing first 5):'));
-          mediumRisk.slice(0, 5).forEach(func => {
-            console.log(chalk.yellow(`  ⚠️  ${func.functionId} (${func.trend})`));
-            func.violations.forEach(v => {
-              console.log(chalk.gray(`     ${v.metric}: ${v.value} (threshold: ${v.threshold})`));
-            });
-          });
-          if (mediumRisk.length > 5) {
-            console.log(chalk.gray(`  ... and ${mediumRisk.length - 5} more`));
-          }
-        }
-      }
-      
-      metricsService.close();
-    } catch (error) {
-      console.error(chalk.red('❌ Trend analysis error:'), error instanceof Error ? error.message : String(error));
-      process.exit(1);
-    }
-  });
-
-program
-  .command('pr-metrics <prNumber>')
-  .description('Show metrics for a specific PR')
-  .action(async (prNumber) => {
-    try {
-      console.log(chalk.blue(`📊 Metrics for PR #${prNumber}`));
-      
-      const metricsService = new MetricsService();
-      const prMetrics = metricsService.getPRMetrics(parseInt(prNumber));
-      
-      if (prMetrics.length === 0) {
-        console.log(chalk.yellow(`No metrics found for PR #${prNumber}`));
-      } else {
-        console.log(chalk.green(`Found metrics for ${prMetrics.length} functions:\n`));
-        
-        prMetrics.forEach((metric, index) => {
-          console.log(chalk.cyan(`${index + 1}. ${metric.functionId}`));
-          console.log(chalk.gray(`   Change: ${metric.changeType} | Commit: ${metric.commitHash.substring(0, 8)}`));
-          console.log(chalk.gray(`   Cyclomatic: ${metric.cyclomaticComplexity} | Cognitive: ${metric.cognitiveComplexity}`));
-          console.log(chalk.gray(`   LOC: ${metric.linesOfCode} | Nesting: ${metric.nestingDepth} | Params: ${metric.parameterCount}`));
-          console.log();
-        });
-      }
-      
-      metricsService.close();
-    } catch (error) {
-      console.error(chalk.red('❌ PR metrics error:'), error instanceof Error ? error.message : String(error));
-      process.exit(1);
-    }
-  });
 
 // エラーハンドリング
 process.on('uncaughtException', (error) => {
