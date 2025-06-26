@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { FunctionInfo } from '../types';
+import { FunctionInfo, FunctionMetrics, MetricsThresholds } from '../types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import chalk from 'chalk';
@@ -7,6 +7,22 @@ import Handlebars from 'handlebars';
 import { ConfigService } from '../services/config-service';
 import { ProjectDetector } from '../utils/project-detector';
 import { handle as handleError, validateInput, validatePath, validateJSON, createFileError, withErrorHandling, ValidationError, ConfigurationError, IndexError } from '../utils/error-handler';
+
+// Type definitions for project configuration
+interface ProjectInfo {
+  root: string;
+  type: 'typescript' | 'javascript' | 'unknown';
+  configFile?: string;
+}
+
+interface Config {
+  version: string;
+  root: string;
+  output: string;
+  domain: string;
+  include: string[];
+  exclude: string[];
+}
 
 interface ReportOptions {
   template?: string;
@@ -95,7 +111,7 @@ function validateThresholdsJSON(value: string): string {
   }
 }
 
-function validateThresholdKeys(parsed: any): void {
+function validateThresholdKeys(parsed: Record<string, unknown>): void {
   const validKeys = ['cyclomaticComplexity', 'cognitiveComplexity', 'linesOfCode', 'nestingDepth', 'parameterCount'];
   const invalidKeys = Object.keys(parsed).filter(key => !validKeys.includes(key));
   if (invalidKeys.length > 0) {
@@ -103,7 +119,7 @@ function validateThresholdKeys(parsed: any): void {
   }
 }
 
-function validateThresholdValues(parsed: any): void {
+function validateThresholdValues(parsed: Record<string, unknown>): void {
   for (const [key, val] of Object.entries(parsed)) {
     if (typeof val !== 'number' || val <= 0) {
       throw new Error(`Threshold ${key} must be a positive number, got: ${val}`);
@@ -225,7 +241,7 @@ function analyzeFunctions(functions: FunctionInfo[], thresholds: typeof DEFAULT_
   };
 }
 
-function checkFunctionViolations(metrics: any, thresholds: typeof DEFAULT_THRESHOLDS): string[] {
+function checkFunctionViolations(metrics: FunctionMetrics, thresholds: MetricsThresholds): string[] {
   const issues: string[] = [];
   const checks = [
     { key: 'cyclomaticComplexity', label: 'Cyclomatic complexity' },
@@ -236,8 +252,10 @@ function checkFunctionViolations(metrics: any, thresholds: typeof DEFAULT_THRESH
   ];
   
   checks.forEach(({ key, label }) => {
-    if (metrics[key] && metrics[key] > thresholds[key as keyof typeof thresholds]) {
-      issues.push(`${label}: ${metrics[key]} (>${thresholds[key as keyof typeof thresholds]})`);
+    const metricValue = metrics[key as keyof FunctionMetrics] as number;
+    const thresholdValue = thresholds[key as keyof MetricsThresholds];
+    if (metricValue && metricValue > thresholdValue) {
+      issues.push(`${label}: ${metricValue} (>${thresholdValue})`);
     }
   });
   
@@ -272,7 +290,12 @@ function generateRecommendations(
   distribution: { low: number; medium: number; high: number },
   missingTypes: number,
   totalFunctions: number,
-  fileMetrics: any[]
+  fileMetrics: Array<{
+    file: string;
+    functionCount: number;
+    avgComplexity: number;
+    maxComplexity: number;
+  }>
 ): string[] {
   const recommendations: string[] = [];
   
@@ -336,7 +359,7 @@ async function validateReportOptions(options: ReportOptions): Promise<void> {
   }
 }
 
-async function loadProjectConfig(): Promise<{ config: any; projectInfo: any }> {
+async function loadProjectConfig(): Promise<{ config: Config; projectInfo: ProjectInfo }> {
   const projectInfo = detectProjectWithError();
   ensureProjectInitialized(projectInfo);
   const config = loadConfigWithError(projectInfo);
@@ -345,7 +368,7 @@ async function loadProjectConfig(): Promise<{ config: any; projectInfo: any }> {
   return { config, projectInfo };
 }
 
-function detectProjectWithError(): any {
+function detectProjectWithError(): ProjectInfo {
   try {
     return ProjectDetector.detectProject();
   } catch (error) {
@@ -353,7 +376,7 @@ function detectProjectWithError(): any {
   }
 }
 
-function ensureProjectInitialized(projectInfo: any): void {
+function ensureProjectInitialized(projectInfo: ProjectInfo): void {
   if (!ConfigService.isInitialized(projectInfo.root)) {
     throw new ConfigurationError(
       'Project not initialized. Run `function-indexer` first to initialize the project.',
@@ -362,7 +385,7 @@ function ensureProjectInitialized(projectInfo: any): void {
   }
 }
 
-function loadConfigWithError(projectInfo: any): any {
+function loadConfigWithError(projectInfo: ProjectInfo): Config {
   try {
     return ConfigService.loadConfig(projectInfo.root);
   } catch (error) {
@@ -412,7 +435,7 @@ async function loadFunctionIndex(outputPath: string): Promise<FunctionInfo[]> {
 function parseThresholds(thresholdsJson?: string): typeof DEFAULT_THRESHOLDS {
   try {
     return thresholdsJson 
-      ? validateJSON(thresholdsJson, 'thresholds')
+      ? validateJSON(thresholdsJson, 'thresholds') as typeof DEFAULT_THRESHOLDS
       : DEFAULT_THRESHOLDS;
   } catch (error) {
     if (error instanceof ValidationError) throw error;

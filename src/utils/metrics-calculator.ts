@@ -1,4 +1,4 @@
-import { Node, SyntaxKind, FunctionDeclaration, MethodDeclaration, ArrowFunction, FunctionExpression } from 'ts-morph';
+import { Node, SyntaxKind, FunctionDeclaration, MethodDeclaration, ArrowFunction, FunctionExpression, BinaryExpression } from 'ts-morph';
 import { FunctionMetrics } from '../types';
 
 export class MetricsCalculator {
@@ -82,7 +82,7 @@ export class MetricsCalculator {
           break;
 
         case SyntaxKind.BinaryExpression: {
-          const binaryExpr = currentNode as any;
+          const binaryExpr = currentNode as BinaryExpression;
           const operatorToken = binaryExpr.getOperatorToken();
           if (operatorToken.getKind() === SyntaxKind.AmpersandAmpersandToken || 
               operatorToken.getKind() === SyntaxKind.BarBarToken) {

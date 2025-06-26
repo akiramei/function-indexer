@@ -1,4 +1,4 @@
-import { Project, SourceFile, FunctionDeclaration, MethodDeclaration, ArrowFunction, FunctionExpression, VariableStatement, SyntaxKind, ClassDeclaration } from 'ts-morph';
+import { Project, SourceFile, FunctionDeclaration, MethodDeclaration, ArrowFunction, FunctionExpression, VariableStatement, SyntaxKind, ClassDeclaration, Node } from 'ts-morph';
 import { glob } from 'glob';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -300,13 +300,13 @@ export class FunctionIndexer {
 
   private getArrowFunctionSignature(name: string, func: ArrowFunction | FunctionExpression): string {
     const params = func.getParameters().map(p => p.getText()).join(', ');
-    const returnType = func.getReturnTypeNode()?.getText() || 'any';
+    const returnType = func.getReturnTypeNode()?.getText() || 'unknown';
     const asyncModifier = func.isAsync() ? 'async ' : '';
     
     return `${asyncModifier}${name} = (${params}): ${returnType} => {...}`;
   }
 
-  private calculateMetrics(node: any, functionBody: string): FunctionMetrics {
+  private calculateMetrics(node: FunctionDeclaration | MethodDeclaration | ArrowFunction | FunctionExpression, functionBody: string): FunctionMetrics {
     return MetricsCalculator.calculateMetrics(node, functionBody);
   }
 

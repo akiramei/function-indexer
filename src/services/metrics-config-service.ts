@@ -229,14 +229,15 @@ export function isEnabled(projectRoot?: string): boolean {
 /**
  * Migration helper: extract metrics config from legacy config
  */
-export function migrateLegacyConfig(legacyConfig: any, projectRoot?: string): MetricsConfig {
+export function migrateLegacyConfig(legacyConfig: Record<string, unknown>, projectRoot?: string): MetricsConfig {
   const defaultConfig = createDefaultConfig(projectRoot);
   
   // Extract metrics settings from legacy config
-  if (legacyConfig.metrics?.thresholds) {
+  const metrics = legacyConfig.metrics as Record<string, unknown> | undefined;
+  if (metrics?.thresholds && typeof metrics.thresholds === 'object' && metrics.thresholds !== null) {
     defaultConfig.thresholds = {
       ...defaultConfig.thresholds,
-      ...legacyConfig.metrics.thresholds
+      ...(metrics.thresholds as Record<string, unknown>)
     };
   }
   

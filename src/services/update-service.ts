@@ -441,7 +441,7 @@ export class UpdateService {
   }
 
   private async processFile(
-    indexer: any,
+    indexer: FunctionIndexer,
     filePath: string,
     domain: string
   ): Promise<FunctionInfo[]> {

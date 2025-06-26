@@ -4,6 +4,13 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { FunctionInfo, SearchHistory, SearchOptions } from './types';
 
+interface SearchCriteria {
+  keywords: string[];
+  async?: boolean;
+  returnType?: string;
+  domain?: string;
+}
+
 export class SearchService {
   private db: Database.Database;
   private functionsIndex: FunctionInfo[] = [];
@@ -144,7 +151,7 @@ export class SearchService {
     context: string | undefined,
     results: FunctionInfo[],
     keywords: string[],
-    searchCriteria: any,
+    searchCriteria: SearchCriteria,
     confidence: number
   ): void {
     this.saveSearchHistory({
@@ -169,8 +176,10 @@ export class SearchService {
     return words.filter(word => !stopWords.has(word));
   }
 
-  private parseSearchCriteria(query: string): any {
-    const criteria: any = {};
+  private parseSearchCriteria(query: string): SearchCriteria {
+    const criteria: SearchCriteria = {
+      keywords: []
+    };
     
     if (query.includes('async') || query.includes('asynchronous')) {
       criteria.async = true;
@@ -184,7 +193,7 @@ export class SearchService {
     return criteria;
   }
 
-  private calculateRelevance(func: FunctionInfo, keywords: string[], criteria: any): number {
+  private calculateRelevance(func: FunctionInfo, keywords: string[], criteria: SearchCriteria): number {
     let score = 0;
     
     const searchableText = `${func.identifier} ${func.signature} ${func.file}`.toLowerCase();
@@ -217,7 +226,7 @@ export class SearchService {
     if (results.length === 0) return 0;
     
     const topResult = results[0];
-    const relevance = this.calculateRelevance(topResult, keywords, {});
+    const relevance = this.calculateRelevance(topResult, keywords, { keywords });
     const maxPossibleScore = keywords.length * 30 + 20;
     
     return Math.min(relevance / maxPossibleScore, 1.0);
@@ -255,51 +264,51 @@ export class SearchService {
         ORDER BY timestamp DESC 
         LIMIT 100
       `);
-      return stmt.all(`%${query}%`).map(this.mapRowToHistory);
+      return stmt.all(`%${query}%`).map(row => this.mapRowToHistory(row as Record<string, unknown>));
     } else {
       stmt = this.db.prepare(`
         SELECT * FROM search_history 
         ORDER BY timestamp DESC 
         LIMIT 100
       `);
-      return stmt.all().map(this.mapRowToHistory);
+      return stmt.all().map(row => this.mapRowToHistory(row as Record<string, unknown>));
     }
   }
 
-  private mapRowToHistory(row: any): SearchHistory {
+  private mapRowToHistory = (row: Record<string, unknown>): SearchHistory => {
     try {
       return {
-        id: row.id,
-        timestamp: row.timestamp,
-        query: row.query,
-        context: row.context,
-        resolvedFunctions: JSON.parse(row.resolved_functions),
+        id: String(row.id),
+        timestamp: String(row.timestamp),
+        query: String(row.query),
+        context: String(row.context),
+        resolvedFunctions: JSON.parse(String(row.resolved_functions)),
         searchCriteria: {
-          keywords: JSON.parse(row.keywords),
-          returnType: row.return_type,
+          keywords: JSON.parse(String(row.keywords)),
+          returnType: row.return_type ? String(row.return_type) : undefined,
           async: row.is_async === 1,
-          domain: row.domain
+          domain: row.domain ? String(row.domain) : undefined
         },
-        confidence: row.confidence,
-        usage: row.usage
+        confidence: Number(row.confidence),
+        usage: String(row.usage) as 'successful' | 'rejected' | 'modified'
       };
     } catch (error) {
       console.error(`Warning: Failed to parse search history entry ${row.id}:`, error);
       // Return a minimal valid object to prevent crashes
       return {
-        id: row.id,
-        timestamp: row.timestamp,
-        query: row.query,
-        context: row.context || '',
+        id: String(row.id),
+        timestamp: String(row.timestamp),
+        query: String(row.query),
+        context: String(row.context || ''),
         resolvedFunctions: [],
         searchCriteria: {
           keywords: [],
-          returnType: row.return_type,
+          returnType: row.return_type ? String(row.return_type) : undefined,
           async: row.is_async === 1,
-          domain: row.domain
+          domain: row.domain ? String(row.domain) : undefined
         },
-        confidence: row.confidence || 0,
-        usage: row.usage || 'successful'
+        confidence: Number(row.confidence) || 0,
+        usage: 'successful' as const
       };
     }
   }

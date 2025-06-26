@@ -33,7 +33,7 @@ export type CommandName = typeof commandAliases[AliasKey];
  * Apply command aliases to the program
  */
 export function applyCommandAliases(program: Command): void {
-  // Check if any of the command line arguments are aliases and replace them
+  // Check if command line arguments contain aliases and replace them
   const args = process.argv.slice(2); // Remove 'node' and script name
   
   if (args.length > 0) {

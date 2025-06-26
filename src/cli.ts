@@ -287,10 +287,10 @@ program
       const searchService = new SearchService();
       searchService.loadFunctionIndex(config.output);
 
-      const determineLimitValue = (options: any): number | undefined => {
+      const determineLimitValue = (options: { all?: boolean; limit?: string }): number | undefined => {
         if (options.all) return undefined;
         
-        const parsed = parseInt(options.limit);
+        const parsed = parseInt(options.limit || '100');
         if (isNaN(parsed) || parsed < 1) {
           console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 100`));
           return 100;

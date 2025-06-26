@@ -156,7 +156,7 @@ function provideSuggestions(command: string, error: Error): void {
 /**
  * Validate common inputs and throw ValidationError if invalid
  */
-export function validateInput(value: any, fieldName: string, validator: (val: any) => boolean, message?: string): void {
+export function validateInput<T>(value: T, fieldName: string, validator: (val: T) => boolean, message?: string): void {
     if (!validator(value)) {
       throw new ValidationError(
         message || `Invalid value for ${fieldName}: ${value}`,
@@ -190,7 +190,7 @@ export async function validatePath(path: string, type: 'file' | 'directory' = 'f
 /**
  * Validate JSON string
  */
-export function validateJSON(jsonString: string, fieldName: string): any {
+export function validateJSON(jsonString: string, fieldName: string): unknown {
     try {
       return JSON.parse(jsonString);
     } catch (error) {
