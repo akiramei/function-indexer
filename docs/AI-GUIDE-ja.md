@@ -84,27 +84,43 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 
 **主要改善**: インデックスファイルが可視性向上のためプロジェクトルートに作成されるようになりました！
 
-### 2. `search` - 関数検索
+### 2. `search` - 関数検索（改善済み！）
 ```bash
 npx @akiramei/function-indexer search <query> [options]
 ```
 **目的**: 名前、内容、自然言語で関数を検索
 **オプション**:
 - `--context, -c`: 検索のコンテキストを提供
-- `--limit, -l`: 最大結果数（デフォルト: 10）
+- `--limit, -l`: 最大結果数（デフォルト: 100）- **10から増加！**
+- `--all`: すべての結果を表示（制限なし）- **新機能！**
 - `--no-save-history`: 検索履歴を保存しない
 
 **使用例**:
 ```bash
-# 名前で検索
+# 名前で検索（デフォルトで最大100件表示）
 npx @akiramei/function-indexer search "validate"
+
+# マッチしたすべての結果を表示（制限なし）
+npx @akiramei/function-indexer search "validate" --all
+
+# プロジェクト内のすべての関数を表示（空クエリ + --all）
+npx @akiramei/function-indexer search "" --all
+
+# ワイルドカード検索ですべての関数を表示
+npx @akiramei/function-indexer search "*" --all
 
 # コンテキスト付き自然言語検索
 npx @akiramei/function-indexer search "認証" --context "ログインとセキュリティ"
 
-# 結果数制限
-npx @akiramei/function-indexer search "コンポーネント" --limit 5
+# カスタム制限
+npx @akiramei/function-indexer search "コンポーネント" --limit 50
 ```
+
+**主な改善点**:
+- **10倍の結果**: デフォルト制限を10から100に増加
+- **無制限検索**: `--all`ですべてのマッチした関数を表示
+- **グローバル検索**: 空クエリ`""`と`--all`でコードベース全体を表示
+- **スマート切り捨て**: 結果が制限された際の明確な表示と使用ヒント
 
 ### 3. `metrics` - コード品質分析
 ```bash
@@ -115,7 +131,7 @@ npx @akiramei/function-indexer metrics [options]
 - `--details, -d`: 関数レベルの詳細メトリクスを表示
 
 **出力例**:
-```
+```text
 📊 コード品質レポート
 ━━━━━━━━━━━━━━━━━━━
 総関数数: 142
@@ -413,7 +429,7 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
-npx @akiramei/function-indexer metrics --threshold --root ./src
+npx @akiramei/function-indexer metrics --details --root ./src
 if [ $? -ne 0 ]; then
   echo "❌ コード品質チェック失敗。高複雑度の関数を修正してください。"
   exit 1
@@ -622,4 +638,4 @@ jobs:
           sudo apt-get update && sudo apt-get install -y build-essential python3-dev
           npm ci && npm run build
           node dist/cli.js ci --format github' > .github/workflows/code-quality.yml
-```
+

@@ -83,27 +83,43 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 
 **Key Improvement**: Index file now created in project root for better visibility!
 
-### 2. `search` - Find Functions
+### 2. `search` - Find Functions (IMPROVED!)
 ```bash
 npx @akiramei/function-indexer search <query> [options]
 ```
 **Purpose**: Search functions by name, content, or natural language
 **Options**:
 - `--context, -c`: Provide context for the search
-- `--limit, -l`: Max results (default: 10)
+- `--limit, -l`: Max results (default: 100) - **INCREASED from 10!**
+- `--all`: Show all results (no limit) - **NEW!**
 - `--no-save-history`: Don't save search to history
 
 **Examples**:
 ```bash
-# Find by name
+# Find by name (now shows up to 100 results by default)
 npx @akiramei/function-indexer search "validate"
+
+# Show ALL matching results (no limit)
+npx @akiramei/function-indexer search "validate" --all
+
+# Show all functions in project (empty query + --all)
+npx @akiramei/function-indexer search "" --all
+
+# Wildcard search for all functions
+npx @akiramei/function-indexer search "*" --all
 
 # Natural language search with context
 npx @akiramei/function-indexer search "authentication" --context "login and security"
 
-# Limit results
-npx @akiramei/function-indexer search "component" --limit 5
+# Custom limit
+npx @akiramei/function-indexer search "component" --limit 50
 ```
+
+**Key Improvements**:
+- **10x more results**: Default limit increased from 10 to 100
+- **Unlimited search**: Use `--all` to see every matching function
+- **Global search**: Empty query `""` with `--all` shows entire codebase
+- **Smart truncation**: Clear indication when results are limited with usage hints
 
 ### 3. `metrics` - Analyze Code Quality
 ```bash
@@ -114,7 +130,7 @@ npx @akiramei/function-indexer metrics [options]
 - `--details, -d`: Show detailed function-level metrics
 
 **Output Example**:
-```
+```text
 📊 Code Quality Report
 ━━━━━━━━━━━━━━━━━━━
 Total Functions: 142
@@ -625,4 +641,4 @@ jobs:
           sudo apt update && sudo apt install build-essential python3
           npm ci && npm run build
           node dist/cli.js ci --format github' > .github/workflows/code-quality.yml
-```
+

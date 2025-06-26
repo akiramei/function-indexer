@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { FunctionIndexer } from './indexer';
-import { IndexerOptions } from './types';
+import { IndexerOptions, FunctionInfo } from './types';
 import { SearchService } from './search';
 import { AIService } from './ai-service';
 import { UpdateService } from './services/update-service';
@@ -244,7 +244,8 @@ program
   .description('Search for functions using natural language')
   .option('-c, --context <context>', 'provide context for the search')
   .option('--no-save-history', 'do not save search to history')
-  .option('-l, --limit <number>', 'limit number of results', '10')
+  .option('-l, --limit <number>', 'limit number of results', '100')
+  .option('--all', 'show all results (no limit)')
   .action(async (query, options) => {
     try {
       // Auto-detect project and load config with error handling
@@ -279,18 +280,22 @@ program
       const searchService = new SearchService();
       searchService.loadFunctionIndex(config.output);
 
+      const determineLimitValue = (options: any): number | undefined => {
+        if (options.all) return undefined;
+        
+        const parsed = parseInt(options.limit);
+        if (isNaN(parsed) || parsed < 1) {
+          console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 100`));
+          return 100;
+        }
+        return Math.max(1, parsed);
+      };
+
       const results = searchService.search({
         query,
         context: options.context,
         saveHistory: options.saveHistory !== false,
-        limit: (() => {
-          const parsed = parseInt(options.limit);
-          if (isNaN(parsed) || parsed < 1) {
-            console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 10`));
-            return 10;
-          }
-          return Math.max(1, parsed);
-        })()
+        limit: determineLimitValue(options)
       });
 
       if (results.length === 0) {
@@ -300,7 +305,16 @@ program
         console.log(chalk.gray('  • Being more specific'));
         console.log(chalk.gray('  • Adding context with --context'));
       } else {
-        console.log(chalk.green(`\nFound ${results.length} matching function${results.length > 1 ? 's' : ''}:\n`));
+        // Get the total results count for display
+        const totalResults = searchService.getLastSearchTotalCount();
+        const isLimited = !options.all && totalResults > results.length;
+        
+        if (isLimited) {
+          console.log(chalk.green(`\nFound ${totalResults} matching functions (showing first ${results.length}):\n`));
+          console.log(chalk.gray(`💡 Use --all to see all results or --limit <n> to adjust\n`));
+        } else {
+          console.log(chalk.green(`\nFound ${results.length} matching function${results.length > 1 ? 's' : ''}:\n`));
+        }
         
         results.forEach((func, index) => {
           console.log(chalk.cyan(`${index + 1}. ${func.identifier}`) + 
@@ -327,6 +341,161 @@ program
       searchService.close();
     } catch (error) {
       console.error(chalk.red('❌ Search error:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('list')
+  .description('List all functions in the codebase without limit')
+  .option('-f, --format <format>', 'output format (default, simple, json)', 'default')
+  .option('--file <pattern>', 'filter by file pattern (glob supported)')
+  .option('--exported', 'show only exported functions')
+  .option('--async', 'show only async functions')
+  .option('-s, --sort <field>', 'sort by field (name, file, complexity)', 'file')
+  .action(async (options) => {
+    try {
+      // Auto-detect project and load config
+      const projectInfo = (() => {
+        try {
+          return ProjectDetector.detectProject();
+        } catch (error) {
+          console.error(chalk.red('❌ Failed to detect project structure'));
+          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
+        }
+      })();
+      
+      if (!ConfigService.isInitialized(projectInfo.root)) {
+        console.error(chalk.red('❌ Project not initialized'));
+        console.log(chalk.yellow('💡 Run `function-indexer` first to initialize the project'));
+        process.exit(1);
+      }
+      
+      const config = ConfigService.loadConfig(projectInfo.root);
+      
+      if (!fs.existsSync(config.output)) {
+        console.error(chalk.red('❌ Index file not found'));
+        console.log(chalk.yellow('💡 Run `function-indexer` to create the index'));
+        process.exit(1);
+      }
+
+      // Load all functions from index
+      const content = fs.readFileSync(config.output, 'utf-8');
+      let functions: FunctionInfo[] = content
+        .trim()
+        .split('\n')
+        .filter(line => line)
+        .map((line, index) => {
+          try {
+            return JSON.parse(line);
+          } catch (error) {
+            console.error(chalk.yellow(`⚠️  Invalid JSON at line ${index + 1}, skipping...`));
+            return null;
+          }
+        })
+        .filter(func => func !== null) as FunctionInfo[];
+
+      // Apply filters
+      if (options.file) {
+        const pattern = options.file.toLowerCase();
+        functions = functions.filter(func => {
+          const filePath = func.file.toLowerCase();
+          // Simple glob pattern matching
+          if (pattern.includes('*')) {
+            const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+            return regex.test(filePath);
+          }
+          return filePath.includes(pattern);
+        });
+      }
+
+      if (options.exported) {
+        functions = functions.filter(func => func.exported);
+      }
+
+      if (options.async) {
+        functions = functions.filter(func => func.async);
+      }
+
+      // Sort functions
+      switch (options.sort) {
+        case 'name':
+          functions.sort((a, b) => a.identifier.localeCompare(b.identifier));
+          break;
+        case 'complexity':
+          functions.sort((a, b) => {
+            const aComplexity = a.metrics?.cyclomaticComplexity || 0;
+            const bComplexity = b.metrics?.cyclomaticComplexity || 0;
+            return bComplexity - aComplexity;
+          });
+          break;
+        default:
+          functions.sort((a, b) => {
+            const fileCompare = a.file.localeCompare(b.file);
+            if (fileCompare !== 0) return fileCompare;
+            return a.startLine - b.startLine;
+          });
+          break;
+      }
+
+      // Output results
+      if (functions.length === 0) {
+        console.log(chalk.yellow('No functions found matching the criteria'));
+      } else {
+        switch (options.format) {
+          case 'json':
+            console.log(JSON.stringify(functions, null, 2));
+            break;
+          
+          case 'simple':
+            functions.forEach(func => {
+              console.log(`${func.file}:${func.startLine}:${func.identifier}`);
+            });
+            break;
+          
+          default: {
+            console.log(chalk.green(`\nFound ${functions.length} function${functions.length > 1 ? 's' : ''}:\n`));
+            
+            let currentFile = '';
+            functions.forEach((func, index) => {
+              // Group by file
+              if (func.file !== currentFile) {
+                if (currentFile !== '') console.log(); // Add spacing between files
+                console.log(chalk.blue(`📁 ${func.file}`));
+                currentFile = func.file;
+              }
+              
+              // Function info
+              console.log(
+                chalk.gray('  ') + 
+                chalk.cyan(`${func.identifier}`) + 
+                (func.exported ? chalk.green(' ✓') : '') +
+                (func.async ? chalk.blue(' ⚡') : '') +
+                chalk.gray(` (line ${func.startLine})`)
+              );
+              
+              // Show metrics if requested
+              if (func.metrics?.cyclomaticComplexity && func.metrics.cyclomaticComplexity > 10) {
+                console.log(chalk.yellow(`     ⚠️  Complexity: ${func.metrics.cyclomaticComplexity}`));
+              }
+            });
+            console.log();
+            break;
+          }
+        }
+        
+        // Summary statistics
+        if (options.format === 'default') {
+          const exportedCount = functions.filter(f => f.exported).length;
+          const asyncCount = functions.filter(f => f.async).length;
+          console.log(chalk.gray('─'.repeat(50)));
+          console.log(chalk.gray(`Total: ${functions.length} functions`));
+          console.log(chalk.gray(`Exported: ${exportedCount} | Async: ${asyncCount}`));
+        }
+      }
+
+    } catch (error) {
+      console.error(chalk.red('❌ List error:'), error instanceof Error ? error.message : error);
       process.exit(1);
     }
   });
