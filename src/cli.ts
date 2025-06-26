@@ -378,7 +378,6 @@ program
             return bComplexity - aComplexity;
           });
           break;
-        case 'file':
         default:
           functions.sort((a, b) => {
             const fileCompare = a.file.localeCompare(b.file);
@@ -403,7 +402,6 @@ program
             });
             break;
           
-          case 'default':
           default: {
             console.log(chalk.green(`\nFound ${functions.length} function${functions.length > 1 ? 's' : ''}:\n`));
             
@@ -426,7 +424,7 @@ program
               );
               
               // Show metrics if requested
-              if (func.metrics && func.metrics.cyclomaticComplexity && func.metrics.cyclomaticComplexity > 10) {
+              if (func.metrics?.cyclomaticComplexity && func.metrics.cyclomaticComplexity > 10) {
                 console.log(chalk.yellow(`     ⚠️  Complexity: ${func.metrics.cyclomaticComplexity}`));
               }
             });
