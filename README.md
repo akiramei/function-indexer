@@ -64,6 +64,7 @@ npx github:akiramei/function-indexer
 **🎯 New to Function Indexer?** Check our guides:
 - 📚 **[Complete Tutorial](docs/TUTORIAL.md)** - Step-by-step guide with real examples
 - ⚡ **[Quick Start Guide](docs/QUICK-START.md)** - Get running in 60 seconds
+- 📋 **[Command Reference](docs/COMMAND-REFERENCE.md)** - All commands with examples
 - 🤖 **[AI Assistant Guide](docs/AI-GUIDE.md)** - Zero-shot usage for AI assistants
 - 🔧 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 

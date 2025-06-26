@@ -7,6 +7,7 @@ import { FunctionInfo, SearchHistory, SearchOptions } from './types';
 export class SearchService {
   private db: Database.Database;
   private functionsIndex: FunctionInfo[] = [];
+  private lastSearchTotalCount: number = 0;
 
   constructor(private dbPath: string = '.function-indexer/search-history.db') {
     this.ensureDbDirectory();
@@ -62,8 +63,51 @@ export class SearchService {
   }
 
   search(options: SearchOptions): FunctionInfo[] {
-    const { query, context, saveHistory = true, limit = 20 } = options;
+    const { query, context, saveHistory = true, limit } = options;
     
+    if (this.isGlobalQuery(query)) {
+      return this.performGlobalSearch(query, context, saveHistory, limit);
+    }
+    
+    return this.performKeywordSearch(query, context, saveHistory, limit);
+  }
+
+  private performGlobalSearch(
+    query: string, 
+    context: string | undefined, 
+    saveHistory: boolean, 
+    limit: number | undefined
+  ): FunctionInfo[] {
+    const allResults = this.functionsIndex.slice(); // shallow copy
+    this.lastSearchTotalCount = allResults.length;
+    
+    // Apply sorting by file and line for consistent ordering
+    allResults.sort((a, b) => {
+      const fileCompare = a.file.localeCompare(b.file);
+      if (fileCompare !== 0) return fileCompare;
+      return a.startLine - b.startLine;
+    });
+    
+    const results = limit ? allResults.slice(0, limit) : allResults;
+    
+    if (saveHistory && results.length > 0) {
+      this.saveSearchEntry(query, context, results, [], {
+        keywords: [],
+        returnType: undefined,
+        async: undefined,
+        domain: undefined
+      }, 1.0);
+    }
+    
+    return results;
+  }
+
+  private performKeywordSearch(
+    query: string, 
+    context: string | undefined, 
+    saveHistory: boolean, 
+    limit: number | undefined
+  ): FunctionInfo[] {
     const keywords = this.extractKeywords(query);
     const searchCriteria = this.parseSearchCriteria(query);
     
@@ -74,30 +118,45 @@ export class SearchService {
         score: this.calculateRelevance(func, keywords, searchCriteria)
       }))
       .filter(item => item.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+      .sort((a, b) => b.score - a.score);
 
-    const results = scoredResults.map(item => item.func);
+    // Store total count before applying limit
+    this.lastSearchTotalCount = scoredResults.length;
+    
+    // Apply limit if specified
+    const limitedResults = limit ? scoredResults.slice(0, limit) : scoredResults;
+    const results = limitedResults.map(item => item.func);
 
     if (saveHistory && results.length > 0) {
-      this.saveSearchHistory({
-        id: this.generateId(),
-        timestamp: new Date().toISOString(),
-        query,
-        context: context || '',
-        resolvedFunctions: results.map(f => `${f.file}:${f.identifier}`),
-        searchCriteria: {
-          keywords,
-          returnType: searchCriteria.returnType,
-          async: searchCriteria.async,
-          domain: searchCriteria.domain
-        },
-        confidence: this.calculateConfidence(results, keywords),
-        usage: 'successful'
-      });
+      this.saveSearchEntry(query, context, results, keywords, {
+        keywords,
+        returnType: searchCriteria.returnType,
+        async: searchCriteria.async,
+        domain: searchCriteria.domain
+      }, this.calculateConfidence(results, keywords));
     }
 
     return results;
+  }
+
+  private saveSearchEntry(
+    query: string,
+    context: string | undefined,
+    results: FunctionInfo[],
+    keywords: string[],
+    searchCriteria: any,
+    confidence: number
+  ): void {
+    this.saveSearchHistory({
+      id: this.generateId(),
+      timestamp: new Date().toISOString(),
+      query,
+      context: context || '',
+      resolvedFunctions: results.map(f => `${f.file}:${f.identifier}`),
+      searchCriteria,
+      confidence,
+      usage: 'successful'
+    });
   }
 
   private extractKeywords(query: string): string[] {
@@ -245,8 +304,17 @@ export class SearchService {
     }
   }
 
+  private isGlobalQuery(query: string): boolean {
+    // Handle empty queries, wildcards, and common "show all" patterns
+    return query === '' || query === '*' || query === '**' || query.trim() === '';
+  }
+
   private generateId(): string {
     return crypto.randomBytes(16).toString('hex');
+  }
+
+  getLastSearchTotalCount(): number {
+    return this.lastSearchTotalCount;
   }
 
   close(): void {

@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "createdAt": "2025-01-20T10:00:00Z",
+    "lastUpdated": "2025-01-20T10:00:00Z",
+    "indexFile": "test-index.jsonl",
+    "options": {
+      "root": "./test-src",
+      "domain": "test",
+      "include": [
+        "**/*.ts"
+      ],
+      "exclude": [
+        "**/*.test.ts"
+      ]
+    },
+    "statistics": {
+      "totalFiles": 1,
+      "totalFunctions": 1
+    }
+  },
+  "functions": [
+    {
+      "file": "test.ts",
+      "identifier": "testFunction",
+      "signature": "function testFunction(): void",
+      "startLine": 1,
+      "endLine": 3,
+      "hash_function": "abc123",
+      "hash_file": "def456",
+      "exported": true,
+      "async": false,
+      "metrics": {
+        "linesOfCode": 3,
+        "parameterCount": 0,
+        "hasReturnType": false
+      },
+      "domain": "test"
+    }
+  ]
+}

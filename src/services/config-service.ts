@@ -23,6 +23,7 @@ export interface FunctionIndexerConfig {
 const CONFIG_DIR = '.function-indexer';
 const CONFIG_FILE = 'config.json';
 const INDEX_FILE = 'index.jsonl';
+const NEW_INDEX_FILE = 'function-index.jsonl'; // New: index file in project root
 const DEFAULT_VERSION = '1.0.0';
 
 /**
@@ -34,10 +35,57 @@ export function getConfigDir(projectRoot?: string): string {
 }
 
 /**
- * Get the default index file path
+ * Get the default index file path (new location in project root)
  */
 export function getDefaultIndexPath(projectRoot?: string): string {
+  const root = projectRoot || process.cwd();
+  return path.join(root, NEW_INDEX_FILE);
+}
+
+/**
+ * Get the old index file path (legacy location)
+ */
+export function getLegacyIndexPath(projectRoot?: string): string {
   return path.join(getConfigDir(projectRoot), INDEX_FILE);
+}
+
+/**
+ * Check if migration from legacy index location is needed
+ */
+export function needsMigration(projectRoot?: string): boolean {
+  const legacyPath = getLegacyIndexPath(projectRoot);
+  const newPath = getDefaultIndexPath(projectRoot);
+  
+  return fs.existsSync(legacyPath) && !fs.existsSync(newPath);
+}
+
+/**
+ * Migrate index file from legacy location to new project root location
+ */
+export function migrateIndexFile(projectRoot?: string): boolean {
+  const legacyPath = getLegacyIndexPath(projectRoot);
+  const newPath = getDefaultIndexPath(projectRoot);
+  
+  try {
+    if (fs.existsSync(legacyPath) && !fs.existsSync(newPath)) {
+      console.log('📦 Migrating index file to project root...');
+      fs.copyFileSync(legacyPath, newPath);
+      
+      // Remove the legacy file
+      fs.unlinkSync(legacyPath);
+      
+      // For legacy indexes that might not have proper metadata,
+      // we'll let the normal update process recreate the metadata
+      console.log('✅ Index file migrated to', path.basename(newPath));
+      console.log('📝 Index metadata will be regenerated automatically');
+      return true;
+    }
+  } catch (error) {
+    console.error('❌ Migration failed:', error instanceof Error ? error.message : error);
+    return false;
+  }
+  
+  return false;
 }
 
 /**
@@ -172,21 +220,67 @@ export function updateConfig(
 }
 
 /**
- * Check if index exists - optimized implementation
+ * Check if index exists - checks both new and legacy locations
  */
 export function indexExists(projectRoot?: string): boolean {
   try {
     const configPath = path.join(getConfigDir(projectRoot), CONFIG_FILE);
     if (!fs.existsSync(configPath)) {
-      return false;
+      // Check if either index location exists without config
+      const newPath = getDefaultIndexPath(projectRoot);
+      const legacyPath = getLegacyIndexPath(projectRoot);
+      return fs.existsSync(newPath) || fs.existsSync(legacyPath);
     }
+    
     const content = fs.readFileSync(configPath, 'utf-8');
     const config = JSON.parse(content);
     const root = projectRoot || process.cwd();
     const outputPath = path.resolve(root, config.output);
-    return fs.existsSync(outputPath);
+    
+    if (fs.existsSync(outputPath)) {
+      return true;
+    }
+    
+    // Check legacy location as fallback
+    const legacyPath = getLegacyIndexPath(projectRoot);
+    return fs.existsSync(legacyPath);
   } catch {
     return false;
+  }
+}
+
+/**
+ * Get the actual index path (prefers new location, falls back to legacy)
+ */
+export function getActualIndexPath(projectRoot?: string): string | null {
+  try {
+    const configPath = path.join(getConfigDir(projectRoot), CONFIG_FILE);
+    if (fs.existsSync(configPath)) {
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const config = JSON.parse(content);
+      const root = projectRoot || process.cwd();
+      const outputPath = path.resolve(root, config.output);
+      
+      if (fs.existsSync(outputPath)) {
+        return outputPath;
+      }
+    }
+    
+    // Check new default location
+    const newPath = getDefaultIndexPath(projectRoot);
+    if (fs.existsSync(newPath)) {
+      return newPath;
+    }
+    
+    // Check legacy location
+    const legacyPath = getLegacyIndexPath(projectRoot);
+    if (fs.existsSync(legacyPath)) {
+      return legacyPath;
+    }
+    
+    return null;
+  } catch {
+    return null;
   }
 }
 
@@ -194,6 +288,10 @@ export function indexExists(projectRoot?: string): boolean {
 export const ConfigService = {
   getConfigDir,
   getDefaultIndexPath,
+  getLegacyIndexPath,
+  needsMigration,
+  migrateIndexFile,
+  getActualIndexPath,
   isInitialized,
   initialize,
   createDefaultConfig,

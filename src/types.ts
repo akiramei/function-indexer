@@ -106,8 +106,8 @@ export interface MetricsCollectionOptions {
 export interface MetricsThresholds {
   cyclomaticComplexity: number;  // Default: 10
   cognitiveComplexity: number;   // Default: 15
-  linesOfCode: number;          // Default: 40
-  nestingDepth: number;         // Default: 3
+  linesOfCode: number;          // Default: 50
+  nestingDepth: number;         // Default: 4
   parameterCount: number;       // Default: 4
 }
 

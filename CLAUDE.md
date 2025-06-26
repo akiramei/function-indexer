@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📖 Quick Reference Guides
+
+**For comprehensive documentation:**
+- **[Command Reference (English)](docs/COMMAND-REFERENCE.md)** - Complete command guide with examples
+- **[Command Reference (Japanese)](docs/COMMAND-REFERENCE-ja.md)** - 完全なコマンドガイド（例付き）
+
+**For AI assistant workflow patterns:**
+- **[AI Master Guide (English)](docs/AI-MASTER-GUIDE.md)** - Complete reference for AI assistants
+- **[AI Master Guide (Japanese)](docs/AI-MASTER-GUIDE-ja.md)** - AIアシスタント向け完全ガイド
+
+This CLAUDE.md provides essential technical context. The AI Master Guides provide comprehensive workflow patterns, command references, and best practices for AI-assisted development.
+
 ## Project Overview
 
 Function Indexer is a TypeScript CLI tool that scans TypeScript/TSX codebases and generates a comprehensive index of all functions, methods, and arrow functions in JSONL format. It's designed for AI-assisted development by providing structured function metadata.
@@ -41,6 +53,13 @@ function-indexer collect-metrics --root ./src --pr 123 --verbose
 function-indexer show-metrics "src/indexer.ts:FunctionIndexer.run"
 function-indexer analyze-trends
 function-indexer pr-metrics 123
+
+# Metrics commands (reorganized with subcommands)
+function-indexer metrics                                    # View code quality overview
+function-indexer metrics collect --root ./src --pr 123     # Collect metrics for tracking
+function-indexer metrics show "src/indexer.ts:FunctionIndexer.run"  # Show function history
+function-indexer metrics trends                             # Analyze trends and violations
+function-indexer metrics pr 123                             # Show PR-specific metrics
 ```
 
 ## Architecture
@@ -59,6 +78,7 @@ Key architectural decisions:
 - Outputs JSONL format for streaming processing
 - SQLite database for metrics history tracking
 - Commit-based metrics collection for AI development workflows
+- **Separated configuration system**: Core indexing and metrics settings isolated for modularity
 
 ## Output Format
 
@@ -112,16 +132,16 @@ The enhanced metrics system tracks code quality over time using commit-based his
 ### CLI Commands
 ```bash
 # Collect metrics for current state
-function-indexer collect-metrics --root ./src --pr 123
+function-indexer metrics collect --root ./src --pr 123
 
 # View function history
-function-indexer show-metrics "src/file.ts:functionName" --limit 5
+function-indexer metrics show "src/file.ts:functionName" --limit 5
 
 # Analyze trends and violations
-function-indexer analyze-trends
+function-indexer metrics trends
 
 # View PR-specific metrics
-function-indexer pr-metrics 123
+function-indexer metrics pr 123
 ```
 
 ## Important Implementation Details
@@ -131,6 +151,119 @@ function-indexer pr-metrics 123
 3. **Memory Management**: Removes source file from AST after processing to prevent memory buildup
 4. **Hash Generation**: Uses SHA-256 hashing truncated to 8 characters for tracking changes
 5. **Metrics Calculation**: Uses ts-morph AST traversal for accurate complexity analysis
+
+## Configuration Architecture
+
+Function Indexer now uses a **separated configuration system** for better modularity and maintenance:
+
+### Configuration Files Structure
+```
+.function-indexer/
+├── config.json          # Core configuration (indexing, file patterns)
+└── metrics-config.json  # Metrics configuration (thresholds, tracking)
+```
+
+### Core Configuration (`config.json`)
+```json
+{
+  "version": "1.1.0",
+  "root": "./src",
+  "output": "function-index.jsonl",
+  "domain": "main",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
+}
+```
+
+### Metrics Configuration (`metrics-config.json`)
+```json
+{
+  "version": "1.1.0",
+  "enabled": true,
+  "database": {
+    "path": ".function-metrics/metrics.db",
+    "autoCleanup": false,
+    "maxHistoryDays": 365
+  },
+  "thresholds": {
+    "cyclomaticComplexity": 10,
+    "cognitiveComplexity": 15,
+    "linesOfCode": 50,
+    "nestingDepth": 4,
+    "parameterCount": 4
+  },
+  "collection": {
+    "autoCollectOnCommit": false,
+    "includeUncommitted": true,
+    "trackTrends": true
+  },
+  "reporting": {
+    "defaultFormat": "summary",
+    "showTrends": true,
+    "highlightViolations": true
+  }
+}
+```
+
+### Automatic Migration
+- Legacy configurations are automatically migrated to separated format
+- Backup files are created during migration
+- Backward compatibility maintained for existing code
+- Migration happens transparently during initialization
+
+### Benefits of Separated Configuration
+- **Modularity**: Core and metrics settings are independent
+- **Maintenance**: Easier to update specific configuration aspects
+- **Extensibility**: New feature configs can be added without affecting core
+- **Performance**: Metrics can be disabled without affecting core functionality
+
+## ⚠️ sed Command Usage Guidelines
+
+**CRITICAL**: sed should only be used for simple, predictable patterns. Avoid for complex document editing.
+
+### ✅ Use sed for:
+1. **Simple global replacements** - Single pattern across entire file
+   ```bash
+   # Safe: Replace all occurrences of a version number
+   sed -i 's/version: "1.0.0"/version: "1.1.0"/g' package.json
+   ```
+
+2. **Unique string patterns** - Patterns that cannot match unintended text
+   ```bash
+   # Safe: Replace a specific import path
+   sed -i 's|from "../old/path"|from "../new/path"|g' *.ts
+   ```
+
+3. **Line-level operations** - Adding/removing entire lines
+   ```bash
+   # Safe: Remove lines containing specific pattern
+   sed -i '/console.log/d' src/*.ts
+   ```
+
+### ❌ NEVER use sed for:
+1. **Context-dependent replacements** - Same pattern with different meanings
+   ```bash
+   # DANGEROUS: Will replace ALL empty code blocks
+   sed -i 's/^```$/```text/' docs/*.md  # ← This caused problems!
+   ```
+
+2. **Structured documents** - Markdown, HTML, JSON where context matters
+3. **Partial string matches** - Risk of changing unintended text
+4. **Complex patterns** - Multiple conditions or state-dependent logic
+
+### 🔧 Alternative approaches:
+- **MultiEdit tool** - For precise, context-aware replacements
+- **Manual editing** - For complex document structures
+- **Specialized tools** - grep + manual review for identification first
+
+### 📋 Pre-sed checklist:
+1. ✅ Pattern is unique and unambiguous
+2. ✅ Tested on small sample first
+3. ✅ Verified with `grep` to see all matches
+4. ✅ Simple enough that results are predictable
+5. ✅ Low risk if something goes wrong
+
+**Remember**: "sed made me suffer" - prefer precision over speed.
 
 ## 🚨 CRITICAL: PR Review Response Protocol
 
