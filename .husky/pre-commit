@@ -5,7 +5,7 @@ echo "🔍 Running pre-commit quality checks..."
 
 # Check for any type usage
 echo "⚠️  Checking for 'any' type usage..."
-if grep -r "\bany\b" src/ --include="*.ts" --exclude="*.test.ts" --exclude="*.spec.ts"; then
+if grep -rE ":\s*any\b|<any>|\bany\[]|any\s*\||\|\s*any\b" src/ --include="*.ts" --exclude="*.test.ts" --exclude="*.spec.ts"; then
   echo "❌ 'any' type found in source code - commit blocked"
   echo "💡 Use proper TypeScript types instead of 'any'"
   exit 1

@@ -230,7 +230,7 @@ function checkViolations(functions: FunctionInfo[], thresholds: MetricsThreshold
 }
 
 async function getDiffSummary(options: CIOptions): Promise<{added: number, modified: number, removed: number}> {
-  let diffSummary = { added: 0, modified: 0, removed: 0 };
+  const diffSummary = { added: 0, modified: 0, removed: 0 };
   
   if (options.base) {
     try {

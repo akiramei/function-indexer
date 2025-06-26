@@ -141,7 +141,7 @@ function detectFromTsConfig(projectRoot: string): string[] {
       // Extract directory from patterns like "src/**/*", "lib/**/*.ts"
       const match = includePath.match(/^([^*]+)/);
       if (match) {
-        let dir = match[1].replace(/\/$/, ''); // Remove trailing slash
+        const dir = match[1].replace(/\/$/, ''); // Remove trailing slash
         if (dir && dir !== '.' && !srcDirs.includes(dir)) {
           // Verify directory exists
           const fullPath = path.join(projectRoot, dir);
@@ -181,7 +181,7 @@ function detectFromPackageJson(projectRoot: string): string[] {
           // Extract directory from patterns like "src/", "lib/**"
           const match = file.match(/^([^*]+)/);
           if (match) {
-            let dir = match[1].replace(/\/$/, ''); // Remove trailing slash
+            const dir = match[1].replace(/\/$/, ''); // Remove trailing slash
             if (dir && dir !== '.' && dir !== 'dist' && dir !== 'build' && !srcDirs.includes(dir)) {
               // Verify directory exists
               const fullPath = path.join(projectRoot, dir);
