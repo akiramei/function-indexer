@@ -43,11 +43,12 @@ export function applyCommandAliases(program: Command): void {
     if (firstArg in commandAliases) {
       const actualCommand = commandAliases[firstArg as AliasKey];
       
-      // Replace the alias with the actual command in process.argv
-      process.argv[2] = actualCommand;
+      // Create a new array instead of modifying process.argv directly
+      const newArgs = [...process.argv];
+      newArgs[2] = actualCommand;
       
-      // For debugging - we don't actually need to do anything else
-      // The commander.js will handle the replaced command normally
+      // Safely replace process.argv with the new array
+      process.argv.splice(0, process.argv.length, ...newArgs);
     }
   }
 }

@@ -613,9 +613,14 @@ program
     console.log(chalk.gray('Running new metrics command...'));
     
     // Import and run the new metrics command
-    const { createMetricsCommand } = await import('./commands/metrics');
-    const metricsCmd = createMetricsCommand();
-    await metricsCmd.parseAsync(['node', 'fx', 'metrics'], { from: 'user' });
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(['node', 'fx', 'metrics'], { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
   });
 
 // Legacy collect-metrics command - redirect to new structure
@@ -641,9 +646,14 @@ program
     if (options.branch) args.push('--branch', options.branch);
     if (options.verboseMetrics) args.push('--verbose');
     
-    const { createMetricsCommand } = await import('./commands/metrics');
-    const metricsCmd = createMetricsCommand();
-    await metricsCmd.parseAsync(args, { from: 'user' });
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(args, { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics collect command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
   });
 
 // Legacy show-metrics command - redirect to new structure
@@ -661,9 +671,14 @@ program
     if (options.limit) args.push('--limit', options.limit);
     if (options.list) args.push('--list');
     
-    const { createMetricsCommand } = await import('./commands/metrics');
-    const metricsCmd = createMetricsCommand();
-    await metricsCmd.parseAsync(args, { from: 'user' });
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(args, { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics show command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
   });
 
 // Legacy analyze-trends command - redirect to new structure
@@ -674,9 +689,14 @@ program
     console.log(chalk.yellow('⚠️  analyze-trends is deprecated, use "fx metrics trends" instead'));
     console.log(chalk.gray('Running new command...\n'));
     
-    const { createMetricsCommand } = await import('./commands/metrics');
-    const metricsCmd = createMetricsCommand();
-    await metricsCmd.parseAsync(['node', 'fx', 'metrics', 'trends'], { from: 'user' });
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(['node', 'fx', 'metrics', 'trends'], { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics trends command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
   });
 
 // Legacy pr-metrics command - redirect to new structure
@@ -687,9 +707,14 @@ program
     console.log(chalk.yellow('⚠️  pr-metrics is deprecated, use "fx metrics pr" instead'));
     console.log(chalk.gray('Running new command...\n'));
     
-    const { createMetricsCommand } = await import('./commands/metrics');
-    const metricsCmd = createMetricsCommand();
-    await metricsCmd.parseAsync(['node', 'fx', 'metrics', 'pr', prNumber], { from: 'user' });
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(['node', 'fx', 'metrics', 'pr', prNumber], { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics pr command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
   });
 
 // エラーハンドリング
