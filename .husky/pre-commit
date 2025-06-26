@@ -3,6 +3,14 @@ set -e
 
 echo "🔍 Running pre-commit quality checks..."
 
+# Check for any type usage with improved pattern
+echo "⚠️  Checking for 'any' type usage..."
+if grep -rE ":\s*any\b|<any>|\bany\[]|any\s*\||\|\s*any\b" src/ --include="*.ts" --exclude="*.test.ts" --exclude="*.spec.ts" --exclude="*.d.ts"; then
+  echo "❌ 'any' type found in source code - commit blocked"
+  echo "💡 Use proper TypeScript types instead of 'any'"
+  exit 1
+fi
+
 # Run TypeScript type checking (faster than ESLint)
 echo "🔍 Running TypeScript type check..."
 npm run type-check

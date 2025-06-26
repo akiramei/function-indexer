@@ -8,19 +8,19 @@ on:
 jobs:
   quality-check:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
+          
       - name: Install dependencies
         run: npm ci
+        
       - name: Check for 'any' type usage
         run: |
           echo "🔍 Checking for 'any' type usage in source code..."
@@ -31,27 +31,27 @@ jobs:
           else
             echo "✅ No 'any' types found"
           fi
-
+          
       - name: Run ESLint
         run: |
           echo "🔍 Running ESLint..."
           npm run lint
-
+          
       - name: TypeScript type check
         run: |
           echo "🔍 Running TypeScript type check..."
           npm run type-check
-
+          
       - name: Run tests
         run: |
           echo "🧪 Running tests..."
           npm run test
-
+          
       - name: Check build
         run: |
           echo "🏗️ Testing build process..."
           npm run build
-
+          
       - name: Quality summary
         if: success()
         run: |

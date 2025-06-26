@@ -265,6 +265,7 @@ Function Indexer now uses a **separated configuration system** for better modula
 
 **Remember**: "sed made me suffer" - prefer precision over speed.
 
+<<<<<<< HEAD
 ## 📝 TypeScript開発ガイドライン
 
 ### 型安全性の推奨事項
@@ -301,6 +302,41 @@ const externalData: any = thirdPartyFunction();
 2. **段階的改善**: 最初は基本的な型から始めて、後で詳細化
 3. **CIで検証**: 型チェックはCIパイプラインで自動実行
 4. **柔軟な対応**: プロトタイプ段階ではanyも許容、本番前に型を整備
+=======
+## ⚠️ 絶対禁止事項 - MANDATORY RESTRICTIONS
+
+### 🚨 TypeScript開発での禁止事項
+- **any型の使用禁止**: `any`型は絶対に使用しない。`unknown`または適切な型定義を使用
+- **型アサーション乱用禁止**: `as any`は絶対使用しない
+- **暗黙的any禁止**: `noImplicitAny: true`設定必須
+- **型安全性の妥協禁止**: 型エラーを隠蔽するための安易な回避は禁止
+
+#### 正しいアプローチ
+```typescript
+// ❌ 絶対禁止
+const data: any = someFunction();
+const result = data.anything.goes; // 型安全性なし
+
+// ✅ 正しい方法
+interface ExpectedData {
+  id: string;
+  value: number;
+}
+const data: ExpectedData = someFunction();
+const result = data.value; // 型安全
+```
+
+### 🚨 コード品質での禁止事項
+- **console.log残留禁止**: デバッグ用console.logはコミット前に必ず削除
+- **TODO/FIXMEの放置禁止**: 発見したら即座に対応またはissue化
+- **テスト無しコミット禁止**: 新機能は必ずテスト追加
+- **リンターエラー無視禁止**: ESLintエラーは必ず修正してからコミット
+
+### 🚨 開発プロセスでの禁止事項
+- **並列PR作業禁止**: 共有ファイル変更時は順次実行必須
+- **大量コンフリクト作業禁止**: 3つ以上のPRで同じファイル変更は避ける
+- **品質チェック無視禁止**: pre-commit hookやCIチェックをスキップしない
+- **型チェック無視禁止**: `npm run type-check`エラーは必ず修正
 
 ## 🔍 PR作成前セルフチェック - MANDATORY CHECKLIST
 
@@ -358,6 +394,7 @@ npm run test          # テスト実行
 grep -r "\bany\b" src/ --include="*.ts" --exclude="*.test.ts"
 ```
 
+<<<<<<< HEAD
 ## 🚨 CRITICAL: Configuration Change Safety Protocol
 
 **MANDATORY**: Before making ANY changes to configuration files (package.json, tsconfig.json, etc.), you MUST:
