@@ -273,6 +273,12 @@ See our [detailed roadmap](ROADMAP.md) for more information.
 - ⚙️ **設定ガイド** - あなたのニーズに合わせてFunction Indexerをカスタマイズ
 - 📊 **メトリクスガイド** - コード品質メトリクスの理解
 
+#### AI-Ready Templates
+- 🔍 **[Function Search](docs/templates/function-search.md)** - Find functions quickly with AI-optimized search patterns
+- 📊 **[Code Quality Check](docs/templates/code-quality-check.md)** - Automated quality analysis workflows
+- 🔄 **[PR Review Automation](docs/templates/pr-review-automation.md)** - Enhance PR reviews with metrics
+- 🏗️ **[Codebase Understanding](docs/templates/codebase-understanding.md)** - Quickly grasp project architecture
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
