@@ -48,6 +48,7 @@ Key architectural decisions:
 - Outputs JSONL format for streaming processing
 - SQLite database for metrics history tracking
 - Commit-based metrics collection for AI development workflows
+- **Separated configuration system**: Core indexing and metrics settings isolated for modularity
 
 ## Output Format
 
@@ -120,6 +121,71 @@ function-indexer metrics pr 123
 3. **Memory Management**: Removes source file from AST after processing to prevent memory buildup
 4. **Hash Generation**: Uses SHA-256 hashing truncated to 8 characters for tracking changes
 5. **Metrics Calculation**: Uses ts-morph AST traversal for accurate complexity analysis
+
+## Configuration Architecture
+
+Function Indexer now uses a **separated configuration system** for better modularity and maintenance:
+
+### Configuration Files Structure
+```
+.function-indexer/
+├── config.json          # Core configuration (indexing, file patterns)
+└── metrics-config.json  # Metrics configuration (thresholds, tracking)
+```
+
+### Core Configuration (`config.json`)
+```json
+{
+  "version": "1.1.0",
+  "root": "./src",
+  "output": "function-index.jsonl",
+  "domain": "main",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
+}
+```
+
+### Metrics Configuration (`metrics-config.json`)
+```json
+{
+  "version": "1.1.0",
+  "enabled": true,
+  "database": {
+    "path": ".function-metrics/metrics.db",
+    "autoCleanup": false,
+    "maxHistoryDays": 365
+  },
+  "thresholds": {
+    "cyclomaticComplexity": 10,
+    "cognitiveComplexity": 15,
+    "linesOfCode": 50,
+    "nestingDepth": 4,
+    "parameterCount": 4
+  },
+  "collection": {
+    "autoCollectOnCommit": false,
+    "includeUncommitted": true,
+    "trackTrends": true
+  },
+  "reporting": {
+    "defaultFormat": "summary",
+    "showTrends": true,
+    "highlightViolations": true
+  }
+}
+```
+
+### Automatic Migration
+- Legacy configurations are automatically migrated to separated format
+- Backup files are created during migration
+- Backward compatibility maintained for existing code
+- Migration happens transparently during initialization
+
+### Benefits of Separated Configuration
+- **Modularity**: Core and metrics settings are independent
+- **Maintenance**: Easier to update specific configuration aspects
+- **Extensibility**: New feature configs can be added without affecting core
+- **Performance**: Metrics can be disabled without affecting core functionality
 
 ## 🚨 CRITICAL: PR Review Response Protocol
 
