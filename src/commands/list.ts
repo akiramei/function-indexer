@@ -1,9 +1,17 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import * as fs from 'fs';
-import { ConfigService } from '../services/config-service';
+import { ConfigService, FunctionIndexerConfig } from '../services/config-service';
 import { ProjectDetector } from '../utils/project-detector';
 import { FunctionInfo } from '../types';
+
+interface ListOptions {
+  exported?: boolean;
+  async?: boolean;
+  file?: string;
+  sort?: string;
+  json?: boolean;
+}
 
 /**
  * Load and parse functions from index file
@@ -26,7 +34,7 @@ function loadFunctionsFromIndex(indexPath: string): FunctionInfo[] {
 /**
  * Apply filters to function list
  */
-function applyFilters(functions: FunctionInfo[], options: any): FunctionInfo[] {
+function applyFilters(functions: FunctionInfo[], options: ListOptions): FunctionInfo[] {
   let filtered = functions;
   
   if (options.exported) {
@@ -100,7 +108,7 @@ function displayFunctions(functions: FunctionInfo[]): void {
 /**
  * Initialize and validate project configuration
  */
-function initializeProject(): { config: any } {
+function initializeProject(): { config: FunctionIndexerConfig } {
   const projectInfo = (() => {
     try {
       return ProjectDetector.detectProject();

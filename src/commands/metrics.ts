@@ -3,9 +3,9 @@ import chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
 import { MetricsService } from '../services/metrics-service';
-import { ConfigService } from '../services/config-service';
+import { ConfigService, FunctionIndexerConfig } from '../services/config-service';
 import { ProjectDetector } from '../utils/project-detector';
-import { FunctionInfo } from '../types';
+import { FunctionInfo, FunctionMetricsHistory } from '../types';
 
 interface MetricsViolation {
   func: FunctionInfo;
@@ -33,7 +33,7 @@ interface MetricsOptions {
 /**
  * Initialize and validate project for metrics
  */
-function initializeMetricsProject(): { config: any } {
+function initializeMetricsProject(): { config: FunctionIndexerConfig } {
   const projectInfo = (() => {
     try {
       return ProjectDetector.detectProject();
@@ -333,7 +333,7 @@ async function collectMetrics(options: MetricsOptions): Promise<void> {
 /**
  * Display available functions with metrics data
  */
-function displayAvailableFunctions(metricsService: any): void {
+function displayAvailableFunctions(metricsService: MetricsService): void {
   console.log(chalk.blue('📊 Available functions with metrics data:\n'));
   
   const availableFunctions = metricsService.listAvailableFunctions();
@@ -344,7 +344,7 @@ function displayAvailableFunctions(metricsService: any): void {
   } else {
     console.log(chalk.green(`Found ${availableFunctions.length} functions with metrics:\n`));
     
-    availableFunctions.forEach((func: any, index: number) => {
+    availableFunctions.forEach((func: { functionId: string; recordCount: number; lastTimestamp: string; latestComplexity: number }, index: number) => {
       console.log(chalk.cyan(`${index + 1}. ${func.functionId}`));
       console.log(chalk.gray(`   Last updated: ${new Date(func.lastTimestamp).toLocaleString()}`));
       console.log(chalk.gray(`   Records: ${func.recordCount} | Latest complexity: ${func.latestComplexity}`));
@@ -360,7 +360,7 @@ function displayAvailableFunctions(metricsService: any): void {
 /**
  * Display metrics history for a specific function
  */
-function displayFunctionHistory(metricsService: any, functionId: string, limit: number): void {
+function displayFunctionHistory(metricsService: MetricsService, functionId: string, limit: number): void {
   console.log(chalk.blue(`📈 Metrics history for: ${functionId}`));
   
   const history = metricsService.showFunctionMetrics(functionId, limit);
@@ -372,7 +372,7 @@ function displayFunctionHistory(metricsService: any, functionId: string, limit: 
   } else {
     console.log(chalk.green(`Found ${history.length} metric entries:\n`));
     
-    history.forEach((metric: any, index: number) => {
+    history.forEach((metric: FunctionMetricsHistory, index: number) => {
       const date = new Date(metric.timestamp).toLocaleString();
       console.log(chalk.cyan(`${index + 1}. ${date} (${metric.commitHash.substring(0, 8)})`));
       console.log(chalk.gray(`   Branch: ${metric.branchName} | Change: ${metric.changeType}`));
