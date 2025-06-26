@@ -254,9 +254,20 @@ async function collectMetrics(options: any): Promise<void> {
 
     const metricsService = new MetricsService();
     
+    // Validate PR number if provided
+    let prNumber: number | undefined;
+    if (options.pr) {
+      prNumber = parseInt(options.pr);
+      if (isNaN(prNumber) || prNumber <= 0) {
+        console.error(chalk.red(`❌ Invalid PR number: ${options.pr}`));
+        console.log(chalk.gray('💡 PR number must be a positive integer'));
+        process.exit(1);
+      }
+    }
+    
     try {
       await metricsService.collectMetrics(rootPath, {
-      prNumber: options.pr ? parseInt(options.pr) : undefined,
+      prNumber,
       commitHash: options.commit,
       branchName: options.branch,
       verbose: options.verbose,
@@ -406,10 +417,17 @@ async function analyzeTrends(): Promise<void> {
  */
 async function showPRMetrics(prNumber: string): Promise<void> {
   try {
+    const prNum = parseInt(prNumber);
+    if (isNaN(prNum) || prNum <= 0) {
+      console.error(chalk.red(`❌ Invalid PR number: ${prNumber}`));
+      console.log(chalk.gray('💡 PR number must be a positive integer'));
+      process.exit(1);
+    }
+    
     console.log(chalk.blue(`📊 Metrics for PR #${prNumber}`));
     
     const metricsService = new MetricsService();
-    const prMetrics = metricsService.getPRMetrics(parseInt(prNumber));
+    const prMetrics = metricsService.getPRMetrics(prNum);
     
     if (prMetrics.length === 0) {
       console.log(chalk.yellow(`No metrics found for PR #${prNumber}`));
