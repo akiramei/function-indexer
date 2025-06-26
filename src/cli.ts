@@ -207,7 +207,8 @@ program
   .description('Search for functions using natural language')
   .option('-c, --context <context>', 'provide context for the search')
   .option('--no-save-history', 'do not save search to history')
-  .option('-l, --limit <number>', 'limit number of results', '10')
+  .option('-l, --limit <number>', 'limit number of results', '100')
+  .option('--all', 'show all results (no limit)')
   .action(async (query, options) => {
     try {
       // Auto-detect project and load config with error handling
@@ -242,18 +243,22 @@ program
       const searchService = new SearchService();
       searchService.loadFunctionIndex(config.output);
 
+      const determineLimitValue = (options: any): number | undefined => {
+        if (options.all) return undefined;
+        
+        const parsed = parseInt(options.limit);
+        if (isNaN(parsed) || parsed < 1) {
+          console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 100`));
+          return 100;
+        }
+        return Math.max(1, parsed);
+      };
+
       const results = searchService.search({
         query,
         context: options.context,
         saveHistory: options.saveHistory !== false,
-        limit: (() => {
-          const parsed = parseInt(options.limit);
-          if (isNaN(parsed) || parsed < 1) {
-            console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 10`));
-            return 10;
-          }
-          return Math.max(1, parsed);
-        })()
+        limit: determineLimitValue(options)
       });
 
       if (results.length === 0) {
@@ -263,7 +268,16 @@ program
         console.log(chalk.gray('  • Being more specific'));
         console.log(chalk.gray('  • Adding context with --context'));
       } else {
-        console.log(chalk.green(`\nFound ${results.length} matching function${results.length > 1 ? 's' : ''}:\n`));
+        // Get the total results count for display
+        const totalResults = searchService.getLastSearchTotalCount();
+        const isLimited = !options.all && totalResults > results.length;
+        
+        if (isLimited) {
+          console.log(chalk.green(`\nFound ${totalResults} matching functions (showing first ${results.length}):\n`));
+          console.log(chalk.gray(`💡 Use --all to see all results or --limit <n> to adjust\n`));
+        } else {
+          console.log(chalk.green(`\nFound ${results.length} matching function${results.length > 1 ? 's' : ''}:\n`));
+        }
         
         results.forEach((func, index) => {
           console.log(chalk.cyan(`${index + 1}. ${func.identifier}`) + 
