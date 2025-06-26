@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { CoreConfigService, CoreConfig } from './core-config-service';
 import { MetricsConfigService, MetricsConfig } from './metrics-config-service';
 import { ConfigMigrationService } from './config-migration-service';
@@ -182,6 +183,33 @@ export function migrate(projectRoot?: string, verbose: boolean = true) {
 }
 
 /**
+ * Check if migration is needed (alias for ConfigMigrationService.isMigrationNeeded)
+ */
+export function needsMigration(projectRoot?: string): boolean {
+  return ConfigMigrationService.isMigrationNeeded(projectRoot);
+}
+
+/**
+ * Migrate index file if needed (placeholder for compatibility)
+ */
+export function migrateIndexFile(projectRoot?: string): boolean {
+  // Index file migration is handled by the main migrate function
+  if (needsMigration(projectRoot)) {
+    const result = migrate(projectRoot, false);
+    return result.migrated;
+  }
+  return false;
+}
+
+/**
+ * Get legacy index path for migration purposes
+ */
+export function getLegacyIndexPath(projectRoot?: string): string {
+  const configDir = getConfigDir(projectRoot);
+  return path.join(configDir, 'index.jsonl');
+}
+
+/**
  * Unified configuration service object for backward compatibility
  * Provides the same API as the previous class-based implementation
  */
@@ -197,7 +225,10 @@ export const UnifiedConfigService = {
   getMetricsThresholds,
   updateMetricsThresholds,
   getMigrationStatus,
-  migrate
+  migrate,
+  needsMigration,
+  migrateIndexFile,
+  getLegacyIndexPath
 };
 
 /**
