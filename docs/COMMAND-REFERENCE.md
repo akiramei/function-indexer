@@ -127,7 +127,7 @@ function-indexer search <query> [options]
 
 #### Output Format
 Default text format:
-```
+```text
 🔍 Search results for "authentication":
 
 1. src/auth/tokenValidator.ts:validateToken (score: 0.95)
@@ -204,7 +204,7 @@ function-indexer list [options]
 
 #### Output Format
 Text format (default):
-```
+```text
 📋 Function Inventory (216 total)
 
 src/auth/tokenValidator.ts
@@ -262,7 +262,7 @@ function-indexer metrics [options]
 
 #### Output Format
 Summary view:
-```
+```text
 📊 Code Quality Metrics
 
 📈 Summary
@@ -347,7 +347,7 @@ function-indexer collect-metrics [options]
 
 #### Output Format
 Console output:
-```
+```text
 📊 Collecting function metrics...
 ✅ Processed 45 files, 216 functions
 📈 Metrics stored in database
@@ -399,7 +399,7 @@ function-indexer show-metrics [functionId] [options]
 
 #### Output Format
 Function history:
-```
+```text
 📈 Metrics history for: src/core/processor.ts:processData
 
 1. 2024-01-15 10:30:00 (commit: abc123)
@@ -451,7 +451,7 @@ function-indexer analyze-trends [options]
 - `--min-change <percent>` - Minimum change percentage (number, default: 10)
 
 #### Output Format
-```
+```text
 📊 Metrics Trend Analysis (Last 30 days)
 
 🔴 Degrading Functions (5)
@@ -502,7 +502,7 @@ function-indexer pr-metrics <prNumber>
 - `prNumber` - Pull request number (required)
 
 #### Output Format
-```
+```text
 📊 Metrics for PR #123
 
 📈 Summary
@@ -557,7 +557,7 @@ function-indexer diff [base] [target] [options]
 - `--only-changes` - Show only changed functions (boolean)
 
 #### Output Format
-```
+```text
 📊 Function Diff: main...feature-branch
 
 ➕ Added (3 functions)
@@ -664,7 +664,7 @@ function-indexer ci [options]
 
 #### Output Format
 GitHub Actions format:
-```
+```text
 ::error file=src/core/processor.ts,line=45::Function 'processData' exceeds complexity threshold (15 > 10)
 ::warning file=src/api/handler.ts,line=23::Function 'handleRequest' has high nesting depth (5 > 4)
 ```
@@ -764,7 +764,7 @@ function-indexer validate [options]
 - `--verbose` - Show detailed validation info (boolean)
 
 #### Output Format
-```
+```text
 🔍 Validating index: .function-indexer/index.jsonl
 
 ✅ Format validation: PASSED
@@ -814,7 +814,7 @@ function-indexer repair [options]
 - `--strategy <type>` - Repair strategy: safe|aggressive (string, default: safe)
 
 #### Output Format
-```
+```text
 🔧 Repairing index file...
 
 Issues found:
@@ -865,7 +865,7 @@ function-indexer backup [options]
 - `--compress` - Create compressed archive (boolean, default: true)
 
 #### Output Format
-```
+```text
 📦 Creating backup...
 
 Included files:
@@ -917,7 +917,7 @@ function-indexer restore <backup-file> [options]
 - `--preview` - Show what would be restored (boolean, default: false)
 
 #### Output Format
-```
+```text
 📥 Restoring from backup: backup-2024-01-15-103000.tar.gz
 
 Backup contents:
@@ -973,7 +973,7 @@ function-indexer update-all [options]
 - `--filter <pattern>` - Project filter pattern (string)
 
 #### Output Format
-```
+```text
 🔄 Updating all projects in workspace...
 
 Found 5 projects with function-indexer:

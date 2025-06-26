@@ -127,7 +127,7 @@ function-indexer search <query> [options]
 
 #### 出力フォーマット
 デフォルトのテキスト形式：
-```
+```text
 🔍 "authentication" の検索結果：
 
 1. src/auth/tokenValidator.ts:validateToken (スコア: 0.95)
@@ -204,7 +204,7 @@ function-indexer list [options]
 
 #### 出力フォーマット
 テキスト形式（デフォルト）：
-```
+```text
 📋 関数インベントリ（合計216個）
 
 src/auth/tokenValidator.ts
@@ -262,7 +262,7 @@ function-indexer metrics [options]
 
 #### 出力フォーマット
 サマリービュー：
-```
+```text
 📊 コード品質メトリクス
 
 📈 サマリー
@@ -347,7 +347,7 @@ function-indexer collect-metrics [options]
 
 #### 出力フォーマット
 コンソール出力：
-```
+```text
 📊 関数メトリクスを収集中...
 ✅ 45ファイル、216関数を処理
 📈 メトリクスをデータベースに保存
@@ -399,7 +399,7 @@ function-indexer show-metrics [functionId] [options]
 
 #### 出力フォーマット
 関数履歴：
-```
+```text
 📈 メトリクス履歴: src/core/processor.ts:processData
 
 1. 2024-01-15 10:30:00 (コミット: abc123)
@@ -451,7 +451,7 @@ function-indexer analyze-trends [options]
 - `--min-change <percent>` - 最小変化率（数値、デフォルト: 10）
 
 #### 出力フォーマット
-```
+```text
 📊 メトリクストレンド分析（過去30日間）
 
 🔴 劣化している関数 (5)
@@ -502,7 +502,7 @@ function-indexer pr-metrics <prNumber>
 - `prNumber` - プルリクエスト番号（必須）
 
 #### 出力フォーマット
-```
+```text
 📊 PR #123のメトリクス
 
 📈 サマリー
@@ -557,7 +557,7 @@ function-indexer diff [base] [target] [options]
 - `--only-changes` - 変更された関数のみ表示（ブール値）
 
 #### 出力フォーマット
-```
+```text
 📊 関数差分: main...feature-branch
 
 ➕ 追加 (3関数)
@@ -664,7 +664,7 @@ function-indexer ci [options]
 
 #### 出力フォーマット
 GitHub Actions形式：
-```
+```text
 ::error file=src/core/processor.ts,line=45::関数 'processData' が複雑度閾値を超過 (15 > 10)
 ::warning file=src/api/handler.ts,line=23::関数 'handleRequest' のネスト深度が高い (5 > 4)
 ```
@@ -764,7 +764,7 @@ function-indexer validate [options]
 - `--verbose` - 詳細な検証情報を表示（ブール値）
 
 #### 出力フォーマット
-```
+```text
 🔍 インデックスを検証中: .function-indexer/index.jsonl
 
 ✅ フォーマット検証: 合格
@@ -814,7 +814,7 @@ function-indexer repair [options]
 - `--strategy <type>` - 修復戦略: safe|aggressive（文字列、デフォルト: safe）
 
 #### 出力フォーマット
-```
+```text
 🔧 インデックスファイルを修復中...
 
 見つかった問題:
@@ -865,7 +865,7 @@ function-indexer backup [options]
 - `--compress` - 圧縮アーカイブを作成（ブール値、デフォルト: true）
 
 #### 出力フォーマット
-```
+```text
 📦 バックアップを作成中...
 
 含まれるファイル:
@@ -917,7 +917,7 @@ function-indexer restore <backup-file> [options]
 - `--preview` - リストアされる内容を表示（ブール値、デフォルト: false）
 
 #### 出力フォーマット
-```
+```text
 📥 バックアップからリストア中: backup-2024-01-15-103000.tar.gz
 
 バックアップ内容:
@@ -973,7 +973,7 @@ function-indexer update-all [options]
 - `--filter <pattern>` - プロジェクトフィルタパターン（文字列）
 
 #### 出力フォーマット
-```
+```text
 🔄 ワークスペース内のすべてのプロジェクトを更新中...
 
 function-indexerを持つ5つのプロジェクトが見つかりました:
