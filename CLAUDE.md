@@ -265,6 +265,97 @@ Function Indexer now uses a **separated configuration system** for better modula
 
 **Remember**: "sed made me suffer" - prefer precision over speed.
 
+## ⚠️ 絶対禁止事項 - MANDATORY RESTRICTIONS
+
+### 🚨 TypeScript開発での禁止事項
+- **any型の使用禁止**: `any`型は絶対に使用しない。`unknown`または適切な型定義を使用
+- **型アサーション乱用禁止**: `as any`は絶対使用しない
+- **暗黙的any禁止**: `noImplicitAny: true`設定必須
+- **型安全性の妥協禁止**: 型エラーを隠蔽するための安易な回避は禁止
+
+#### 正しいアプローチ
+```typescript
+// ❌ 絶対禁止
+const data: any = someFunction();
+const result = data.anything.goes; // 型安全性なし
+
+// ✅ 正しい方法
+interface ExpectedData {
+  id: string;
+  value: number;
+}
+const data: ExpectedData = someFunction();
+const result = data.value; // 型安全
+```
+
+### 🚨 コード品質での禁止事項
+- **console.log残留禁止**: デバッグ用console.logはコミット前に必ず削除
+- **TODO/FIXMEの放置禁止**: 発見したら即座に対応またはissue化
+- **テスト無しコミット禁止**: 新機能は必ずテスト追加
+- **リンターエラー無視禁止**: ESLintエラーは必ず修正してからコミット
+
+### 🚨 開発プロセスでの禁止事項
+- **並列PR作業禁止**: 共有ファイル変更時は順次実行必須
+- **大量コンフリクト作業禁止**: 3つ以上のPRで同じファイル変更は避ける
+- **品質チェック無視禁止**: pre-commit hookやCIチェックをスキップしない
+- **型チェック無視禁止**: `npm run type-check`エラーは必ず修正
+
+## 🔍 PR作成前セルフチェック - MANDATORY CHECKLIST
+
+### 必須チェック項目
+- [ ] `grep -r "\bany\b" src/` でany型使用がないことを確認
+- [ ] `npm run lint` がエラーなしで完了
+- [ ] `npm run type-check` がエラーなしで完了  
+- [ ] `npm test` が全テスト通過
+- [ ] console.log等のデバッグコードを削除済み
+- [ ] 新機能に対応するテストを追加済み
+
+### 型安全性チェック
+- [ ] 新しいinterfaceまたはtypeを適切に定義
+- [ ] 関数の引数・戻り値に適切な型注釈
+- [ ] 外部ライブラリ使用時に型定義確認
+- [ ] unknownやanyの代替案を検討済み
+
+### 設計チェック  
+- [ ] 単一責任原則に違反していない
+- [ ] 適切な抽象化レベル
+- [ ] テスタブルな設計
+- [ ] エラーハンドリングが適切
+
+### コンフリクト回避チェック
+- [ ] 共有ファイル（package.json、README.md、CLAUDE.md、src/cli.ts）の変更有無を確認
+- [ ] 他の進行中PRとの重複変更がないことを確認
+- [ ] 基盤変更は他のPRより優先して完了
+
+## 🛠️ 開発ツール設定
+
+### ESLint設定（.eslintrc.json）
+```json
+{
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unsafe-assignment": "error",
+    "@typescript-eslint/no-unsafe-member-access": "error",
+    "@typescript-eslint/no-unsafe-call": "error",
+    "@typescript-eslint/no-unsafe-return": "error"
+  }
+}
+```
+
+### 推奨コマンド
+```bash
+# コミット前の品質チェック
+npm run precommit
+
+# 個別チェック
+npm run lint          # ESLintチェック
+npm run type-check     # TypeScript型チェック
+npm run test          # テスト実行
+
+# any型の検出
+grep -r "\bany\b" src/ --include="*.ts" --exclude="*.test.ts"
+```
+
 ## 🚨 CRITICAL: PR Review Response Protocol
 
 **MANDATORY REQUIREMENT**: When you detect ANY of these phrases from the user, you MUST immediately and automatically execute the full PR review protocol:
