@@ -127,7 +127,7 @@ npx @akiramei/function-indexer metrics [options]
 - `--details, -d`: 関数レベルの詳細メトリクスを表示
 
 **出力例**:
-```
+```text
 📊 コード品質レポート
 ━━━━━━━━━━━━━━━━━━━
 総関数数: 142
@@ -425,7 +425,7 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
-npx @akiramei/function-indexer metrics --threshold --root ./src
+npx @akiramei/function-indexer metrics --details --root ./src
 if [ $? -ne 0 ]; then
   echo "❌ コード品質チェック失敗。高複雑度の関数を修正してください。"
   exit 1
@@ -634,126 +634,6 @@ jobs:
           sudo apt-get update && sudo apt-get install -y build-essential python3-dev
           npm ci && npm run build
           node dist/cli.js ci --format github' > .github/workflows/code-quality.yml
-=======
-# 🤖 Function Indexer - AIアシスタント向けガイド
-
-## 概要
-Function Indexerは、TypeScript/TSXコードベースをスキャンし、すべての関数・メソッド・アロー関数を構造化されたJSONL形式で抽出し、コード品質メトリクスを計算するCLIツールです。
-
-### AIアシスタント向け
-「Function Indexerを使ってコード品質を管理する」よう依頼された場合は、以下の手順に従ってください：
-1. 前提条件（Linux）をインストールしてFunction Indexerを準備
-2. 初回スキャンを実行してベースラインを確立
-3. 追跡用のメトリクス収集を設定
-4. 自動チェック用のCI/CD統合を構成
-5. コードレビュー用の定期レポートを作成
-
-## 主要機能
-- **関数検出**: TypeScript/TSXファイル内のすべての関数を検出
-- **メトリクス分析**: 複雑度、コード行数、ネスト深度を計算
-- **検索機能**: 自然言語およびパターンベースの関数検索
-- **変更追跡**: コンテンツハッシュによる変更検出
-- **品質監視**: コード品質の経時的追跡
-
-## インストールと基本使用法
-
-```bash
-# 前提条件（Linux/WSL）
-sudo apt-get update
-sudo apt-get install build-essential python3-dev
-
-# カレントディレクトリをスキャン
-npx @akiramei/function-indexer
-
-# 特定ディレクトリをスキャンして出力
-npx @akiramei/function-indexer --root ./src --output functions.jsonl
-
-# PRのメトリクスを収集
-npx @akiramei/function-indexer collect-metrics --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
-
-# またはプロジェクトにローカルインストール
-npm install --save-dev @akiramei/function-indexer
-npx function-indexer
-
-# 代替: GitHub直接インストール（開発版）
-npx github:akiramei/function-indexer
-```
-
-## コマンドリファレンス
-
-### 1. メインコマンド - 関数インデックス生成
-```bash
-npx @akiramei/function-indexer --root <path> --output <file> [options]
-```
-**目的**: コードベースをスキャンし、すべての関数をJSONLファイルに出力
-**オプション**:
-- `--root, -r`: スキャンディレクトリ（デフォルト: 自動検出）
-- `--output, -o`: 出力ファイル（デフォルト: .function-indexer/ 内に自動生成）
-- `--verbose, -v`: 詳細な進捗表示
-
-**注意**: Function Indexerは設定不要で動作します - `npx @akiramei/function-indexer` を実行するだけで開始できます！
-
-**出力形式**（JSONL、1行1オブジェクト）:
-```json
-{
-  "file": "src/services/auth.ts",
-  "identifier": "validateToken",
-  "signature": "async function validateToken(token: string): Promise<boolean>",
-  "startLine": 15,
-  "endLine": 28,
-  "hash_function": "a3f5c912",
-  "hash_file": "b8d4e7f1",
-  "exported": true,
-  "async": true,
-  "metrics": {
-    "linesOfCode": 12,
-    "cyclomaticComplexity": 4,
-    "cognitiveComplexity": 6,
-    "nestingDepth": 2,
-    "parameterCount": 1,
-    "hasReturnType": true
-  },
-  "domain": "backend"
-}
-```
-
-### 2. `list` - 全関数一覧表示
-```bash
-npx @akiramei/function-indexer list [options]
-```
-**目的**: コードベース内の全関数を制限なしで一覧表示
-**オプション**:
-- `--format, -f`: 出力形式 (default, simple, json)
-- `--file <pattern>`: ファイルパターンでフィルタ（glob対応）
-- `--exported`: エクスポートされた関数のみ表示
-- `--async`: 非同期関数のみ表示
-- `--sort, -s`: ソートフィールド (name, file, complexity)
-
-**使用例**:
-```bash
-# デフォルト形式で全関数を一覧表示
-npx @akiramei/function-indexer list
-
-# AI処理用のシンプル形式
-npx @akiramei/function-indexer list --format simple
-
-# エクスポートされた非同期関数をフィルタ
-npx @akiramei/function-indexer list --exported --async
-
-# ファイルパターンでフィルタ
-npx @akiramei/function-indexer list --file "src/services/*.ts"
-
-# 複雑度でソート
-npx @akiramei/function-indexer list --sort complexity
-
-# JSONとしてエクスポート
-npx @akiramei/function-indexer list --format json > functions.json
-```
-
-**出力形式**:
-- **default**: ファイルごとにグループ化、視覚的インジケータ付き
-- **simple**: `file:line:functionName` 形式（AI最適化）
-- **json**: 全メタデータを含む完全なJSON配列
 
 ### 3. `search` - 関数検索（改善済み！）
 ```bash
@@ -802,7 +682,7 @@ npx @akiramei/function-indexer metrics [options]
 - `--details, -d`: 関数レベルの詳細メトリクスを表示
 
 **出力例**:
-```
+```text
 📊 コード品質レポート
 ━━━━━━━━━━━━━━━━━━━
 総関数数: 142
@@ -1100,7 +980,7 @@ PR #123をマージする前に、コード品質への影響を分析してく�
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
-npx @akiramei/function-indexer metrics --threshold --root ./src
+npx @akiramei/function-indexer metrics --details --root ./src
 if [ $? -ne 0 ]; then
   echo "❌ コード品質チェック失敗。高複雑度の関数を修正してください。"
   exit 1

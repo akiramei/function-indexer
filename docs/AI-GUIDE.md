@@ -126,7 +126,7 @@ npx @akiramei/function-indexer metrics [options]
 - `--details, -d`: Show detailed function-level metrics
 
 **Output Example**:
-```
+```text
 📊 Code Quality Report
 ━━━━━━━━━━━━━━━━━━━
 Total Functions: 142
@@ -637,125 +637,6 @@ jobs:
           sudo apt update && sudo apt install build-essential python3
           npm ci && npm run build
           node dist/cli.js ci --format github' > .github/workflows/code-quality.yml
-=======
-# 🤖 Function Indexer - AI Assistant Guide
-
-## Quick Overview
-Function Indexer is a TypeScript CLI tool that scans codebases to extract all functions, methods, and arrow functions into structured JSONL format with code quality metrics.
-
-### For AI Assistants
-When asked to "manage code quality using Function Indexer", follow these steps:
-1. Install Function Indexer globally
-2. Run initial scan to establish baseline
-3. Set up metrics collection for tracking
-4. Configure CI/CD integration for automated checks
-5. Create regular reports for code review
-
-## Core Capabilities
-- **Function Discovery**: Finds all functions in TypeScript/TSX files
-- **Metrics Analysis**: Calculates complexity, lines of code, nesting depth
-- **Search**: Natural language and pattern-based function search
-- **Change Tracking**: Detects modifications via content hashing
-- **Quality Monitoring**: Tracks code quality trends over time
-
-## Installation & Basic Usage
-
-```bash
-# Prerequisites (Linux/WSL users only)
-sudo apt update && sudo apt install build-essential python3
-
-# Run directly with npx (recommended)
-npx @akiramei/function-indexer
-
-# Scan specific directory with output file  
-npx @akiramei/function-indexer --root ./src --output functions.jsonl
-
-# Collect metrics for PR
-npx @akiramei/function-indexer collect-metrics --root ./src --pr 123
-
-# Or install locally to project
-npm install --save-dev @akiramei/function-indexer
-npx function-indexer
-
-# Alternative: GitHub direct install (development version)
-npx github:akiramei/function-indexer
-```
-
-## Command Reference
-
-### 1. Main Command - Generate Function Index
-```bash
-npx @akiramei/function-indexer --root <path> --output <file> [options]
-```
-**Purpose**: Scans codebase and generates JSONL file with all functions
-**Options**:
-- `--root, -r`: Directory to scan (default: auto-detected)
-- `--output, -o`: Output file (default: auto-generated in .function-indexer/)
-- `--verbose, -v`: Show detailed progress
-
-**Note**: Function Indexer now works with zero configuration - just run `npx @akiramei/function-indexer` to get started!
-
-**Output Format** (JSONL, one object per line):
-```json
-{
-  "file": "src/services/auth.ts",
-  "identifier": "validateToken",
-  "signature": "async function validateToken(token: string): Promise<boolean>",
-  "startLine": 15,
-  "endLine": 28,
-  "hash_function": "a3f5c912",
-  "hash_file": "b8d4e7f1",
-  "exported": true,
-  "async": true,
-  "metrics": {
-    "linesOfCode": 12,
-    "cyclomaticComplexity": 4,
-    "cognitiveComplexity": 6,
-    "nestingDepth": 2,
-    "parameterCount": 1,
-    "hasReturnType": true
-  },
-  "domain": "backend"
-}
-```
-
-### 2. `list` - List All Functions
-```bash
-npx @akiramei/function-indexer list [options]
-```
-**Purpose**: List all functions in the codebase without limit
-**Options**:
-- `--format, -f`: Output format (default, simple, json)
-- `--file <pattern>`: Filter by file pattern (glob supported)
-- `--exported`: Show only exported functions
-- `--async`: Show only async functions
-- `--sort, -s`: Sort by field (name, file, complexity)
-
-**Examples**:
-```bash
-# List all functions with default format
-npx @akiramei/function-indexer list
-
-# Simple format for AI processing
-npx @akiramei/function-indexer list --format simple
-
-# Filter exported async functions
-npx @akiramei/function-indexer list --exported --async
-
-# Filter by file pattern
-npx @akiramei/function-indexer list --file "src/services/*.ts"
-
-# Sort by complexity
-npx @akiramei/function-indexer list --sort complexity
-
-# Export as JSON
-npx @akiramei/function-indexer list --format json > functions.json
-```
-
-**Output Formats**:
-- **default**: Grouped by file with visual indicators
-- **simple**: `file:line:functionName` format (AI-optimized)
-- **json**: Full JSON array with all metadata
 
 ### 3. `search` - Find Functions (IMPROVED!)
 ```bash
@@ -804,7 +685,7 @@ npx @akiramei/function-indexer metrics [options]
 - `--details, -d`: Show detailed function-level metrics
 
 **Output Example**:
-```
+```text
 📊 Code Quality Report
 ━━━━━━━━━━━━━━━━━━━
 Total Functions: 142
