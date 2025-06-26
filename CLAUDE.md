@@ -2,9 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 📖 For Comprehensive AI Assistant Guide
+## 📖 Quick Reference Guides
 
-**For detailed AI assistant guidance, see:**
+**For comprehensive documentation:**
+- **[Command Reference (English)](docs/COMMAND-REFERENCE.md)** - Complete command guide with examples
+- **[Command Reference (Japanese)](docs/COMMAND-REFERENCE-ja.md)** - 完全なコマンドガイド（例付き）
+
+**For AI assistant workflow patterns:**
 - **[AI Master Guide (English)](docs/AI-MASTER-GUIDE.md)** - Complete reference for AI assistants
 - **[AI Master Guide (Japanese)](docs/AI-MASTER-GUIDE-ja.md)** - AIアシスタント向け完全ガイド
 
@@ -194,6 +198,54 @@ Function Indexer now uses a **separated configuration system** for better modula
 - **Maintenance**: Easier to update specific configuration aspects
 - **Extensibility**: New feature configs can be added without affecting core
 - **Performance**: Metrics can be disabled without affecting core functionality
+
+## ⚠️ sed Command Usage Guidelines
+
+**CRITICAL**: sed should only be used for simple, predictable patterns. Avoid for complex document editing.
+
+### ✅ Use sed for:
+1. **Simple global replacements** - Single pattern across entire file
+   ```bash
+   # Safe: Replace all occurrences of a version number
+   sed -i 's/version: "1.0.0"/version: "1.1.0"/g' package.json
+   ```
+
+2. **Unique string patterns** - Patterns that cannot match unintended text
+   ```bash
+   # Safe: Replace a specific import path
+   sed -i 's|from "../old/path"|from "../new/path"|g' *.ts
+   ```
+
+3. **Line-level operations** - Adding/removing entire lines
+   ```bash
+   # Safe: Remove lines containing specific pattern
+   sed -i '/console.log/d' src/*.ts
+   ```
+
+### ❌ NEVER use sed for:
+1. **Context-dependent replacements** - Same pattern with different meanings
+   ```bash
+   # DANGEROUS: Will replace ALL empty code blocks
+   sed -i 's/^```$/```text/' docs/*.md  # ← This caused problems!
+   ```
+
+2. **Structured documents** - Markdown, HTML, JSON where context matters
+3. **Partial string matches** - Risk of changing unintended text
+4. **Complex patterns** - Multiple conditions or state-dependent logic
+
+### 🔧 Alternative approaches:
+- **MultiEdit tool** - For precise, context-aware replacements
+- **Manual editing** - For complex document structures
+- **Specialized tools** - grep + manual review for identification first
+
+### 📋 Pre-sed checklist:
+1. ✅ Pattern is unique and unambiguous
+2. ✅ Tested on small sample first
+3. ✅ Verified with `grep` to see all matches
+4. ✅ Simple enough that results are predictable
+5. ✅ Low risk if something goes wrong
+
+**Remember**: "sed made me suffer" - prefer precision over speed.
 
 ## 🚨 CRITICAL: PR Review Response Protocol
 
