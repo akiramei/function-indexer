@@ -80,7 +80,45 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 }
 ```
 
-### 2. `search` - 関数検索
+### 2. `list` - 全関数一覧表示
+```bash
+npx @akiramei/function-indexer list [options]
+```
+**目的**: コードベース内の全関数を制限なしで一覧表示
+**オプション**:
+- `--format, -f`: 出力形式 (default, simple, json)
+- `--file <pattern>`: ファイルパターンでフィルタ（glob対応）
+- `--exported`: エクスポートされた関数のみ表示
+- `--async`: 非同期関数のみ表示
+- `--sort, -s`: ソートフィールド (name, file, complexity)
+
+**使用例**:
+```bash
+# デフォルト形式で全関数を一覧表示
+npx @akiramei/function-indexer list
+
+# AI処理用のシンプル形式
+npx @akiramei/function-indexer list --format simple
+
+# エクスポートされた非同期関数をフィルタ
+npx @akiramei/function-indexer list --exported --async
+
+# ファイルパターンでフィルタ
+npx @akiramei/function-indexer list --file "src/services/*.ts"
+
+# 複雑度でソート
+npx @akiramei/function-indexer list --sort complexity
+
+# JSONとしてエクスポート
+npx @akiramei/function-indexer list --format json > functions.json
+```
+
+**出力形式**:
+- **default**: ファイルごとにグループ化、視覚的インジケータ付き
+- **simple**: `file:line:functionName` 形式（AI最適化）
+- **json**: 全メタデータを含む完全なJSON配列
+
+### 3. `search` - 関数検索
 ```bash
 npx @akiramei/function-indexer search <query> [options]
 ```
@@ -102,7 +140,7 @@ npx @akiramei/function-indexer search "認証" --context "ログインとセキ�
 npx @akiramei/function-indexer search "コンポーネント" --limit 5
 ```
 
-### 3. `metrics` - コード品質分析
+### 4. `metrics` - コード品質分析
 ```bash
 npx @akiramei/function-indexer metrics [options]
 ```
@@ -123,7 +161,7 @@ npx @akiramei/function-indexer metrics [options]
 2. calculateShipping (src/shipping.ts:122) - 複雑度: 15
 ```
 
-### 4. `collect-metrics` - 品質の経時追跡
+### 5. `collect-metrics` - 品質の経時追跡
 ```bash
 npx @akiramei/function-indexer collect-metrics --root <path> [options]
 ```
@@ -147,7 +185,7 @@ npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .qu
 npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl --verbose-metrics
 ```
 
-### 5. `show-metrics` - 関数履歴表示
+### 6. `show-metrics` - 関数履歴表示
 ```bash
 npx @akiramei/function-indexer show-metrics [function-path]
 ```
@@ -167,7 +205,7 @@ npx @akiramei/function-indexer show-metrics --list
 npx @akiramei/function-indexer show-metrics "src/auth.ts:validateToken"
 ```
 
-### 6. `diff` - ブランチ/コミット間の関数比較
+### 7. `diff` - ブランチ/コミット間の関数比較
 ```bash
 npx @akiramei/function-indexer diff [base] [target]
 ```
@@ -199,7 +237,7 @@ npx @akiramei/function-indexer diff main HEAD --thresholds '{"cyclomaticComplexi
 - 閾値を超えた関数
 - 要約統計
 
-### 7. `report` - 包括的コード品質レポート生成
+### 8. `report` - 包括的コード品質レポート生成
 ```bash
 npx @akiramei/function-indexer report [options]
 ```
@@ -232,7 +270,7 @@ npx @akiramei/function-indexer report --thresholds '{"cyclomaticComplexity":8,"c
 - 改善提案
 - ファイル別詳細分析
 
-### 8. `ci` - CI/CDパイプライン統合
+### 9. `ci` - CI/CDパイプライン統合
 ```bash
 npx @akiramei/function-indexer ci [options]
 ```
@@ -270,7 +308,7 @@ npx @akiramei/function-indexer ci --format json --output ci-results.json
 - 複数CIプラットフォーム対応（GitHub, GitLab）
 - 既存品質閾値との統合
 
-### 9. その他のコマンド
+### 10. その他のコマンド
 - `analyze-trends`: メトリクストレンドと違反の分析
 - `pr-metrics <prNumber>`: 特定PRのメトリクス表示
 - `update <index>`: 既存の関数インデックスを更新

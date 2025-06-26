@@ -79,7 +79,45 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 }
 ```
 
-### 2. `search` - Find Functions
+### 2. `list` - List All Functions
+```bash
+npx @akiramei/function-indexer list [options]
+```
+**Purpose**: List all functions in the codebase without limit
+**Options**:
+- `--format, -f`: Output format (default, simple, json)
+- `--file <pattern>`: Filter by file pattern (glob supported)
+- `--exported`: Show only exported functions
+- `--async`: Show only async functions
+- `--sort, -s`: Sort by field (name, file, complexity)
+
+**Examples**:
+```bash
+# List all functions with default format
+npx @akiramei/function-indexer list
+
+# Simple format for AI processing
+npx @akiramei/function-indexer list --format simple
+
+# Filter exported async functions
+npx @akiramei/function-indexer list --exported --async
+
+# Filter by file pattern
+npx @akiramei/function-indexer list --file "src/services/*.ts"
+
+# Sort by complexity
+npx @akiramei/function-indexer list --sort complexity
+
+# Export as JSON
+npx @akiramei/function-indexer list --format json > functions.json
+```
+
+**Output Formats**:
+- **default**: Grouped by file with visual indicators
+- **simple**: `file:line:functionName` format (AI-optimized)
+- **json**: Full JSON array with all metadata
+
+### 3. `search` - Find Functions
 ```bash
 npx @akiramei/function-indexer search <query> [options]
 ```
@@ -101,7 +139,7 @@ npx @akiramei/function-indexer search "authentication" --context "login and secu
 npx @akiramei/function-indexer search "component" --limit 5
 ```
 
-### 3. `metrics` - Analyze Code Quality
+### 4. `metrics` - Analyze Code Quality
 ```bash
 npx @akiramei/function-indexer metrics [options]
 ```
@@ -122,7 +160,7 @@ Functions Above Threshold: 8
 2. calculateShipping (src/shipping.ts:122) - Complexity: 15
 ```
 
-### 4. `collect-metrics` - Track Quality Over Time
+### 5. `collect-metrics` - Track Quality Over Time
 ```bash
 npx @akiramei/function-indexer collect-metrics --root <path> [options]
 ```
@@ -146,7 +184,7 @@ npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .qu
 npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl --verbose-metrics
 ```
 
-### 5. `show-metrics` - View Function History
+### 6. `show-metrics` - View Function History
 ```bash
 npx @akiramei/function-indexer show-metrics [function-path]
 ```
@@ -166,7 +204,7 @@ npx @akiramei/function-indexer show-metrics --list
 npx @akiramei/function-indexer show-metrics "src/auth.ts:validateToken"
 ```
 
-### 6. `diff` - Compare Functions Between Branches/Commits
+### 7. `diff` - Compare Functions Between Branches/Commits
 ```bash
 npx @akiramei/function-indexer diff [base] [target]
 ```
@@ -198,7 +236,7 @@ npx @akiramei/function-indexer diff main HEAD --thresholds '{"cyclomaticComplexi
 - Functions exceeding thresholds
 - Summary statistics
 
-### 7. `report` - Generate Comprehensive Code Quality Reports
+### 8. `report` - Generate Comprehensive Code Quality Reports
 ```bash
 npx @akiramei/function-indexer report [options]
 ```
@@ -231,7 +269,7 @@ npx @akiramei/function-indexer report --thresholds '{"cyclomaticComplexity":8,"c
 - Recommendations for improvement
 - File-by-file breakdown
 
-### 8. `ci` - CI/CD Pipeline Integration
+### 9. `ci` - CI/CD Pipeline Integration
 ```bash
 npx @akiramei/function-indexer ci [options]
 ```
@@ -269,7 +307,7 @@ npx @akiramei/function-indexer ci --format json --output ci-results.json
 - Multiple CI platform support (GitHub, GitLab)
 - Integration with existing quality thresholds
 
-### 9. Additional Commands
+### 10. Additional Commands
 - `npx @akiramei/function-indexer analyze-trends`: Analyze metrics trends and violations
 - `npx @akiramei/function-indexer pr-metrics <prNumber>`: Show metrics for a specific PR
 - `npx @akiramei/function-indexer update <index>`: Update an existing function index
