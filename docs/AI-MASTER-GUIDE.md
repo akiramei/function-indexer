@@ -393,10 +393,12 @@ const complexFunctions = functions.filter(f =>
 
 // Group by file for architectural analysis
 const byFile = functions.reduce((acc, func) => {
-  acc[func.file] = acc[func.file] || [];
+  if (!acc[func.file]) {
+    acc[func.file] = [];
+  }
   acc[func.file].push(func);
   return acc;
-}, {});
+}, {} as Record<string, any[]>);
 ```
 
 ### Python Integration Example
