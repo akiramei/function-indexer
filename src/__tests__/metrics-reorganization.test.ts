@@ -110,7 +110,7 @@ export function simpleFunction(): string {
     try {
       execSync('npm run build', { cwd: functionIndexerPath, stdio: 'pipe' });
     } catch (error) {
-      console.warn('Build warning:', error);
+      throw new Error(`Failed to build function-indexer: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
 

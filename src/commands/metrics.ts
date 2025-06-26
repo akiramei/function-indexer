@@ -50,7 +50,6 @@ export function createMetricsCommand(): Command {
             functions.push(JSON.parse(line));
           } catch (error) {
             console.warn(chalk.yellow(`⚠️  Skipping malformed JSON line: ${line.substring(0, 50)}...`));
-            continue;
           }
         }
 
