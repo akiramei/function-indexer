@@ -36,6 +36,24 @@ npm start -- --root ./src --output function-index.jsonl
 # Run tests
 npm test
 
+# Simplified command structure (NEW in v1.1.0+)
+fx                              # Initialize or update index (short alias)
+fx s "authentication logic"     # Search functions (short alias)
+fx ls                          # List all functions (short alias)
+fx m                           # Show metrics overview (short alias)
+
+# Structured metrics commands
+fx metrics collect --root ./src --pr 123 --verbose
+fx metrics show "src/indexer.ts:FunctionIndexer.run"
+fx metrics trends
+fx metrics pr 123
+
+# Legacy commands (still supported but deprecated)
+function-indexer collect-metrics --root ./src --pr 123 --verbose
+function-indexer show-metrics "src/indexer.ts:FunctionIndexer.run"
+function-indexer analyze-trends
+function-indexer pr-metrics 123
+
 # Metrics commands (reorganized with subcommands)
 function-indexer metrics                                    # View code quality overview
 function-indexer metrics collect --root ./src --pr 123     # Collect metrics for tracking

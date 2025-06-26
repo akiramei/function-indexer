@@ -15,6 +15,8 @@ import { createDiffCommand } from './commands/diff';
 import { createReportCommand } from './commands/report';
 import { createCICommand } from './commands/ci';
 import { createMetricsCommand } from './commands/metrics';
+import { createListCommand } from './commands/list';
+import { applyCommandAliases, getAliasHelpText } from './commands/aliases';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
@@ -23,8 +25,11 @@ dotenv.config();
 
 const program = new Command();
 
+// Support both 'function-indexer' and 'fx' as program names
+const programName = path.basename(process.argv[1]) === 'fx' ? 'fx' : 'function-indexer';
+
 program
-  .name('function-indexer')
+  .name(programName)
   .description('A modern TypeScript function analyzer that helps you understand and maintain your codebase')
   .version('1.0.0');
 
@@ -347,172 +352,12 @@ program
     }
   });
 
-program
-  .command('list')
-  .description('List all functions in the codebase without limit')
-  .option('-f, --format <format>', 'output format (default, simple, json)', 'default')
-  .option('--file <pattern>', 'filter by file pattern (glob supported)')
-  .option('--exported', 'show only exported functions')
-  .option('--async', 'show only async functions')
-  .option('-s, --sort <field>', 'sort by field (name, file, complexity)', 'file')
-  .action(async (options) => {
-    try {
-      // Auto-detect project and load config
-      const projectInfo = (() => {
-        try {
-          return ProjectDetector.detectProject();
-        } catch (error) {
-          console.error(chalk.red('❌ Failed to detect project structure'));
-          throw new Error('Project detection failed. Please ensure you are in a valid project directory.');
-        }
-      })();
-      
-      if (!ConfigService.isInitialized(projectInfo.root)) {
-        console.error(chalk.red('❌ Project not initialized'));
-        console.log(chalk.yellow('💡 Run `function-indexer` first to initialize the project'));
-        process.exit(1);
-      }
-      
-      const config = ConfigService.loadConfig(projectInfo.root);
-      
-      if (!fs.existsSync(config.output)) {
-        console.error(chalk.red('❌ Index file not found'));
-        console.log(chalk.yellow('💡 Run `function-indexer` to create the index'));
-        process.exit(1);
-      }
-
-      // Load all functions from index
-      const content = fs.readFileSync(config.output, 'utf-8');
-      let functions: FunctionInfo[] = content
-        .trim()
-        .split('\n')
-        .filter(line => line)
-        .map((line, index) => {
-          try {
-            return JSON.parse(line);
-          } catch (error) {
-            console.error(chalk.yellow(`⚠️  Invalid JSON at line ${index + 1}, skipping...`));
-            return null;
-          }
-        })
-        .filter(func => func !== null) as FunctionInfo[];
-
-      // Apply filters
-      if (options.file) {
-        const pattern = options.file.toLowerCase();
-        functions = functions.filter(func => {
-          const filePath = func.file.toLowerCase();
-          // Simple glob pattern matching
-          if (pattern.includes('*')) {
-            const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
-            return regex.test(filePath);
-          }
-          return filePath.includes(pattern);
-        });
-      }
-
-      if (options.exported) {
-        functions = functions.filter(func => func.exported);
-      }
-
-      if (options.async) {
-        functions = functions.filter(func => func.async);
-      }
-
-      // Sort functions
-      switch (options.sort) {
-        case 'name':
-          functions.sort((a, b) => a.identifier.localeCompare(b.identifier));
-          break;
-        case 'complexity':
-          functions.sort((a, b) => {
-            const aComplexity = a.metrics?.cyclomaticComplexity || 0;
-            const bComplexity = b.metrics?.cyclomaticComplexity || 0;
-            return bComplexity - aComplexity;
-          });
-          break;
-        default:
-          functions.sort((a, b) => {
-            const fileCompare = a.file.localeCompare(b.file);
-            if (fileCompare !== 0) return fileCompare;
-            return a.startLine - b.startLine;
-          });
-          break;
-      }
-
-      // Output results
-      if (functions.length === 0) {
-        console.log(chalk.yellow('No functions found matching the criteria'));
-      } else {
-        switch (options.format) {
-          case 'json':
-            console.log(JSON.stringify(functions, null, 2));
-            break;
-          
-          case 'simple':
-            functions.forEach(func => {
-              console.log(`${func.file}:${func.startLine}:${func.identifier}`);
-            });
-            break;
-          
-          default: {
-            console.log(chalk.green(`\nFound ${functions.length} function${functions.length > 1 ? 's' : ''}:\n`));
-            
-            let currentFile = '';
-            functions.forEach((func, index) => {
-              // Group by file
-              if (func.file !== currentFile) {
-                if (currentFile !== '') console.log(); // Add spacing between files
-                console.log(chalk.blue(`📁 ${func.file}`));
-                currentFile = func.file;
-              }
-              
-              // Function info
-              console.log(
-                chalk.gray('  ') + 
-                chalk.cyan(`${func.identifier}`) + 
-                (func.exported ? chalk.green(' ✓') : '') +
-                (func.async ? chalk.blue(' ⚡') : '') +
-                chalk.gray(` (line ${func.startLine})`)
-              );
-              
-              // Show metrics if requested
-              if (func.metrics?.cyclomaticComplexity && func.metrics.cyclomaticComplexity > 10) {
-                console.log(chalk.yellow(`     ⚠️  Complexity: ${func.metrics.cyclomaticComplexity}`));
-              }
-            });
-            console.log();
-            break;
-          }
-        }
-        
-        // Summary statistics
-        if (options.format === 'default') {
-          const exportedCount = functions.filter(f => f.exported).length;
-          const asyncCount = functions.filter(f => f.async).length;
-          console.log(chalk.gray('─'.repeat(50)));
-          console.log(chalk.gray(`Total: ${functions.length} functions`));
-          console.log(chalk.gray(`Exported: ${exportedCount} | Async: ${asyncCount}`));
-        }
-      }
-
-    } catch (error) {
-      console.error(chalk.red('❌ List error:'), error instanceof Error ? error.message : error);
-      process.exit(1);
-    }
-  });
-
-// Add the diff command
+// Add structured commands
 program.addCommand(createDiffCommand());
-
-// Add the report command
 program.addCommand(createReportCommand());
-
-// Add the CI command
 program.addCommand(createCICommand());
-
-// Add the metrics command with subcommands
 program.addCommand(createMetricsCommand());
+program.addCommand(createListCommand());
 
 program
   .command('generate-descriptions')
@@ -804,10 +649,125 @@ program
     }
   });
 
+// Legacy metrics command - redirect to new structure
+program
+  .command('metrics-legacy')
+  .description('Legacy metrics command (use "metrics" instead)')
+  .option('-d, --details', 'show detailed function-level metrics')
+  .action(async (options) => {
+    console.log(chalk.yellow('⚠️  The old metrics command structure is deprecated'));
+    console.log(chalk.blue('💡 Use the new structure:'));
+    console.log(chalk.gray('   fx metrics           # Show overview'));
+    console.log(chalk.gray('   fx metrics collect   # Collect metrics'));
+    console.log(chalk.gray('   fx metrics show      # Show function metrics'));
+    console.log(chalk.gray('   fx metrics trends    # Analyze trends'));
+    console.log('');
+    console.log(chalk.gray('Running new metrics command...'));
+    
+    // Import and run the new metrics command
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(['node', 'fx', 'metrics'], { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
 
+// Legacy collect-metrics command - redirect to new structure
+program
+  .command('collect-metrics')
+  .description('Collect code metrics (use "metrics collect" instead)')
+  .option('-r, --root <path>', 'root directory to scan', './src')
+  .option('--metrics-output <file>', 'output JSONL file for metrics history')
+  .option('--pr <number>', 'PR number for this metrics collection')
+  .option('--commit <hash>', 'specific commit hash (defaults to current HEAD)')
+  .option('--branch <name>', 'branch name (defaults to current branch)')
+  .option('--verbose-metrics', 'verbose output for metrics collection')
+  .action(async (options) => {
+    console.log(chalk.yellow('⚠️  collect-metrics is deprecated, use "fx metrics collect" instead'));
+    console.log(chalk.gray('Running new command...\n'));
+    
+    // Map options to new format
+    const args = ['node', 'fx', 'metrics', 'collect'];
+    if (options.root) args.push('--root', options.root);
+    if (options.metricsOutput) args.push('--output', options.metricsOutput);
+    if (options.pr) args.push('--pr', options.pr);
+    if (options.commit) args.push('--commit', options.commit);
+    if (options.branch) args.push('--branch', options.branch);
+    if (options.verboseMetrics) args.push('--verbose');
+    
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(args, { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics collect command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
 
+// Legacy show-metrics command - redirect to new structure
+program
+  .command('show-metrics [functionId]')
+  .description('Show metrics history (use "metrics show" instead)')
+  .option('-l, --limit <number>', 'limit number of history entries', '10')
+  .option('--list', 'list all functions with metrics data')
+  .action(async (functionId, options) => {
+    console.log(chalk.yellow('⚠️  show-metrics is deprecated, use "fx metrics show" instead'));
+    console.log(chalk.gray('Running new command...\n'));
+    
+    const args = ['node', 'fx', 'metrics', 'show'];
+    if (functionId) args.push(functionId);
+    if (options.limit) args.push('--limit', options.limit);
+    if (options.list) args.push('--list');
+    
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(args, { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics show command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
 
+// Legacy analyze-trends command - redirect to new structure
+program
+  .command('analyze-trends')
+  .description('Analyze metrics trends (use "metrics trends" instead)')
+  .action(async () => {
+    console.log(chalk.yellow('⚠️  analyze-trends is deprecated, use "fx metrics trends" instead'));
+    console.log(chalk.gray('Running new command...\n'));
+    
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(['node', 'fx', 'metrics', 'trends'], { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics trends command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
 
+// Legacy pr-metrics command - redirect to new structure
+program
+  .command('pr-metrics <prNumber>')
+  .description('Show PR metrics (use "metrics pr" instead)')
+  .action(async (prNumber) => {
+    console.log(chalk.yellow('⚠️  pr-metrics is deprecated, use "fx metrics pr" instead'));
+    console.log(chalk.gray('Running new command...\n'));
+    
+    try {
+      const { createMetricsCommand } = await import('./commands/metrics');
+      const metricsCmd = createMetricsCommand();
+      await metricsCmd.parseAsync(['node', 'fx', 'metrics', 'pr', prNumber], { from: 'user' });
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to execute metrics pr command:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
 
 // エラーハンドリング
 process.on('uncaughtException', (error) => {
@@ -818,6 +778,26 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error(chalk.red('❌ Unhandled Rejection at:'), promise, 'reason:', reason);
   process.exit(1);
+});
+
+// Apply command aliases before parsing
+applyCommandAliases(program);
+
+// Add help command that shows aliases
+program
+  .command('help-aliases')
+  .description('Show command aliases')
+  .action(() => {
+    console.log(chalk.blue('\n' + getAliasHelpText()));
+  });
+
+// Override the help to mention aliases
+program.on('--help', () => {
+  console.log('');
+  console.log(chalk.blue('Tip: Use `' + programName + ' help-aliases` to see command shortcuts'));
+  if (programName === 'function-indexer') {
+    console.log(chalk.blue('     You can also use `fx` as a shorter command'));
+  }
 });
 
 program.parse();
