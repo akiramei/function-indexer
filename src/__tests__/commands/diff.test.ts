@@ -1,5 +1,5 @@
 import { createDiffCommand } from '../../commands/diff';
-import { GitService } from '../../services/git';
+import { GitService, DiffResult } from '../../services/git';
 import { FunctionIndexer } from '../../indexer';
 import * as fs from 'fs/promises';
 import chalk from 'chalk';
@@ -12,8 +12,8 @@ jest.mock('fs/promises');
 chalk.level = 0;
 
 describe('diff command', () => {
-  let mockGitService: jest.Mocked<GitService>;
-  let mockIndexer: jest.Mocked<FunctionIndexer>;
+  let mockGitService: jest.Mocked<Partial<GitService>>;
+  let mockIndexer: jest.Mocked<Partial<FunctionIndexer>>;
   let consoleLogSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
   let processExitSpy: jest.SpyInstance;
@@ -30,7 +30,7 @@ describe('diff command', () => {
       getChangedFiles: jest.fn(),
       revisionExists: jest.fn().mockResolvedValue(true),
       getFilesAtRevision: jest.fn().mockResolvedValue(['src/test.ts'])
-    } as any;
+    } as jest.Mocked<Partial<GitService>>;
 
     mockIndexer = {
       run: jest.fn().mockResolvedValue({
@@ -40,7 +40,7 @@ describe('diff command', () => {
         errors: [],
         executionTime: 100
       })
-    } as any;
+    } as jest.Mocked<Partial<FunctionIndexer>>;
 
     (GitService as jest.Mock).mockImplementation(() => mockGitService);
     (FunctionIndexer as jest.Mock).mockImplementation(() => mockIndexer);
@@ -63,7 +63,7 @@ describe('diff command', () => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     processExitSpy = jest.spyOn(process, 'exit').mockImplementation(((code?: string | number | null | undefined) => {
       throw new Error(`Process exited with code ${code}`);
-    }) as any);
+    }) as typeof process.exit);
   });
 
   afterEach(() => {
@@ -99,7 +99,7 @@ describe('diff command', () => {
         removed: []
       };
 
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as any);
+      mockGitService.compareIndexes.mockResolvedValue(diffResult as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test', 'main', 'feature']);
@@ -115,7 +115,7 @@ describe('diff command', () => {
         added: [],
         modified: [],
         removed: []
-      } as any);
+      } as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test']);
@@ -164,7 +164,7 @@ describe('diff command', () => {
     });
 
     it('should format terminal output correctly', async () => {
-      mockGitService.compareIndexes.mockResolvedValue(createMockDiffResult() as any);
+      mockGitService.compareIndexes.mockResolvedValue(createMockDiffResult() as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test', 'main', 'feature', '--format', 'terminal']);
@@ -186,7 +186,7 @@ describe('diff command', () => {
 
     it('should output JSON format when requested', async () => {
       const diffResult = createMockDiffResult();
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as any);
+      mockGitService.compareIndexes.mockResolvedValue(diffResult as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test', 'main', 'feature', '--format', 'json']);
@@ -197,7 +197,7 @@ describe('diff command', () => {
     });
 
     it('should save output to file when specified', async () => {
-      mockGitService.compareIndexes.mockResolvedValue(createMockDiffResult() as any);
+      mockGitService.compareIndexes.mockResolvedValue(createMockDiffResult() as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync([
@@ -232,7 +232,7 @@ describe('diff command', () => {
         removed: []
       };
 
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as any);
+      mockGitService.compareIndexes.mockResolvedValue(diffResult as DiffResult);
 
       const command = createDiffCommand();
       
@@ -259,7 +259,7 @@ describe('diff command', () => {
         removed: []
       };
 
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as any);
+      mockGitService.compareIndexes.mockResolvedValue(diffResult as DiffResult);
 
       const customThresholds = { cyclomaticComplexity: 20 };
       const command = createDiffCommand();

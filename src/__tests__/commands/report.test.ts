@@ -143,7 +143,7 @@ File: {{this.file}}:{{this.startLine}}
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     processExitSpy = jest.spyOn(process, 'exit').mockImplementation(((code?: string | number | null | undefined) => {
       throw new Error(`Process exited with code ${code}`);
-    }) as any);
+    }) as typeof process.exit);
   });
 
   afterEach(() => {

@@ -14,9 +14,9 @@ jest.mock('fs/promises');
 chalk.level = 0;
 
 describe('ci command', () => {
-  let mockIndexer: jest.Mocked<FunctionIndexer>;
-  let mockGitService: jest.Mocked<GitService>;
-  let mockMetricsService: jest.Mocked<MetricsService>;
+  let mockIndexer: jest.Mocked<Partial<FunctionIndexer>>;
+  let mockGitService: jest.Mocked<Partial<GitService>>;
+  let mockMetricsService: jest.Mocked<Partial<MetricsService>>;
   let consoleLogSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
@@ -59,16 +59,16 @@ describe('ci command', () => {
         errors: [],
         executionTime: 100
       })
-    } as any;
+    } as jest.Mocked<Partial<FunctionIndexer>>;
 
     mockGitService = {
       getChangedFiles: jest.fn().mockResolvedValue(['src/test.ts'])
-    } as any;
+    } as jest.Mocked<Partial<GitService>>;
 
     mockMetricsService = {
       collectMetrics: jest.fn().mockResolvedValue(undefined),
       close: jest.fn()
-    } as any;
+    } as jest.Mocked<Partial<MetricsService>>;
 
     (FunctionIndexer as jest.Mock).mockImplementation(() => mockIndexer);
     (GitService as jest.Mock).mockImplementation(() => mockGitService);
@@ -90,7 +90,7 @@ describe('ci command', () => {
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
     processExitSpy = jest.spyOn(process, 'exit').mockImplementation(((code?: string | number | null | undefined) => {
       throw new Error(`Process exited with code ${code}`);
-    }) as any);
+    }) as typeof process.exit);
 
     // Clear environment variables
     delete process.env.GITHUB_ACTIONS;
