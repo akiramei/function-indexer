@@ -23,7 +23,7 @@
     "quality:collect": "node dist/cli.js collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl",
     "quality:show": "node dist/cli.js show-metrics --list",
     "quality:trends": "node dist/cli.js analyze-trends",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",
