@@ -4,19 +4,21 @@
 
 **English** (you are here) | [日本語](GETTING-STARTED-ja.md)
 
-> **New to Function Indexer?** This comprehensive guide will get you from zero to productive in minutes.
+> **Complete guide from zero to productive** - Get running in 60 seconds, master the essentials in 5 minutes
 
 ## 📖 What You'll Learn
 
-1. [**Quick Installation**](#-quick-installation) - Get running in 60 seconds
-2. [**First Run Experience**](#-first-run-walkthrough) - What to expect when you start
-3. [**Essential Commands**](#-essential-commands) - The 5 commands you need to know
-4. [**Next Steps**](#-what-to-do-next) - Productive workflows and best practices
-5. [**Troubleshooting**](#-common-issues) - Quick fixes for common problems
+This progressive guide covers everything you need:
+
+1. [**⚡ Quick Start (60 seconds)**](#-quick-start-60-seconds) - Get running immediately
+2. [**📊 Understanding Your Results**](#-understanding-your-results) - Make sense of the output
+3. [**🔧 Essential Commands**](#-essential-commands) - The core commands you need
+4. [**🎯 Deep Dive (30 minutes)**](#-deep-dive-project-integration) - Advanced usage and integration
+5. [**🚀 Mastery & Best Practices**](#-mastery--best-practices) - Professional workflows
 
 ---
 
-## ⚡ Quick Installation
+## ⚡ Quick Start (60 seconds)
 
 ### Prerequisites
 ```bash
@@ -24,311 +26,695 @@
 sudo apt update && sudo apt install build-essential python3
 ```
 
-### One-Command Start
-```bash
-# Navigate to your TypeScript/JavaScript project
-cd your-project
+### Choose Your Project Type
 
-# Run Function Indexer (no installation needed!)
+<details>
+<summary>🟦 <strong>TypeScript/Node.js Project</strong></summary>
+
+#### Installation & First Run
+```bash
+# Navigate to your project and run directly
+cd your-typescript-project
 npx github:akiramei/function-indexer
 ```
 
-**That's it!** Function Indexer will auto-detect your project and create an index of all your functions.
-
----
-
-## 🎯 First Run Walkthrough
-
-When you run Function Indexer for the first time, here's what happens:
-
-### 1. Project Detection
+#### What You'll See
 ```
 🚀 Welcome to Function Indexer!
 ✨ Detected typescript project at: /your/project
-📁 Found source directories: src, lib
-🎯 Suggested scan root: src
-```
-
-### 2. Automatic Configuration
-```
 ✅ Created configuration in .function-indexer/
-📁 Scanning: ./src
-📄 Output: function-index.jsonl
-```
-
-### 3. Function Analysis
-```
+📁 Scanning: src/
 ✅ Indexing completed!
-📁 Files processed: 45
-🔧 Functions found: 127
-⏱️  Execution time: 1250ms
+
+📊 Results:
+   • Functions found: 47
+   • Files processed: 12
+   • Output: function-index.jsonl
+
+🎯 Quick commands to try next:
+   fx s "auth"        # Search for authentication functions
+   fx m               # View code quality metrics
+   fx ls --exported   # List exported functions only
 ```
 
-### 4. Next Steps Guidance
-You'll see specific suggestions for what to do next - **this is your roadmap to getting value from Function Indexer!**
+#### Next Steps
+```bash
+# Search your functions
+fx s "authentication"
+
+# Check code quality
+fx m
+
+# See all available commands
+fx --help
+```
+
+</details>
+
+<details>
+<summary>🟧 <strong>React Project</strong></summary>
+
+#### Installation & First Run
+```bash
+# Prerequisites (Linux/WSL users)
+sudo apt update && sudo apt install build-essential python3
+
+# Navigate to your React project
+cd your-react-app
+npx github:akiramei/function-indexer --root ./src
+```
+
+#### What You'll See
+```
+🚀 Welcome to Function Indexer!
+✨ Detected React project at: /your/react-app
+📁 Scanning: src/
+✅ Found components, hooks, and utilities
+
+📊 Results:
+   • Functions found: 23 (12 components, 8 hooks, 3 utilities)
+   • Files processed: 8
+   • Output: function-index.jsonl
+
+🎯 Try these React-specific searches:
+   fx s "component"   # Find React components
+   fx s "hook"        # Find custom hooks
+   fx s "handler"     # Find event handlers
+```
+
+#### Next Steps
+```bash
+# Find React patterns
+fx s "useState"
+fx s "useEffect"
+fx s "onClick"
+
+# Check component complexity
+fx m
+```
+
+</details>
+
+<details>
+<summary>🟪 <strong>Large Codebase/Monorepo</strong></summary>
+
+#### Installation & First Run
+```bash
+# Prerequisites (Linux/WSL users)
+sudo apt update && sudo apt install build-essential python3
+
+# For large codebases, specify root directory
+cd your-monorepo
+npx github:akiramei/function-indexer --root ./packages/core --output core-functions.jsonl
+```
+
+#### What You'll See
+```
+🚀 Welcome to Function Indexer!
+📁 Scanning: packages/core/
+⏳ Processing large codebase... (this may take a moment)
+✅ Indexing completed!
+
+📊 Results:
+   • Functions found: 234
+   • Files processed: 67
+   • Output: core-functions.jsonl
+
+💡 Pro tip: Use domain classification for better organization
+```
+
+#### Next Steps
+```bash
+# Scan different parts with domains
+npx github:akiramei/function-indexer --root ./packages/api --domain backend
+npx github:akiramei/function-indexer --root ./packages/ui --domain frontend
+
+# Set up metrics tracking
+fx metrics collect --root ./packages/core
+```
+
+</details>
+
+<details>
+<summary>🔄 <strong>Existing Project with Legacy Code</strong></summary>
+
+#### Installation & First Run
+```bash
+# Prerequisites (Linux/WSL users)
+sudo apt update && sudo apt install build-essential python3
+
+# Navigate to your project
+cd your-existing-project
+npx github:akiramei/function-indexer --verbose
+```
+
+#### What You'll See
+```
+🚀 Welcome to Function Indexer!
+📁 Scanning: ./
+⚠️  Found mixed file types, focusing on TypeScript/JavaScript
+✅ Indexing completed with some warnings
+
+📊 Results:
+   • Functions found: 156
+   • Files processed: 43
+   • Warnings: 3 (see --verbose output)
+   • Output: function-index.jsonl
+
+🔍 Quality overview:
+   ⚠️  12 functions exceed complexity threshold
+   ⚠️  5 functions are very long (>50 lines)
+```
+
+#### Next Steps
+```bash
+# Check code quality issues
+fx metrics trends
+
+# Focus on problem areas
+fx s "TODO" --context "fix"
+fx s "legacy" --context "refactor"
+```
+
+</details>
+
+---
+
+## 📊 Understanding Your Results
+
+### Output File Structure
+Function Indexer creates a `function-index.jsonl` file where each line represents one function:
+
+```json
+{
+  "file": "src/auth/login.ts",
+  "identifier": "validateUser",
+  "signature": "async validateUser(email: string, password: string): Promise<User>",
+  "startLine": 15,
+  "endLine": 28,
+  "exported": true,
+  "async": true,
+  "metrics": {
+    "linesOfCode": 12,
+    "cyclomaticComplexity": 3,
+    "cognitiveComplexity": 4,
+    "nestingDepth": 2,
+    "parameterCount": 2,
+    "hasReturnType": true
+  }
+}
+```
+
+### Key Fields Explained
+- **`file`**: Location of the function
+- **`identifier`**: Function name (including class context if method)
+- **`signature`**: Complete function signature
+- **`metrics`**: Code quality measurements
+- **`exported`**: Whether function is exported (public API)
+- **`async`**: Whether function is asynchronous
+
+### Quality Metrics Guide
+- **Cyclomatic Complexity** (threshold: 10): Decision points in code
+- **Cognitive Complexity** (threshold: 15): How hard code is to understand
+- **Lines of Code** (threshold: 50): Actual code lines (excluding braces/comments)
+- **Nesting Depth** (threshold: 4): Maximum depth of if/for/while statements
+- **Parameter Count** (threshold: 4): Number of function parameters
 
 ---
 
 ## 🔧 Essential Commands
 
-These 5 commands cover 90% of your Function Indexer usage:
-
-### 1. **Index/Update Your Code** (`fx`)
+### 1. Basic Scanning
 ```bash
-# Initialize or update your function index
+# Scan current directory
 fx
-# Or the full command:
-function-indexer
-```
-**When to use:** First time setup, after major code changes, daily updates
 
-### 2. **Search for Functions** (`fx s`)
-```bash
-# Find functions using natural language
-fx search "authentication"
-fx s "user login"          # Short alias
-fx s "database connection" # Works with concepts, not just names
-```
-**When to use:** Finding specific functionality, code exploration, onboarding
+# Scan specific directory with custom output
+fx --root ./src --output my-functions.jsonl
 
-### 3. **View Code Quality** (`fx m`)
+# Scan with domain classification
+fx --root ./backend --domain api
+```
+
+### 2. Search Functions
 ```bash
-# Quick metrics overview
+# Natural language search
+fx s "authentication"
+fx s "user validation"
+fx s "error handling"
+
+# Pattern-based search
+fx search --pattern "handle*Error"
+fx search --pattern "validate*" --async-only
+
+# Context-aware search
+fx s "login" --context "auth"
+```
+
+### 3. Quality Analysis
+```bash
+# View quality overview
+fx m
 fx metrics
-fx m              # Short alias
 
-# Show functions with violations
+# Collect metrics for tracking
+fx metrics collect --root ./src
+
+# View trends and violations
 fx metrics trends
+
+# Check specific function history
+fx metrics show "src/auth.ts:validateUser"
 ```
-**When to use:** Code reviews, refactoring planning, quality checks
 
-### 4. **List All Functions** (`fx ls`)
+### 4. List and Filter
 ```bash
-# See all functions in your codebase
-fx list
-fx ls             # Short alias
-
-# Filter by file or pattern
-fx ls --file "auth"
-```
-**When to use:** Getting project overview, finding unused code
-
-### 5. **Track Changes** (`fx d`)
-```bash
-# Compare functions between branches
-fx diff main feature-branch
-fx d main HEAD    # Short alias
-
-# See what changed since last commit
-fx d HEAD~1 HEAD
-```
-**When to use:** Code reviews, understanding impact of changes
-
----
-
-## 🎯 What To Do Next
-
-After your first successful run, try these workflows in order:
-
-### 🔍 **Immediate: Explore Your Codebase**
-```bash
-# Get familiar with your project structure
+# List all functions
 fx ls
 
-# Search for your main functionality
-fx s "main function"
-fx s "api routes"
-fx s "database"
-```
-
-### 📊 **Day 1: Check Code Quality**
-```bash
-# See overall code health
-fx m
-
-# Find complex functions that might need refactoring
-fx metrics trends
-
-# Track complexity over time
-fx metrics collect
-```
-
-### 🔄 **Week 1: Integrate into Workflow**
-```bash
-# Before code reviews
-fx d main your-feature-branch
-
-# Regular quality checks
-fx m
-
-# Update index after changes
-fx
-```
-
-### 🤝 **Week 2: Team Integration**
-```bash
-# Generate reports for the team
-fx report --format markdown
-
-# Set up CI/CD integration
-fx ci --format github
-
-# Share quality metrics
-fx metrics trends
+# Filter by criteria
+fx ls --exported-only
+fx ls --complexity ">10"
+fx ls --file "src/auth.ts"
+fx ls --async-only
 ```
 
 ---
 
-## 🎨 Project-Specific Tips
+## 🎯 Deep Dive: Project Integration
 
-### **React/Frontend Projects**
-```bash
-# Find React components
-fx s "component"
+### Step 1: Configuration Setup
 
-# Look for hooks
-fx s "useState useEffect"
+Function Indexer automatically creates configuration files, but you can customize them:
 
-# Check component complexity
-fx metrics trends
-```
-
-### **Node.js/Backend Projects**
-```bash
-# Find API routes
-fx s "route handler"
-
-# Look for middleware
-fx s "middleware auth"
-
-# Database functions
-fx s "database query"
-```
-
-### **Library/Package Projects**
-```bash
-# Check exported functions
-fx s "export"
-
-# Verify API complexity before publishing
-fx metrics trends
-
-# Compare versions
-fx d v1.0.0 main
-```
-
----
-
-## ⚠️ Common Issues
-
-<details>
-<summary><strong>🔍 "No functions found" or very few results</strong></summary>
-
-**Likely causes:**
-- Function Indexer is scanning the wrong directory
-- Your source files are in a non-standard location
-
-**Quick fixes:**
-```bash
-# Check what was detected
-fx --verbose
-
-# Specify custom source directory
-fx --root ./your-src-directory
-
-# Check configuration
-cat .function-indexer/config.json
-```
-
-**Edit config if needed:**
+#### Core Configuration (`.function-indexer/config.json`)
 ```json
 {
+  "version": "1.1.0",
   "root": "./src",
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
+  "output": "function-index.jsonl",
+  "domain": "main",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/node_modules/**"]
 }
 ```
-</details>
 
-<details>
-<summary><strong>📁 "Project not initialized" error</strong></summary>
-
-**What happened:** You tried to use search/metrics without running the basic `fx` command first.
-
-**Fix:**
-```bash
-# Run basic indexing first
-fx
-
-# Then try your search/metrics command again
-fx s "your query"
-```
-</details>
-
-<details>
-<summary><strong>🐛 Build tool errors (Linux/WSL)</strong></summary>
-
-**What happened:** Native dependencies need build tools.
-
-**Fix:**
-```bash
-# Install required build tools
-sudo apt update && sudo apt install build-essential python3
-
-# Try running Function Indexer again
-fx
-```
-</details>
-
-<details>
-<summary><strong>🔄 Slow performance on large codebases</strong></summary>
-
-**Solutions:**
-```bash
-# Exclude unnecessary directories
-fx --root ./src  # Instead of scanning everything
-
-# Edit .function-indexer/config.json to exclude more:
+#### Metrics Configuration (`.function-indexer/metrics-config.json`)
+```json
 {
-  "exclude": [
-    "**/node_modules/**",
-    "**/dist/**", 
-    "**/build/**",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+  "version": "1.1.0",
+  "enabled": true,
+  "thresholds": {
+    "cyclomaticComplexity": 10,
+    "cognitiveComplexity": 15,
+    "linesOfCode": 50,
+    "nestingDepth": 4,
+    "parameterCount": 4
+  },
+  "database": {
+    "path": ".function-metrics/metrics.db",
+    "maxHistoryDays": 365
+  }
+}
+```
+
+### Step 2: Development Workflow Integration
+
+#### Pre-commit Quality Gates
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+
+echo "🔍 Running Function Indexer quality check..."
+fx metrics collect --root ./src
+
+# Check for violations
+fx metrics trends --format json > /tmp/violations.json
+if [ -s /tmp/violations.json ]; then
+    echo "❌ Code quality violations detected!"
+    fx metrics trends
+    exit 1
+fi
+
+echo "✅ Quality check passed"
+```
+
+#### Package.json Scripts
+```json
+{
+  "scripts": {
+    "analyze": "fx --root ./src",
+    "quality": "fx metrics",
+    "quality:collect": "fx metrics collect --root ./src",
+    "quality:trends": "fx metrics trends",
+    "search": "fx s"
+  }
+}
+```
+
+### Step 3: Team Collaboration
+
+#### PR Analysis Workflow
+```bash
+# Before starting work
+fx metrics collect --root ./src --pr 123
+
+# After completing changes
+fx metrics collect --root ./src --pr 123
+
+# Review changes
+fx metrics pr 123
+```
+
+#### Code Review Helpers
+```bash
+# Find complex functions for review priority
+fx ls --complexity ">10" --lines ">30"
+
+# Search for specific patterns that need attention
+fx s "TODO" --context "refactor"
+fx s "FIXME" --context "bug"
+```
+
+### Step 4: CI/CD Integration
+
+#### GitHub Actions Example
+```yaml
+name: Code Quality Check
+on: [pull_request]
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Function Indexer
+        run: npm install -g github:akiramei/function-indexer
+      
+      - name: Collect Metrics
+        run: fx metrics collect --root ./src --pr ${{ github.event.number }}
+      
+      - name: Check Quality Gates
+        run: |
+          fx metrics trends --format json > violations.json
+          if [ -s violations.json ]; then
+            echo "Quality violations detected:"
+            fx metrics trends
+            exit 1
+          fi
+```
+
+---
+
+## 🚀 Mastery & Best Practices
+
+### Progressive Analysis Strategy
+
+#### 1. Initial Assessment (5 minutes)
+```bash
+# Get the big picture
+fx metrics
+
+# Identify hotspots
+fx metrics trends
+
+# Search for common issues
+fx s "any" --context "type"
+fx s "console.log"
+```
+
+#### 2. Focused Investigation (15 minutes)
+```bash
+# Analyze specific violations
+fx metrics show "src/complex-file.ts:complexFunction"
+
+# Search for related patterns
+fx s "authentication" --context "security"
+fx s "error" --context "handling"
+
+# List high-risk functions
+fx ls --complexity ">15" --lines ">40"
+```
+
+#### 3. Systematic Improvement (ongoing)
+```bash
+# Set up regular tracking
+fx metrics collect --root ./src
+
+# Monitor trends
+fx metrics trends --since "1 week ago"
+
+# Review PR impact
+fx metrics pr <pr-number>
+```
+
+### Quality-Focused Workflows
+
+#### Daily Code Quality Check
+```bash
+#!/bin/bash
+# daily-quality.sh
+
+echo "📊 Daily Code Quality Report"
+echo "=========================="
+
+# Overall metrics
+fx metrics
+
+echo ""
+echo "🎯 Recent Trends:"
+fx metrics trends --since "1 day ago"
+
+echo ""
+echo "⚠️  Functions Needing Attention:"
+fx ls --complexity ">10" --lines ">30" | head -10
+```
+
+#### Refactoring Workflow
+```bash
+# 1. Identify candidates
+fx ls --complexity ">15" --exported-only
+
+# 2. Analyze specific function
+fx metrics show "src/target.ts:complexFunction"
+
+# 3. Track improvement
+fx metrics collect --root ./src --note "before refactor"
+# ... make changes ...
+fx metrics collect --root ./src --note "after refactor"
+```
+
+#### Code Review Preparation
+```bash
+# Generate review-focused analysis
+echo "🔍 Functions changed in this PR:"
+fx metrics pr $(git log --oneline -1 | cut -d' ' -f1)
+
+echo ""
+echo "⚠️  Complexity violations:"
+fx metrics trends --pr-only
+
+echo ""
+echo "🎯 Search patterns to review:"
+fx s "TODO" --context "review"
+fx s "FIXME" --context "urgent"
+```
+
+### Advanced Search Techniques
+
+#### Semantic Search Examples
+```bash
+# Architecture patterns
+fx s "singleton" --context "pattern"
+fx s "factory" --context "creation"
+fx s "observer" --context "event"
+
+# Security-focused searches
+fx s "auth" --context "security"
+fx s "validate" --context "input"
+fx s "sanitize" --context "xss"
+
+# Performance-related searches
+fx s "cache" --context "performance"
+fx s "async" --context "optimization"
+fx s "batch" --context "processing"
+```
+
+#### Pattern-Based Discovery
+```bash
+# API patterns
+fx search --pattern "*Handler" --exported-only
+fx search --pattern "*Controller" --async-only
+fx search --pattern "*Service" --complexity "<5"
+
+# Utility patterns
+fx search --pattern "is*" --lines "<10"
+fx search --pattern "get*" --return-type-required
+fx search --pattern "validate*" --parameter-count ">2"
+```
+
+### Integration with Development Tools
+
+#### VS Code Integration
+```json
+// .vscode/tasks.json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Analyze Functions",
+      "type": "shell",
+      "command": "fx",
+      "args": ["--root", "./src"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Quality Check",
+      "type": "shell",
+      "command": "fx",
+      "args": ["metrics", "trends"],
+      "group": "test"
+    }
   ]
 }
 ```
-</details>
+
+#### ESLint Integration
+```javascript
+// Custom ESLint rule based on Function Indexer data
+// .eslintrc.js
+module.exports = {
+  rules: {
+    'max-complexity': ['error', { max: 10 }], // Align with Function Indexer thresholds
+    'max-lines-per-function': ['error', { max: 50 }],
+    'max-params': ['error', { max: 4 }]
+  }
+};
+```
 
 ---
 
-## 🎉 Success Checklist
+## 🔧 Common Issues & Solutions
 
-You're successfully using Function Indexer when you can:
+### Installation Problems
 
-- [ ] **Initialize your project** - `fx` completes without errors
-- [ ] **Search effectively** - `fx s "authentication"` finds relevant functions  
-- [ ] **Understand code quality** - `fx m` shows meaningful metrics
-- [ ] **Track changes** - `fx d main feature` shows function differences
-- [ ] **Integrate into workflow** - You run `fx` regularly and it saves you time
+#### Issue: "build-essential not found"
+```bash
+# Solution: Update package lists first
+sudo apt update
+sudo apt install build-essential python3-dev
+```
 
-## 📚 What's Next?
+#### Issue: "Permission denied" on global install
+```bash
+# Solution: Use npx instead of global install
+npx github:akiramei/function-indexer
 
-Once you're comfortable with the basics:
+# Or fix npm permissions
+npm config set prefix ~/.npm-global
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.profile
+source ~/.profile
+```
 
-- **📖 [Complete Tutorial](TUTORIAL.md)** - Deep dive with real examples
-- **🔧 [Configuration Guide](CONFIGURATION.md)** - Customize for your needs  
-- **🔗 [Integration Guide](INTEGRATIONS.md)** - CI/CD, Git hooks, VS Code
-- **👥 [Team Features](TEAM-FEATURES.md)** - Advanced collaboration features
-- **🤖 [AI Assistant Guide](AI-GUIDE.md)** - Use with AI tools effectively
+### Parsing Issues
 
-## 🤝 Need Help?
+#### Issue: "Failed to parse TypeScript files"
+```bash
+# Solution 1: Check TypeScript compilation
+npx tsc --noEmit
 
-- **📋 [Full Command Reference](COMMAND-REFERENCE.md)** - Complete command documentation
-- **🛠️ [Troubleshooting Guide](TROUBLESHOOTING.md)** - Detailed problem solving
-- **💬 [GitHub Discussions](https://github.com/akiramei/function-indexer/discussions)** - Community support
-- **🐛 [Report Issues](https://github.com/akiramei/function-indexer/issues)** - Bug reports and feature requests
+# Solution 2: Use verbose mode to see details
+fx --verbose --root ./src
+
+# Solution 3: Exclude problematic files
+fx --root ./src --exclude "**/*.d.ts" --exclude "**/generated/**"
+```
+
+#### Issue: "No functions found"
+```bash
+# Solution: Check file patterns
+fx --root ./src --include "**/*.js" --include "**/*.ts"
+
+# Or verify directory structure
+ls -la src/
+```
+
+### Performance Issues
+
+#### Issue: "Scanning takes too long"
+```bash
+# Solution 1: Exclude unnecessary directories
+fx --root ./src --exclude "**/node_modules/**" --exclude "**/dist/**"
+
+# Solution 2: Process smaller chunks
+fx --root ./src/core --output core.jsonl
+fx --root ./src/utils --output utils.jsonl
+```
+
+#### Issue: "Out of memory on large codebases"
+```bash
+# Solution: Increase Node.js memory limit
+NODE_OPTIONS="--max-old-space-size=4096" fx --root ./src
+```
+
+### Output Issues
+
+#### Issue: "JSONL file is empty"
+```bash
+# Solution: Check for write permissions
+ls -la function-index.jsonl
+
+# Or specify different output location
+fx --root ./src --output ./outputs/functions.jsonl
+```
+
+#### Issue: "Metrics database locked"
+```bash
+# Solution: Close other Function Indexer processes
+pkill -f function-indexer
+
+# Or reset metrics database
+rm -rf .function-metrics/
+fx metrics collect --root ./src
+```
 
 ---
 
-**🌟 Enjoying Function Indexer?** Star the project and share it with your team!
+## 🎉 Next Steps
+
+Congratulations! You're now ready to use Function Indexer effectively. Here's what to explore next:
+
+### For Individual Developers
+1. **Set up daily quality checks** using the provided scripts
+2. **Integrate with your IDE** for seamless workflow
+3. **Explore advanced search patterns** for your specific domain
+
+### For Teams
+1. **Configure CI/CD integration** for automatic quality gates
+2. **Establish team quality thresholds** in metrics configuration
+3. **Create shared search patterns** for common code reviews
+
+### For AI-Assisted Development
+1. **Use the JSONL output** with AI tools for code analysis
+2. **Set up automated quality reports** for AI-driven insights
+3. **Explore the AI Integration Guide** for advanced patterns
+
+### Additional Resources
+- [📖 AI Integration Guide](AI-INTEGRATION.md) - Comprehensive AI assistant reference
+- [📚 Command Reference](COMMAND-REFERENCE.md) - Complete command documentation
+- [🔧 Advanced Usage](ADVANCED-USAGE.md) - Enterprise patterns and CI/CD
+- [❓ Troubleshooting](TROUBLESHOOTING.md) - Detailed problem-solving guide
+
+---
+
+**Happy coding!** 🎯
+
+> 💡 **Pro Tip**: Start with `fx metrics` every morning to get a quality overview of your codebase, then use `fx s "<topic>"` to dive into specific areas you're working on.
