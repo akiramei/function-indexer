@@ -29,7 +29,7 @@ npx github:akiramei/function-indexer
 npx github:akiramei/function-indexer --root ./src --output functions.jsonl
 
 # 品質概要
-npx github:akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics trends
 
 # 関数検索
 npx github:akiramei/function-indexer search "認証" --context "ログイン"
@@ -139,7 +139,7 @@ npx github:akiramei/function-indexer metrics [--details]
 npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123 --verbose
 
 # 関数の進化表示
-npx github:akiramei/function-indexer show-metrics "src/auth.ts:validateToken" --limit 10
+npx github:akiramei/function-indexer metrics show "src/auth.ts:validateToken" --limit 10
 
 # トレンド分析
 npx github:akiramei/function-indexer metrics trends
@@ -452,7 +452,7 @@ jobs:
       
       - name: コード品質分析
         run: |
-          npx github:akiramei/function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
+          npx github:akiramei/function-indexer metrics collect --root ./src --pr ${{ github.event.number }}
           npx github:akiramei/function-indexer ci --format github --base main --fail-on-violation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
