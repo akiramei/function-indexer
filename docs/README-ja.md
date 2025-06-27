@@ -8,25 +8,22 @@ Function Indexer の完全ドキュメントへようこそ！初心者からワ
 
 ## 🚀 はじめに
 
-### 新規ユーザー向け
-1. **[クイックスタートガイド](QUICK-START-ja.md)** ⚡  
-   60秒で特定のプロジェクトタイプでFunction Indexerを動作させる
+### 段階的学習パス
+1. **[はじめにガイド](GETTING-STARTED-ja.md)** 🚀  
+   ゼロから実用まで完全ガイド - 60秒でマスタリー
 
-2. **[完全チュートリアル](TUTORIAL-ja.md)** 📚  
-   実例とベストプラクティスを含むステップバイステップの詳細ガイド
-
-3. **[トラブルシューティング](TROUBLESHOOTING-ja.md)** 🔧  
+2. **[トラブルシューティング](TROUBLESHOOTING-ja.md)** 🔧  
    よくある問題とその解決方法
 
 ## 🔗 統合・自動化
 
 ### AIアシスタント統合
-- **[AIガイド](AI-GUIDE-ja.md)** 🤖  
-  AIアシスタント向けに最適化されたドキュメント（ゼロショット利用対応）
+- **[AI統合ガイド](AI-INTEGRATION-ja.md)** 🤖  
+  高度なパターンを含む包括的なAIアシスタントリファレンス
 
 ### 開発ワークフロー
-- **[統合ガイド](INTEGRATIONS-ja.md)** 🔗  
-  CI/CD、Gitフック、開発ツールの完全な統合例
+- **[高度な使用法ガイド](ADVANCED-USAGE-ja.md)** 🔧  
+  エンタープライズパターン、CI/CD統合、チームコラボレーション
 
 ### プラットフォーム固有ガイド
 - **GitHub Actions** - 自動品質チェックとPRコメント
@@ -89,12 +86,12 @@ Function Indexer の完全ドキュメントへようこそ！初心者からワ
 
 | やりたいこと | 参照先 |
 |--------------|----------|
-| すぐに始める | [クイックスタートガイド](QUICK-START-ja.md) |
-| 詳しく学ぶ | [完全チュートリアル](TUTORIAL-ja.md) |
+| すぐに始める | [はじめにガイド](GETTING-STARTED-ja.md) |
+| AI統合を学ぶ | [AI統合ガイド](AI-INTEGRATION-ja.md) |
 | 問題を解決する | [トラブルシューティング](TROUBLESHOOTING-ja.md) |
-| CI/CDと統合する | [統合ガイド](INTEGRATIONS-ja.md) |
-| メトリクスを理解する | [メトリクスガイド](#) |
-| 設定を構成する | [設定ガイド](#) |
+| CI/CDと統合する | [高度な使用法ガイド](ADVANCED-USAGE-ja.md) |
+| メトリクスを理解する | [はじめにガイド](GETTING-STARTED-ja.md#結果の理解) |
+| 設定を構成する | [はじめにガイド](GETTING-STARTED-ja.md#設定セットアップ) |
 | バグを報告する | [GitHub Issues](https://github.com/akiramei/function-indexer/issues) |
 | 質問する | [GitHub Discussions](https://github.com/akiramei/function-indexer/discussions) |
 
