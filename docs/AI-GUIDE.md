@@ -25,27 +25,28 @@ When asked to "manage code quality using Function Indexer", follow these steps:
 sudo apt update && sudo apt install build-essential python3
 
 # Run directly with npx (recommended)
-npx @akiramei/function-indexer
+npx github:akiramei/function-indexer
 
 # Scan specific directory with output file  
-npx @akiramei/function-indexer --root ./src --output functions.jsonl
+npx github:akiramei/function-indexer --root ./src --output functions.jsonl
 
-# Collect metrics for PR
-npx @akiramei/function-indexer collect-metrics --root ./src --pr 123
+# Collect metrics for PR (NEW command structure)
+npx github:akiramei/function-indexer metrics collect --root ./src --pr 123
 
 # Or install locally to project
-npm install --save-dev @akiramei/function-indexer
+npm install --save-dev github:akiramei/function-indexer
 npx function-indexer
 
-# Alternative: GitHub direct install (development version)
-npx github:akiramei/function-indexer
+# Alternative: npm package (if published)
+npm install --save-dev @akiramei/function-indexer
+npx function-indexer
 ```
 
 ## Command Reference
 
 ### 1. Main Command - Generate Function Index
 ```bash
-npx @akiramei/function-indexer --root <path> --output <file> [options]
+npx github:akiramei/function-indexer --root <path> --output <file> [options]
 ```
 **Purpose**: Scans codebase and generates JSONL file with all functions
 **Options**:
@@ -53,7 +54,7 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 - `--output, -o`: Output file (default: auto-generated in .function-indexer/)
 - `--verbose, -v`: Show detailed progress
 
-**Note**: Function Indexer now works with zero configuration - just run `npx @akiramei/function-indexer` to get started!
+**Note**: Function Indexer now works with zero configuration - just run `npx github:akiramei/function-indexer` to get started!
 
 **Output Location**: `function-index.jsonl` in project root (visible and accessible!)
 
@@ -85,7 +86,9 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 
 ### 2. `search` - Find Functions (IMPROVED!)
 ```bash
-npx @akiramei/function-indexer search <query> [options]
+npx github:akiramei/function-indexer search <query> [options]
+# Or use short alias:
+fx s <query> [options]
 ```
 **Purpose**: Search functions by name, content, or natural language
 **Options**:
@@ -97,22 +100,24 @@ npx @akiramei/function-indexer search <query> [options]
 **Examples**:
 ```bash
 # Find by name (now shows up to 100 results by default)
-npx @akiramei/function-indexer search "validate"
+npx github:akiramei/function-indexer search "validate"
+# Or use short alias:
+fx s "validate"
 
 # Show ALL matching results (no limit)
-npx @akiramei/function-indexer search "validate" --all
+npx github:akiramei/function-indexer search "validate" --all
+fx s "validate" --all
 
-# Show all functions in project (empty query + --all)
-npx @akiramei/function-indexer search "" --all
-
-# Wildcard search for all functions
-npx @akiramei/function-indexer search "*" --all
+# Show all functions in project (use list command)
+npx github:akiramei/function-indexer list
+fx ls
 
 # Natural language search with context
-npx @akiramei/function-indexer search "authentication" --context "login and security"
+npx github:akiramei/function-indexer search "authentication" --context "login and security"
+fx s "authentication" --context "login and security"
 
 # Custom limit
-npx @akiramei/function-indexer search "component" --limit 50
+npx github:akiramei/function-indexer search "component" --limit 50
 ```
 
 **Key Improvements**:
@@ -121,13 +126,15 @@ npx @akiramei/function-indexer search "component" --limit 50
 - **Global search**: Empty query `""` with `--all` shows entire codebase
 - **Smart truncation**: Clear indication when results are limited with usage hints
 
-### 3. `metrics` - Analyze Code Quality
+### 3. `metrics` - Analyze Code Quality (NEW STRUCTURE)
 ```bash
-npx @akiramei/function-indexer metrics [options]
+npx github:akiramei/function-indexer metrics [options]
+# Or use short alias:
+fx m [options]
 ```
 **Purpose**: Display code quality metrics and violations
 **Options**:
-- `--details, -d`: Show detailed function-level metrics
+- No detailed options needed - use subcommands for specific analysis
 
 **Output Example**:
 ```text
@@ -142,9 +149,11 @@ Functions Above Threshold: 8
 2. calculateShipping (src/shipping.ts:122) - Complexity: 15
 ```
 
-### 4. `collect-metrics` - Track Quality Over Time
+### 4. `metrics collect` - Track Quality Over Time (NEW STRUCTURE)
 ```bash
-npx @akiramei/function-indexer collect-metrics --root <path> [options]
+npx github:akiramei/function-indexer metrics collect --root <path> [options]
+# Or use short alias:
+fx metrics collect --root <path> [options]
 ```
 **Purpose**: Store metrics in SQLite database for trend analysis (optionally export to JSONL)
 **Options**:
@@ -157,18 +166,21 @@ npx @akiramei/function-indexer collect-metrics --root <path> [options]
 **Examples**:
 ```bash
 # Store in database only
-npx @akiramei/function-indexer collect-metrics --root ./src --pr 123
+npx github:akiramei/function-indexer metrics collect --root ./src --pr 123
+fx metrics collect --root ./src --pr 123
 
 # Store in database AND export to JSONL file
-npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl
+npx github:akiramei/function-indexer metrics collect --root ./src --metrics-output .quality/metrics-history.jsonl
 
 # With verbose output
-npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl --verbose-metrics
+npx github:akiramei/function-indexer metrics collect --root ./src --metrics-output .quality/metrics-history.jsonl --verbose-metrics
 ```
 
-### 5. `show-metrics` - View Function History
+### 5. `metrics show` - View Function History (NEW STRUCTURE)
 ```bash
-npx @akiramei/function-indexer show-metrics [function-path]
+npx github:akiramei/function-indexer metrics show [function-path]
+# Or use short alias:
+fx metrics show [function-path]
 ```
 **Purpose**: Display metric history for specific function or list all available functions
 **Format**: "file:functionName" or "file:className.methodName"
@@ -179,16 +191,19 @@ npx @akiramei/function-indexer show-metrics [function-path]
 **Examples**:
 ```bash
 # List all functions with metrics data
-npx @akiramei/function-indexer show-metrics
-npx @akiramei/function-indexer show-metrics --list
+npx github:akiramei/function-indexer metrics show
+fx metrics show
 
 # Show history for specific function
-npx @akiramei/function-indexer show-metrics "src/auth.ts:validateToken"
+npx github:akiramei/function-indexer metrics show "src/auth.ts:validateToken"
+fx metrics show "src/auth.ts:validateToken"
 ```
 
 ### 6. `diff` - Compare Functions Between Branches/Commits
 ```bash
-npx @akiramei/function-indexer diff [base] [target]
+npx github:akiramei/function-indexer diff [base] [target]
+# Or use short alias:
+fx d [base] [target]
 ```
 **Purpose**: Compare functions between Git branches or commits - **Perfect for Phase Management**
 **Arguments**:
@@ -203,13 +218,15 @@ npx @akiramei/function-indexer diff [base] [target]
 **Examples**:
 ```bash
 # Compare phase 1 vs phase 2 (using commit hashes)
-npx @akiramei/function-indexer diff abc123f def456g --format markdown --output phase-comparison.md
+npx github:akiramei/function-indexer diff abc123f def456g --format markdown --output phase-comparison.md
+fx d abc123f def456g --format markdown --output phase-comparison.md
 
 # Compare current branch with main
-npx @akiramei/function-indexer diff main HEAD --format json
+npx github:akiramei/function-indexer diff main HEAD --format json
+fx d main HEAD --format json
 
 # Compare with custom thresholds
-npx @akiramei/function-indexer diff main HEAD --thresholds '{"cyclomaticComplexity":15,"linesOfCode":50}'
+npx github:akiramei/function-indexer diff main HEAD --thresholds '{"cyclomaticComplexity":15,"linesOfCode":50}'
 ```
 
 **Output includes**:
@@ -220,7 +237,9 @@ npx @akiramei/function-indexer diff main HEAD --thresholds '{"cyclomaticComplexi
 
 ### 7. `report` - Generate Comprehensive Code Quality Reports
 ```bash
-npx @akiramei/function-indexer report [options]
+npx github:akiramei/function-indexer report [options]
+# Or use short alias:
+fx r [options]
 ```
 **Purpose**: Generate detailed, shareable code quality reports for stakeholders
 **Options**:
@@ -232,16 +251,18 @@ npx @akiramei/function-indexer report [options]
 **Examples**:
 ```bash
 # Generate Markdown report for phase review
-npx @akiramei/function-indexer report --format markdown --output phase2-quality-report.md
+npx github:akiramei/function-indexer report --format markdown --output phase2-quality-report.md
+fx r --format markdown --output phase2-quality-report.md
 
 # Generate HTML report for management
-npx @akiramei/function-indexer report --format html --output quality-dashboard.html
+npx github:akiramei/function-indexer report --format html --output quality-dashboard.html
+fx r --format html --output quality-dashboard.html
 
 # Generate JSON data for further analysis
-npx @akiramei/function-indexer report --format json --output metrics-data.json
+npx github:akiramei/function-indexer report --format json --output metrics-data.json
 
 # Custom thresholds for enterprise standards
-npx @akiramei/function-indexer report --thresholds '{"cyclomaticComplexity":8,"cognitiveComplexity":12}'
+npx github:akiramei/function-indexer report --thresholds '{"cyclomaticComplexity":8,"cognitiveComplexity":12}'
 ```
 
 **Report includes**:
@@ -253,7 +274,7 @@ npx @akiramei/function-indexer report --thresholds '{"cyclomaticComplexity":8,"c
 
 ### 8. `ci` - CI/CD Pipeline Integration
 ```bash
-npx @akiramei/function-indexer ci [options]
+npx github:akiramei/function-indexer ci [options]
 ```
 **Purpose**: Run automated quality analysis in CI/CD pipelines with PR integration
 **Options**:
@@ -270,16 +291,16 @@ npx @akiramei/function-indexer ci [options]
 **Examples**:
 ```bash
 # GitHub Actions integration
-npx @akiramei/function-indexer ci --format github --base main --fail-on-violation
+npx github:akiramei/function-indexer ci --format github --base main --fail-on-violation
 
 # GitLab CI with PR comments
-npx @akiramei/function-indexer ci --format gitlab --comment --base main
+npx github:akiramei/function-indexer ci --format gitlab --comment --base main
 
 # Custom quality gates
-npx @akiramei/function-indexer ci --thresholds '{"cyclomaticComplexity":10}' --fail-on-violation
+npx github:akiramei/function-indexer ci --thresholds '{"cyclomaticComplexity":10}' --fail-on-violation
 
 # JSON output for custom processing
-npx @akiramei/function-indexer ci --format json --output ci-results.json
+npx github:akiramei/function-indexer ci --format json --output ci-results.json
 ```
 
 **Features**:
@@ -289,13 +310,21 @@ npx @akiramei/function-indexer ci --format json --output ci-results.json
 - Multiple CI platform support (GitHub, GitLab)
 - Integration with existing quality thresholds
 
-### 9. Additional Commands
-- `npx @akiramei/function-indexer analyze-trends`: Analyze metrics trends and violations
-- `npx @akiramei/function-indexer pr-metrics <prNumber>`: Show metrics for a specific PR
-- `npx @akiramei/function-indexer update <index>`: Update an existing function index
-- `npx @akiramei/function-indexer validate <index>`: Validate index integrity
-- `npx @akiramei/function-indexer backup <index>`: Create backup of index
-- `npx @akiramei/function-indexer restore <backupId>`: Restore from backup
+### 9. Additional Commands (NEW STRUCTURE)
+- `npx github:akiramei/function-indexer metrics trends`: Analyze metrics trends and violations (was analyze-trends)
+- `npx github:akiramei/function-indexer metrics pr <prNumber>`: Show metrics for a specific PR (was pr-metrics)
+- `npx github:akiramei/function-indexer update <index>`: Update an existing function index
+- `npx github:akiramei/function-indexer validate <index>`: Validate index integrity
+- `npx github:akiramei/function-indexer backup <index>`: Create backup of index
+- `npx github:akiramei/function-indexer restore <backupId>`: Restore from backup
+
+**Short aliases**:
+- `fx metrics trends` - Analyze trends
+- `fx metrics pr <number>` - PR metrics
+- `fx u <index>` - Update index
+- `fx v <index>` - Validate index
+- `fx b <index>` - Backup index
+- `fx rs <backupId>` - Restore backup
 
 ## Phase Management Workflow
 
@@ -305,45 +334,45 @@ Function Indexer is designed for **phase-based development quality management**.
 ```bash
 # Phase 1 completion - establish baseline
 git tag phase-1-complete
-npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/phase1-metrics.jsonl
-npx @akiramei/function-indexer report --format html --output .quality/phase1-quality-report.html
+npx github:akiramei/function-indexer metrics collect --root ./src --metrics-output .quality/phase1-metrics.jsonl
+npx github:akiramei/function-indexer report --format html --output .quality/phase1-quality-report.html
 ```
 
 ### Phase Transition and Comparison  
 ```bash
 # Phase 2 completion - collect new metrics
 git tag phase-2-complete
-npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/phase2-metrics.jsonl
+npx github:akiramei/function-indexer metrics collect --root ./src --metrics-output .quality/phase2-metrics.jsonl
 
 # Compare phases directly using commits/tags
-npx @akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output .quality/phase1-vs-phase2-comparison.md
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output .quality/phase1-vs-phase2-comparison.md
 
 # Generate comprehensive phase 2 report
-npx @akiramei/function-indexer report --format html --output .quality/phase2-quality-report.html
+npx github:akiramei/function-indexer report --format html --output .quality/phase2-quality-report.html
 ```
 
 ### Identifying Quality Changes
 ```bash
 # Find functions with significant changes
-npx @akiramei/function-indexer diff phase-1-complete phase-2-complete --format json | jq '.modified[] | select(.metrics.cyclomaticComplexity.change > 5)'
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format json | jq '.modified[] | select(.metrics.cyclomaticComplexity.change > 5)'
 
 # Current violations analysis
-npx @akiramei/function-indexer analyze-trends
+npx github:akiramei/function-indexer metrics trends
 
 # Specific function history across phases
-npx @akiramei/function-indexer show-metrics "src/core/processor.ts:processData" --limit 10
+npx github:akiramei/function-indexer metrics show "src/core/processor.ts:processData" --limit 10
 ```
 
 ### Management Reporting
 ```bash
 # Executive summary report (HTML with charts)
-npx @akiramei/function-indexer report --format html --output executive-quality-summary.html
+npx github:akiramei/function-indexer report --format html --output executive-quality-summary.html
 
 # Technical team report (detailed Markdown)
-npx @akiramei/function-indexer report --format markdown --output technical-quality-details.md
+npx github:akiramei/function-indexer report --format markdown --output technical-quality-details.md
 
 # Data export for external tools
-npx @akiramei/function-indexer report --format json --output quality-metrics.json
+npx github:akiramei/function-indexer report --format json --output quality-metrics.json
 ```
 
 ## AI Task Templates
@@ -353,8 +382,8 @@ npx @akiramei/function-indexer report --format json --output quality-metrics.jso
 Using function-indexer, find all functions with cyclomatic complexity > 10 in the src/ directory and suggest refactoring priorities.
 
 Commands to run:
-1. npx @akiramei/function-indexer --root ./src
-2. npx @akiramei/function-indexer metrics --details
+1. npx github:akiramei/function-indexer --root ./src
+2. npx github:akiramei/function-indexer metrics trends
 ```
 
 ### Task 2: Phase Quality Comparison Analysis
@@ -362,9 +391,9 @@ Commands to run:
 Compare quality changes between development phases to identify areas of concern:
 
 Commands to run:
-1. npx @akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output phase-comparison.md
-2. npx @akiramei/function-indexer analyze-trends
-3. npx @akiramei/function-indexer report --format html --output current-quality-dashboard.html
+1. npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output phase-comparison.md
+2. npx github:akiramei/function-indexer metrics trends
+3. npx github:akiramei/function-indexer report --format html --output current-quality-dashboard.html
 
 Expected outputs:
 - Markdown comparison showing function-level changes
@@ -377,9 +406,9 @@ Expected outputs:
 Before merging PR #123, analyze the code quality impact:
 
 Commands to run:
-1. npx @akiramei/function-indexer ci --base main --format github --fail-on-violation
-2. npx @akiramei/function-indexer collect-metrics --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
-3. npx @akiramei/function-indexer pr-metrics 123
+1. npx github:akiramei/function-indexer ci --base main --format github --fail-on-violation
+2. npx github:akiramei/function-indexer metrics collect --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
+3. npx github:akiramei/function-indexer metrics pr 123
 
 Or using npm scripts (if configured):
 1. npm run quality:collect
@@ -391,8 +420,8 @@ Or using npm scripts (if configured):
 Find all functions that handle database operations:
 
 Commands to run:
-1. npx @akiramei/function-indexer --root ./src
-2. npx @akiramei/function-indexer search "database" --context "async operations"
+1. npx github:akiramei/function-indexer --root ./src
+2. npx github:akiramei/function-indexer search "database" --context "async operations"
 ```
 
 ### Task 5: Monitor Function Growth
@@ -400,7 +429,7 @@ Commands to run:
 Track how a specific function has grown over time:
 
 Commands to run:
-1. npx @akiramei/function-indexer show-metrics "src/core/processor.ts:processData" --limit 10
+1. npx github:akiramei/function-indexer metrics show "src/core/processor.ts:processData" --limit 10
 ```
 
 ## Integration Patterns
@@ -412,8 +441,8 @@ Commands to run:
   run: |
     # Install prerequisites for Linux/Ubuntu runners
     sudo apt update && sudo apt install build-essential python3
-    npx @akiramei/function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
-    npx @akiramei/function-indexer ci --format github
+    npx github:akiramei/function-indexer metrics collect --root ./src --pr ${{ github.event.number }}
+    npx github:akiramei/function-indexer ci --format github
 
 # Alternative: GitHub Actions with local build
 - name: Analyze Code Quality
@@ -421,7 +450,7 @@ Commands to run:
     sudo apt update && sudo apt install build-essential python3
     npm ci
     npm run build
-    node dist/cli.js collect-metrics --root ./src --pr ${{ github.event.number }}
+    node dist/cli.js metrics collect --root ./src --pr ${{ github.event.number }}
     node dist/cli.js ci --format github
 ```
 
@@ -429,7 +458,7 @@ Commands to run:
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
-npx @akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics trends
 if [ $? -ne 0 ]; then
   echo "❌ Code quality check failed. Fix high complexity functions."
   exit 1
@@ -441,7 +470,7 @@ fi
 {
   "label": "Find Complex Functions",
   "type": "shell",
-  "command": "npx @akiramei/function-indexer metrics --details",
+  "command": "npx github:akiramei/function-indexer metrics trends",
   "problemMatcher": []
 }
 ```
@@ -461,34 +490,42 @@ fi
 ### 1. Codebase Understanding
 ```bash
 # Get overview
-npx @akiramei/function-indexer metrics
+npx github:akiramei/function-indexer metrics
+fx m
 
 # Find entry points
-npx @akiramei/function-indexer search "main" --context "entry point"
+npx github:akiramei/function-indexer search "main" --context "entry point"
+fx s "main" --context "entry point"
 
 # Find complex areas
-npx @akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics trends
+fx metrics trends
 ```
 
 ### 2. Code Review Assistance
 ```bash
 # Index changed files
-npx @akiramei/function-indexer --root ./src
+npx github:akiramei/function-indexer --root ./src
+fx
 
 # Check quality
-npx @akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics trends
+fx metrics trends
 
 # Compare branches
-npx @akiramei/function-indexer diff main HEAD
+npx github:akiramei/function-indexer diff main HEAD
+fx d main HEAD
 ```
 
 ### 3. Refactoring Planning
 ```bash
 # Find complex candidates
-npx @akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics trends
+fx metrics trends
 
 # Find duplicates
-npx @akiramei/function-indexer search "similar function names or patterns"
+npx github:akiramei/function-indexer search "similar function names or patterns"
+fx s "similar function names or patterns"
 ```
 
 ## Output Processing Tips
@@ -505,8 +542,8 @@ npx @akiramei/function-indexer search "similar function names or patterns"
 - **Comparing phases/branches?** → Use `diff` command
 - **Need comprehensive reports?** → Use `report` command
 - **Building automation?** → Use main command + parse JSONL
-- **Tracking trends over time?** → Use `collect-metrics` + `analyze-trends`
-- **Reviewing code changes?** → Use `metrics --details` or `diff` command
+- **Tracking trends over time?** → Use `metrics collect` + `metrics trends`
+- **Reviewing code changes?** → Use `metrics trends` or `diff` command
 - **CI/CD integration?** → Use `ci` command
 - **Management reporting?** → Use `report --format html`
 - **Phase management?** → Use `diff` + `collect-metrics` + `report`
@@ -531,63 +568,94 @@ npx @akiramei/function-indexer search "similar function names or patterns"
 When an AI assistant is asked to help with code quality management using Function Indexer, follow these patterns:
 
 ### For Phase-Based Quality Management:
-1. **Establish Baseline**: `collect-metrics` + `report`
+1. **Establish Baseline**: `metrics collect` + `report`
 2. **Compare Phases**: `diff [phase1-commit] [phase2-commit]`
 3. **Generate Reports**: `report --format html`
-4. **Track Changes**: `show-metrics` for specific functions
+4. **Track Changes**: `metrics show` for specific functions
 
 ### For PR/MR Quality Gates:
 1. **Quality Check**: `ci --base main --fail-on-violation`
 2. **Detailed Analysis**: `diff main HEAD --format markdown`
-3. **Collect Data**: `collect-metrics --pr [number]`
+3. **Collect Data**: `metrics collect --pr [number]`
 
 ### For General Quality Analysis:
-1. **Overview**: `metrics` or `metrics --details`
-2. **Find Issues**: `analyze-trends`
+1. **Overview**: `metrics` or `metrics trends`
+2. **Find Issues**: `metrics trends`
 3. **Search Functions**: `search [query] --context [context]`
 4. **Export Data**: `report --format json`
 
 ### Key Commands by Use Case:
 - **Executive Reporting**: `report --format html`
-- **Technical Analysis**: `diff` + `metrics --details`
+- **Technical Analysis**: `diff` + `metrics trends`
 - **CI/CD Integration**: `ci --format github`
-- **Historical Tracking**: `collect-metrics` + `show-metrics`
+- **Historical Tracking**: `metrics collect` + `metrics show`
 
-## Configuration File Support
+## Configuration File Support (NEW SEPARATED STRUCTURE)
 
-Function Indexer supports **project-specific configuration** through a JSON configuration file:
+Function Indexer now uses a **separated configuration system** for better modularity:
 
-**File Location**: `.function-indexer/config.json` (automatically created on first run)
+**File Locations**:
+- `.function-indexer/config.json` - Core configuration (indexing, file patterns)
+- `.function-indexer/metrics-config.json` - Metrics configuration (thresholds, tracking)
 
-**Example Configuration**:
+**Core Configuration (`config.json`)**:
 ```json
 {
-  "version": "1.0.0",
-  "root": "src",
-  "output": ".function-indexer/index.jsonl",
+  "version": "1.1.0",
+  "root": "./src",
+  "output": "function-index.jsonl",
   "domain": "main",
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
-  "metrics": {
-    "thresholds": {
-      "cyclomaticComplexity": 8,
-      "cognitiveComplexity": 12,
-      "linesOfCode": 30,
-      "nestingDepth": 3,
-      "parameterCount": 3
-    }
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
+}
+```
+
+**Metrics Configuration (`metrics-config.json`)**:
+```json
+{
+  "version": "1.1.0",
+  "enabled": true,
+  "database": {
+    "path": ".function-metrics/metrics.db",
+    "autoCleanup": false,
+    "maxHistoryDays": 365
+  },
+  "thresholds": {
+    "cyclomaticComplexity": 10,
+    "cognitiveComplexity": 15,
+    "linesOfCode": 50,
+    "nestingDepth": 4,
+    "parameterCount": 4
+  },
+  "collection": {
+    "autoCollectOnCommit": false,
+    "includeUncommitted": true,
+    "trackTrends": true
+  },
+  "reporting": {
+    "defaultFormat": "summary",
+    "showTrends": true,
+    "highlightViolations": true
   }
 }
 ```
 
-**Configuration Features**:
-- **Custom Quality Thresholds**: Set project-specific complexity, lines of code, and other metric limits
-- **Include/Exclude Patterns**: Define which files to scan or ignore using glob patterns
-- **Root Directory**: Set the default scanning directory
-- **Output Path**: Customize where function indexes are saved
-- **Automatic Integration**: All commands respect the configuration file settings
+**Benefits of Separated Configuration**:
+- **Modularity**: Core and metrics settings are independent
+- **Maintenance**: Easier to update specific configuration aspects
+- **Extensibility**: New feature configs can be added without affecting core
+- **Performance**: Metrics can be disabled without affecting core functionality
+- **Automatic Migration**: Legacy configurations are automatically migrated to separated format
 
-**Default Thresholds**:
+**Configuration Features**:
+- **Custom Quality Thresholds**: Set project-specific complexity, lines of code, and other metric limits in metrics-config.json
+- **Include/Exclude Patterns**: Define which files to scan or ignore using glob patterns in config.json
+- **Root Directory**: Set the default scanning directory in config.json
+- **Output Path**: Customize where function indexes are saved in config.json
+- **Metrics Tracking**: Configure database path, cleanup, and collection behavior in metrics-config.json
+- **Automatic Integration**: All commands respect both configuration files
+
+**Default Thresholds** (in metrics-config.json):
 - Cyclomatic Complexity: 10
 - Cognitive Complexity: 15
 - Lines of Code: 50
@@ -602,31 +670,33 @@ When setting up code quality management for a new project:
 # 1. Install prerequisites (Linux/WSL only)
 sudo apt update && sudo apt install build-essential python3
 
-# 2. Initialize project (creates .function-indexer/config.json automatically)
+# 2. Initialize project (creates both config files automatically)
 cd your-project
-npx @akiramei/function-indexer
+npx github:akiramei/function-indexer
 
 # 3. Customize configuration (optional)
-# Edit .function-indexer/config.json with your preferred thresholds and patterns
+# Edit .function-indexer/config.json for core settings
+# Edit .function-indexer/metrics-config.json for metrics thresholds
 
 # 4. Check current quality status
-npx @akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics trends
 
 # 5. Set up continuous monitoring
-npx @akiramei/function-indexer collect-metrics --pr $PR_NUMBER
+npx github:akiramei/function-indexer metrics collect --pr $PR_NUMBER
 
 # 6. Add to package.json scripts (optional)
-npm pkg set scripts.quality="npx @akiramei/function-indexer metrics"
-npm pkg set scripts.quality:detailed="npx @akiramei/function-indexer metrics --details"
-npm pkg set scripts.quality:collect="npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/metrics-history.jsonl"
-npm pkg set scripts.quality:show="npx @akiramei/function-indexer show-metrics --list"
-npm pkg set scripts.quality:trends="npx @akiramei/function-indexer analyze-trends"
+npm pkg set scripts.quality="npx github:akiramei/function-indexer metrics"
+npm pkg set scripts.quality:trends="npx github:akiramei/function-indexer metrics trends"
+npm pkg set scripts.quality:collect="npx github:akiramei/function-indexer metrics collect --root ./src --metrics-output .quality/metrics-history.jsonl"
+npm pkg set scripts.quality:show="npx github:akiramei/function-indexer metrics show --list"
+npm pkg set scripts.quality:pr="npx github:akiramei/function-indexer metrics pr"
 
 # 7. Use the quality scripts
 npm run quality          # Show code quality overview
+npm run quality:trends   # Analyze trends and violations
 npm run quality:collect  # Collect metrics to .quality/metrics-history.jsonl
 npm run quality:show     # List all functions with metrics data
-npm run quality:trends   # Analyze trends and violations
+npm run quality:pr       # Show PR-specific metrics
 
 # 8. Create GitHub Action (save as .github/workflows/code-quality.yml)
 echo 'name: Code Quality Check

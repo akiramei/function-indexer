@@ -23,16 +23,16 @@ sudo apt update && sudo apt install build-essential python3
 ### 即座に使用開始
 ```bash
 # 現在のプロジェクトをスキャン（ゼロ設定）
-npx @akiramei/function-indexer
+npx github:akiramei/function-indexer
 
 # 特定ディレクトリを出力付きでスキャン
-npx @akiramei/function-indexer --root ./src --output functions.jsonl
+npx github:akiramei/function-indexer --root ./src --output functions.jsonl
 
 # 品質概要
-npx @akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 
 # 関数検索
-npx @akiramei/function-indexer search "認証" --context "ログイン"
+npx github:akiramei/function-indexer search "認証" --context "ログイン"
 ```
 
 ## コアアーキテクチャの理解
@@ -93,7 +93,7 @@ interface FunctionRecord {
 
 ### 1. インデックス生成（コアコマンド）
 ```bash
-npx @akiramei/function-indexer [options]
+npx github:akiramei/function-indexer [options]
 ```
 **目的**: JSONL形式での包括的関数インデックス生成
 **AI使用ケース**: コードベース分析、関数発見、変更追跡
@@ -105,25 +105,25 @@ npx @akiramei/function-indexer [options]
 
 ### 2. 関数検索
 ```bash
-npx @akiramei/function-indexer search <query> [options]
+npx github:akiramei/function-indexer search <query> [options]
 ```
 **目的**: 自然言語およびパターンベースの関数発見
 **AI使用ケース**: コード探索、類似関数検索、機能位置特定
 **高度な例**:
 ```bash
 # マルチコンテキスト検索
-npx @akiramei/function-indexer search "検証" --context "ユーザー入力セキュリティ"
+npx github:akiramei/function-indexer search "検証" --context "ユーザー入力セキュリティ"
 
 # パターンベース検索
-npx @akiramei/function-indexer search "handle*Error" --limit 20
+npx github:akiramei/function-indexer search "handle*Error" --limit 20
 
 # 複雑な機能検索
-npx @akiramei/function-indexer search "データベース操作" --context "非同期トランザクション"
+npx github:akiramei/function-indexer search "データベース操作" --context "非同期トランザクション"
 ```
 
 ### 3. 品質分析
 ```bash
-npx @akiramei/function-indexer metrics [--details]
+npx github:akiramei/function-indexer metrics [--details]
 ```
 **目的**: コード品質概要と違反検出
 **AI使用ケース**: 品質評価、リファクタリング優先順位付け、技術的負債特定
@@ -136,43 +136,43 @@ npx @akiramei/function-indexer metrics [--details]
 ### 4. 履歴追跡
 ```bash
 # PR関連付けでメトリクス収集
-npx @akiramei/function-indexer collect-metrics --root ./src --pr 123 --verbose
+npx github:akiramei/function-indexer collect-metrics --root ./src --pr 123 --verbose
 
 # 関数の進化表示
-npx @akiramei/function-indexer show-metrics "src/auth.ts:validateToken" --limit 10
+npx github:akiramei/function-indexer show-metrics "src/auth.ts:validateToken" --limit 10
 
 # トレンド分析
-npx @akiramei/function-indexer analyze-trends
+npx github:akiramei/function-indexer metrics trends
 ```
 
 ### 5. 比較分析
 ```bash
 # ブランチ/コミット比較
-npx @akiramei/function-indexer diff main feature-branch --format markdown --output changes.md
+npx github:akiramei/function-indexer diff main feature-branch --format markdown --output changes.md
 
 # フェーズ比較（タグ使用）
-npx @akiramei/function-indexer diff phase-1-complete phase-2-complete --format json
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format json
 ```
 
 ### 6. レポートと文書化
 ```bash
 # エグゼクティブHTMLダッシュボード
-npx @akiramei/function-indexer report --format html --output quality-dashboard.html
+npx github:akiramei/function-indexer report --format html --output quality-dashboard.html
 
 # 技術的markdownレポート
-npx @akiramei/function-indexer report --format markdown --output technical-analysis.md
+npx github:akiramei/function-indexer report --format markdown --output technical-analysis.md
 
 # 外部ツール向けデータエクスポート
-npx @akiramei/function-indexer report --format json --output metrics-export.json
+npx github:akiramei/function-indexer report --format json --output metrics-export.json
 ```
 
 ### 7. CI/CD統合
 ```bash
 # GitHub Actions統合
-npx @akiramei/function-indexer ci --format github --base main --fail-on-violation
+npx github:akiramei/function-indexer ci --format github --base main --fail-on-violation
 
 # カスタム品質ゲート
-npx @akiramei/function-indexer ci --thresholds '{"cyclomaticComplexity":8}' --fail-on-violation
+npx github:akiramei/function-indexer ci --thresholds '{"cyclomaticComplexity":8}' --fail-on-violation
 ```
 
 ## 品質メトリクス詳細
@@ -206,16 +206,16 @@ npx @akiramei/function-indexer ci --thresholds '{"cyclomaticComplexity":8}' --fa
 ### パターン1: コードベース理解と分析
 ```bash
 # ステップ1: 概要取得
-npx @akiramei/function-indexer metrics
+npx github:akiramei/function-indexer metrics
 
 # ステップ2: 複雑な領域を発見
-npx @akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 
 # ステップ3: 特定ドメインを探索
-npx @akiramei/function-indexer search "認証" --context "セキュリティパターン"
+npx github:akiramei/function-indexer search "認証" --context "セキュリティパターン"
 
 # ステップ4: エントリポイント特定
-npx @akiramei/function-indexer search "main" --context "アプリケーションエントリ"
+npx github:akiramei/function-indexer search "main" --context "アプリケーションエントリ"
 ```
 
 **AIアシスタント応答パターン**:
@@ -227,16 +227,16 @@ npx @akiramei/function-indexer search "main" --context "アプリケーション
 ### パターン2: コードレビューと品質ゲート
 ```bash
 # ステップ1: ベースライン生成
-npx @akiramei/function-indexer --root ./src
+npx github:akiramei/function-indexer --root ./src
 
 # ステップ2: 変更比較
-npx @akiramei/function-indexer diff main HEAD --format markdown
+npx github:akiramei/function-indexer diff main HEAD --format markdown
 
 # ステップ3: 品質評価
-npx @akiramei/function-indexer ci --base main --format github
+npx github:akiramei/function-indexer ci --base main --format github
 
 # ステップ4: メトリクス収集
-npx @akiramei/function-indexer collect-metrics --pr $PR_NUMBER
+npx github:akiramei/function-indexer collect-metrics --pr $PR_NUMBER
 ```
 
 **AIアシスタント応答パターン**:
@@ -248,29 +248,29 @@ npx @akiramei/function-indexer collect-metrics --pr $PR_NUMBER
 ### パターン3: リファクタリング計画
 ```bash
 # ステップ1: リファクタリング候補を発見
-npx @akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics --details
 
 # ステップ2: 複雑度分布を分析
-npx @akiramei/function-indexer report --format json | jq '.functions[] | select(.metrics.cyclomaticComplexity > 10)'
+npx github:akiramei/function-indexer report --format json | jq '.functions[] | select(.metrics.cyclomaticComplexity > 10)'
 
 # ステップ3: 類似パターンを発見
-npx @akiramei/function-indexer search "類似機能パターン"
+npx github:akiramei/function-indexer search "類似機能パターン"
 
 # ステップ4: 改善を追跡
-npx @akiramei/function-indexer show-metrics "対象関数" --limit 10
+npx github:akiramei/function-indexer show-metrics "対象関数" --limit 10
 ```
 
 ### パターン4: フェーズベース品質管理
 ```bash
 # フェーズベースライン確立
 git tag phase-1-baseline
-npx @akiramei/function-indexer collect-metrics --root ./src
-npx @akiramei/function-indexer report --format html --output phase1-quality.html
+npx github:akiramei/function-indexer collect-metrics --root ./src
+npx github:akiramei/function-indexer report --format html --output phase1-quality.html
 
 # フェーズ比較と分析
 git tag phase-2-complete
-npx @akiramei/function-indexer diff phase-1-baseline phase-2-complete --format markdown --output phase-comparison.md
-npx @akiramei/function-indexer analyze-trends
+npx github:akiramei/function-indexer diff phase-1-baseline phase-2-complete --format markdown --output phase-comparison.md
+npx github:akiramei/function-indexer metrics trends
 ```
 
 ## 高度なAI統合シナリオ
@@ -278,8 +278,8 @@ npx @akiramei/function-indexer analyze-trends
 ### シナリオ1: 技術的負債評価
 ```bash
 # 包括的負債分析
-npx @akiramei/function-indexer report --format json --output debt-analysis.json
-npx @akiramei/function-indexer analyze-trends
+npx github:akiramei/function-indexer report --format json --output debt-analysis.json
+npx github:akiramei/function-indexer metrics trends
 
 # AI処理:
 # - 高複雑度関数のJSONを解析
@@ -291,8 +291,8 @@ npx @akiramei/function-indexer analyze-trends
 ### シナリオ2: コード品質監視
 ```bash
 # 継続的品質追跡
-npx @akiramei/function-indexer collect-metrics --root ./src --pr $PR_NUMBER
-npx @akiramei/function-indexer show-metrics --list | grep "violation"
+npx github:akiramei/function-indexer collect-metrics --root ./src --pr $PR_NUMBER
+npx github:akiramei/function-indexer show-metrics --list | grep "violation"
 
 # AI処理:
 # - 時間経過に伴う品質トレンドを追跡
@@ -304,8 +304,8 @@ npx @akiramei/function-indexer show-metrics --list | grep "violation"
 ### シナリオ3: アーキテクチャ分析
 ```bash
 # ドメインベース分析
-npx @akiramei/function-indexer --root ./src --domain "認証"
-npx @akiramei/function-indexer search "*" --context "アーキテクチャパターン"
+npx github:akiramei/function-indexer --root ./src --domain "認証"
+npx github:akiramei/function-indexer search "*" --context "アーキテクチャパターン"
 
 # AI処理:
 # - アーキテクチャ境界を特定
@@ -452,8 +452,8 @@ jobs:
       
       - name: コード品質分析
         run: |
-          npx @akiramei/function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
-          npx @akiramei/function-indexer ci --format github --base main --fail-on-violation
+          npx github:akiramei/function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
+          npx github:akiramei/function-indexer ci --format github --base main --fail-on-violation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -466,8 +466,8 @@ code-quality:
   before_script:
     - apt-get update && apt-get install -y build-essential python3
   script:
-    - npx @akiramei/function-indexer collect-metrics --root ./src --pr $CI_MERGE_REQUEST_IID
-    - npx @akiramei/function-indexer ci --format gitlab --comment --base main
+    - npx github:akiramei/function-indexer collect-metrics --root ./src --pr $CI_MERGE_REQUEST_IID
+    - npx github:akiramei/function-indexer ci --format gitlab --comment --base main
   artifacts:
     reports:
       junit: quality-report.xml
