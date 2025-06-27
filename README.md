@@ -61,16 +61,18 @@ npm run build
 npx github:akiramei/function-indexer
 ```
 
-**🎯 New to Function Indexer?** Check our guides:
+**🎯 New to Function Indexer?** Essential guides:
+- 🚀 **[Getting Started Guide](docs/GETTING-STARTED.md)** - **START HERE** - Complete beginner guide
+- ⚡ **[Quick Start Guide](docs/QUICK-START.md)** - Project-specific setup (60 seconds)
 - 📚 **[Complete Tutorial](docs/TUTORIAL.md)** - Step-by-step guide with real examples
-- ⚡ **[Quick Start Guide](docs/QUICK-START.md)** - Get running in 60 seconds
 - 📋 **[Command Reference](docs/COMMAND-REFERENCE.md)** - All commands with examples
 - 🤖 **[AI Assistant Guide](docs/AI-GUIDE.md)** - Zero-shot usage for AI assistants
 - 🔧 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 **🇯🇵 日本語ドキュメント:**
+- 🚀 **[入門ガイド](docs/GETTING-STARTED-ja.md)** - **ここから開始** - 完全初心者向けガイド
+- ⚡ **[クイックスタート](docs/QUICK-START-ja.md)** - プロジェクト別セットアップ（60秒）
 - 📚 **[完全チュートリアル](docs/TUTORIAL-ja.md)** - 実例付きステップバイステップガイド
-- ⚡ **[クイックスタート](docs/QUICK-START-ja.md)** - 60秒で開始
 - 🤖 **[AIガイド](docs/AI-GUIDE-ja.md)** - AIアシスタント向けゼロショット利用ガイド
 - 🔧 **[トラブルシューティング](docs/TROUBLESHOOTING-ja.md)** - よくある問題と解決方法
 
@@ -79,6 +81,8 @@ No configuration needed! Function Indexer will:
 - Create a `.function-indexer/` directory
 - Generate an index of all your functions
 - Show code quality metrics
+
+> **✨ First time?** After running the command above, Function Indexer will show you specific next steps to get immediate value from your function index. Follow the on-screen guidance, or check the **[Getting Started Guide](docs/GETTING-STARTED.md)** for a comprehensive walkthrough.
 
 ## 📖 Common Usage Patterns
 
