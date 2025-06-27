@@ -111,14 +111,23 @@ program
           }
         }
         
-        // Show next steps
+        // Show enhanced next steps with specific examples
         console.log('');
-        console.log(chalk.blue('💡 Next steps:'));
-        console.log(chalk.gray('  • Run `function-indexer search <query>` to search functions'));
-        console.log(chalk.gray('  • Run `function-indexer metrics` to view code quality'));
-        console.log(chalk.gray('  • Run `function-indexer metrics collect` to track code metrics'));
-        console.log(chalk.gray('  • Run `function-indexer diff` to compare branches'));
-        console.log(chalk.gray('  • Run `function-indexer` again to update the index'));
+        console.log(chalk.blue('💡 Next steps - Get immediate value:'));
+        console.log(chalk.yellow('   🔍 Explore your codebase:'));
+        console.log(chalk.gray('      fx search "authentication"  # Find auth-related functions'));
+        console.log(chalk.gray('      fx search "database"        # Find database functions'));
+        console.log(chalk.gray('      fx list                     # See all functions'));
+        console.log('');
+        console.log(chalk.yellow('   📊 Check code quality:'));
+        console.log(chalk.gray('      fx metrics                  # Quality overview'));
+        console.log(chalk.gray('      fx metrics --details        # Detailed complexity report'));
+        console.log('');
+        console.log(chalk.yellow('   📚 Learn more:'));
+        console.log(chalk.gray('      📖 Getting Started: docs/GETTING-STARTED.md'));
+        console.log(chalk.gray('      🔧 All Commands: docs/COMMAND-REFERENCE.md'));
+        console.log('');
+        console.log(chalk.green('💡 Tip: Use `fx` instead of `function-indexer` for shorter commands!'));
         
       } else {
         // Already initialized - Check for migration first

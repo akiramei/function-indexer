@@ -6,6 +6,110 @@
 
 > Common issues and their solutions
 
+## 🆕 First-Time User Issues
+
+<details>
+<summary><strong>❓ "I ran the command but I'm not sure what happened"</strong></summary>
+
+**Problem:** Successfully ran Function Indexer but unsure about the results or next steps.
+
+**Understanding the output:**
+
+1. **Success indicators to look for:**
+   ```
+   ✅ Indexing completed!
+   📁 Files processed: 45
+   🔧 Functions found: 127
+   ```
+
+2. **Check what was created:**
+   ```bash
+   ls -la .function-indexer/
+   # Should show: config.json, function-index.jsonl
+   ```
+
+3. **Verify your functions were found:**
+   ```bash
+   head -5 function-index.jsonl
+   # Should show JSON objects with your functions
+   ```
+
+4. **Try a simple search:**
+   ```bash
+   fx search "function"  # Find any functions
+   fx list               # See all functions
+   ```
+
+</details>
+
+<details>
+<summary><strong>❓ "What should I do after the first run?"</strong></summary>
+
+**Problem:** Unclear about productive next steps.
+
+**Recommended workflow:**
+
+1. **Explore your codebase (immediate value):**
+   ```bash
+   fx list                    # See all your functions
+   fx search "main"           # Find main functions
+   fx search "auth"           # Find authentication code
+   ```
+
+2. **Check code quality:**
+   ```bash
+   fx metrics                 # Quality overview
+   fx metrics --details       # Detailed report
+   ```
+
+3. **Learn the tool:**
+   ```bash
+   fx --help                  # See all commands
+   cat docs/GETTING-STARTED.md  # Comprehensive guide
+   ```
+
+4. **Set up regular usage:**
+   ```bash
+   # Add to your workflow
+   fx                         # Update index regularly
+   fx metrics                 # Check before commits
+   ```
+
+</details>
+
+<details>
+<summary><strong>❓ "Is this tool working correctly?"</strong></summary>
+
+**Problem:** Uncertainty about whether Function Indexer is working as expected.
+
+**Health check steps:**
+
+1. **Verify basic functionality:**
+   ```bash
+   fx                         # Should update without errors
+   fx list | wc -l           # Should show reasonable function count
+   fx search "function"       # Should find some results
+   ```
+
+2. **Check for your known functions:**
+   ```bash
+   # Search for a function you know exists
+   fx search "your-main-function-name"
+   ```
+
+3. **Verify metrics are calculated:**
+   ```bash
+   fx metrics                 # Should show complexity stats
+   ```
+
+4. **Expected ranges for healthy projects:**
+   - Small project: 10-100 functions
+   - Medium project: 100-1000 functions  
+   - Large project: 1000+ functions
+   - Complexity violations: Usually 5-20% of functions
+
+</details>
+
 ## 🚨 Installation Issues
 
 <details>
