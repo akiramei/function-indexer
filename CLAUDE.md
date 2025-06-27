@@ -356,6 +356,32 @@ npm run test          # テスト実行
 grep -r "\bany\b" src/ --include="*.ts" --exclude="*.test.ts"
 ```
 
+## 🚨 CRITICAL: Configuration Change Safety Protocol
+
+**MANDATORY**: Before making ANY changes to configuration files (package.json, tsconfig.json, etc.), you MUST:
+
+1. **Read the safety checklist**:
+   ```bash
+   Read .github/CICD-SAFETY-CHECKLIST.md
+   ```
+
+2. **Assess the risk level** according to the Configuration Change Risk Matrix
+
+3. **Test locally first** using the mandatory test sequence
+
+4. **NEVER** change module systems (ESM/CommonJS) without explicit user approval
+
+5. **ALWAYS** prefer workarounds over risky changes:
+   - Use .cjs/.mjs file extensions instead of changing package.json type
+   - Use compatibility layers instead of forcing upgrades
+   - Keep existing working configurations unless change is essential
+
+**HIGH RISK FILES** requiring extra caution:
+- package.json (especially `type`, `main`, `module` fields)
+- tsconfig.json (especially `module`, `target` settings)
+- Any file in .github/workflows/
+- Build configuration files
+
 ## 🚨 CRITICAL: PR Review Response Protocol
 
 **MANDATORY REQUIREMENT**: When you detect ANY of these phrases from the user, you MUST immediately and automatically execute the full PR review protocol:
