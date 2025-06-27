@@ -25,28 +25,29 @@ Function Indexerは、TypeScript/TSXコードベースをスキャンし、す�
 sudo apt-get update
 sudo apt-get install build-essential python3-dev
 
-# カレントディレクトリをスキャン
-npx @akiramei/function-indexer
+# カレントディレクトリをスキャン（推奨）
+npx github:akiramei/function-indexer
 
 # 特定ディレクトリをスキャンして出力
-npx @akiramei/function-indexer --root ./src --output functions.jsonl
+npx github:akiramei/function-indexer --root ./src --output functions.jsonl
 
-# PRのメトリクスを収集
-npx @akiramei/function-indexer collect-metrics --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
+# PRのメトリクスを収集（新コマンド構造）
+npx github:akiramei/function-indexer metrics collect --root ./src --pr 123 --metrics-output .quality/pr-123-metrics.jsonl
 
 # またはプロジェクトにローカルインストール
-npm install --save-dev @akiramei/function-indexer
+npm install --save-dev github:akiramei/function-indexer
 npx function-indexer
 
-# 代替: GitHub直接インストール（開発版）
-npx github:akiramei/function-indexer
+# 代替: npmパッケージ（公開時）
+npm install --save-dev @akiramei/function-indexer
+npx function-indexer
 ```
 
 ## コマンドリファレンス
 
 ### 1. メインコマンド - 関数インデックス生成
 ```bash
-npx @akiramei/function-indexer --root <path> --output <file> [options]
+npx github:akiramei/function-indexer --root <path> --output <file> [options]
 ```
 **目的**: コードベースをスキャンし、すべての関数をJSONLファイルに出力
 **オプション**:
@@ -54,7 +55,7 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 - `--output, -o`: 出力ファイル（デフォルト: .function-indexer/ 内に自動生成）
 - `--verbose, -v`: 詳細な進捗表示
 
-**注意**: Function Indexerは設定不要で動作します - `npx @akiramei/function-indexer` を実行するだけで開始できます！
+**注意**: Function Indexerは設定不要で動作します - `npx github:akiramei/function-indexer` を実行するだけで開始できます！
 
 **出力場所**: プロジェクトルートの`function-index.jsonl`（可視的でアクセス可能！）
 
@@ -86,7 +87,9 @@ npx @akiramei/function-indexer --root <path> --output <file> [options]
 
 ### 2. `search` - 関数検索（改善済み！）
 ```bash
-npx @akiramei/function-indexer search <query> [options]
+npx github:akiramei/function-indexer search <query> [options]
+# または短縮エイリアス:
+fx s <query> [options]
 ```
 **目的**: 名前、内容、自然言語で関数を検索
 **オプション**:
@@ -98,22 +101,24 @@ npx @akiramei/function-indexer search <query> [options]
 **使用例**:
 ```bash
 # 名前で検索（デフォルトで最大100件表示）
-npx @akiramei/function-indexer search "validate"
+npx github:akiramei/function-indexer search "validate"
+# または短縮エイリアス:
+fx s "validate"
 
 # マッチしたすべての結果を表示（制限なし）
-npx @akiramei/function-indexer search "validate" --all
+npx github:akiramei/function-indexer search "validate" --all
+fx s "validate" --all
 
-# プロジェクト内のすべての関数を表示（空クエリ + --all）
-npx @akiramei/function-indexer search "" --all
-
-# ワイルドカード検索ですべての関数を表示
-npx @akiramei/function-indexer search "*" --all
+# プロジェクト内のすべての関数を表示（listコマンドを使用）
+npx github:akiramei/function-indexer list
+fx ls
 
 # コンテキスト付き自然言語検索
-npx @akiramei/function-indexer search "認証" --context "ログインとセキュリティ"
+npx github:akiramei/function-indexer search "認証" --context "ログインとセキュリティ"
+fx s "認証" --context "ログインとセキュリティ"
 
 # カスタム制限
-npx @akiramei/function-indexer search "コンポーネント" --limit 50
+npx github:akiramei/function-indexer search "コンポーネント" --limit 50
 ```
 
 **主な改善点**:
@@ -122,13 +127,15 @@ npx @akiramei/function-indexer search "コンポーネント" --limit 50
 - **グローバル検索**: 空クエリ`""`と`--all`でコードベース全体を表示
 - **スマート切り捨て**: 結果が制限された際の明確な表示と使用ヒント
 
-### 3. `metrics` - コード品質分析
+### 3. `metrics` - コード品質分析（新構造）
 ```bash
-npx @akiramei/function-indexer metrics [options]
+npx github:akiramei/function-indexer metrics [options]
+# または短縮エイリアス:
+fx m [options]
 ```
 **目的**: コード品質メトリクスと違反を表示
 **オプション**:
-- `--details, -d`: 関数レベルの詳細メトリクスを表示
+- 詳細オプションは不要 - 特定の分析にはサブコマンドを使用
 
 **出力例**:
 ```text
@@ -143,9 +150,11 @@ npx @akiramei/function-indexer metrics [options]
 2. calculateShipping (src/shipping.ts:122) - 複雑度: 15
 ```
 
-### 4. `collect-metrics` - 品質の経時追跡
+### 4. `metrics collect` - 品質の経時追跡（新構造）
 ```bash
-npx @akiramei/function-indexer collect-metrics --root <path> [options]
+npx github:akiramei/function-indexer metrics collect --root <path> [options]
+# または短縮エイリアス:
+fx metrics collect --root <path> [options]
 ```
 **目的**: SQLiteデータベースにメトリクスを保存しトレンド分析（オプションでJSONLエクスポート）
 **オプション**:
@@ -290,13 +299,21 @@ npx @akiramei/function-indexer ci --format json --output ci-results.json
 - 複数CIプラットフォーム対応（GitHub, GitLab）
 - 既存品質閾値との統合
 
-### 9. その他のコマンド
-- `analyze-trends`: メトリクストレンドと違反の分析
-- `pr-metrics <prNumber>`: 特定PRのメトリクス表示
-- `update <index>`: 既存の関数インデックスを更新
-- `validate <index>`: インデックスの整合性検証
-- `backup <index>`: インデックスのバックアップ作成
-- `restore <backupId>`: バックアップから復元
+### 9. その他のコマンド（新構造）
+- `npx github:akiramei/function-indexer metrics trends`: メトリクストレンドと違反の分析（旧 analyze-trends）
+- `npx github:akiramei/function-indexer metrics pr <prNumber>`: 特定PRのメトリクス表示（旧 pr-metrics）
+- `npx github:akiramei/function-indexer update <index>`: 既存の関数インデックスを更新
+- `npx github:akiramei/function-indexer validate <index>`: インデックスの整合性検証
+- `npx github:akiramei/function-indexer backup <index>`: インデックスのバックアップ作成
+- `npx github:akiramei/function-indexer restore <backupId>`: バックアップから復元
+
+**短縮エイリアス**:
+- `fx metrics trends` - トレンド分析
+- `fx metrics pr <number>` - PRメトリクス
+- `fx u <index>` - インデックス更新
+- `fx v <index>` - インデックス検証
+- `fx b <index>` - バックアップ
+- `fx rs <backupId>` - 復元
 
 ## フェーズ管理ワークフロー
 
@@ -306,45 +323,45 @@ Function Indexerは**フェーズベース開発における品質管理**のた
 ```bash
 # フェーズ1完了時 - ベースライン確立
 git tag phase-1-complete
-npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/phase1-metrics.jsonl
-npx @akiramei/function-indexer report --format html --output .quality/phase1-quality-report.html
+npx github:akiramei/function-indexer metrics collect --root ./src --metrics-output .quality/phase1-metrics.jsonl
+npx github:akiramei/function-indexer report --format html --output .quality/phase1-quality-report.html
 ```
 
 ### フェーズ移行と比較
 ```bash
 # フェーズ2完了時 - 新しいメトリクス収集
 git tag phase-2-complete
-npx @akiramei/function-indexer collect-metrics --root ./src --metrics-output .quality/phase2-metrics.jsonl
+npx github:akiramei/function-indexer metrics collect --root ./src --metrics-output .quality/phase2-metrics.jsonl
 
 # コミット/タグを使用したフェーズの直接比較
-npx @akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output .quality/phase1-vs-phase2-comparison.md
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format markdown --output .quality/phase1-vs-phase2-comparison.md
 
 # 包括的なフェーズ2レポート生成
-npx @akiramei/function-indexer report --format html --output .quality/phase2-quality-report.html
+npx github:akiramei/function-indexer report --format html --output .quality/phase2-quality-report.html
 ```
 
 ### 品質変化の特定
 ```bash
 # 大幅な変化のある関数を検索
-npx @akiramei/function-indexer diff phase-1-complete phase-2-complete --format json | jq '.modified[] | select(.metrics.cyclomaticComplexity.change > 5)'
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format json | jq '.modified[] | select(.metrics.cyclomaticComplexity.change > 5)'
 
 # 現在の違反分析
-npx @akiramei/function-indexer analyze-trends
+npx github:akiramei/function-indexer metrics trends
 
 # フェーズ間での特定関数の履歴
-npx @akiramei/function-indexer show-metrics "src/core/processor.ts:processData" --limit 10
+npx github:akiramei/function-indexer metrics show "src/core/processor.ts:processData" --limit 10
 ```
 
 ### 管理レポート作成
 ```bash
 # エグゼクティブサマリーレポート（チャート付きHTML）
-npx @akiramei/function-indexer report --format html --output executive-quality-summary.html
+npx github:akiramei/function-indexer report --format html --output executive-quality-summary.html
 
 # 技術チーム向けレポート（詳細Markdown）
-npx @akiramei/function-indexer report --format markdown --output technical-quality-details.md
+npx github:akiramei/function-indexer report --format markdown --output technical-quality-details.md
 
 # 外部ツール向けデータエクスポート
-npx @akiramei/function-indexer report --format json --output quality-metrics.json
+npx github:akiramei/function-indexer report --format json --output quality-metrics.json
 ```
 
 ## AIタスクテンプレート

@@ -23,16 +23,16 @@ sudo apt update && sudo apt install build-essential python3
 ### Immediate Usage
 ```bash
 # Scan current project (zero configuration)
-npx @akiramei/function-indexer
+npx github:akiramei/function-indexer
 
 # Scan specific directory with output
-npx @akiramei/function-indexer --root ./src --output functions.jsonl
+npx github:akiramei/function-indexer --root ./src --output functions.jsonl
 
 # Quality overview
-npx @akiramei/function-indexer metrics --details
+npx github:akiramei/function-indexer metrics trends
 
 # Search functions
-npx @akiramei/function-indexer search "authentication" --context "login"
+npx github:akiramei/function-indexer search "authentication" --context "login"
 ```
 
 ## Core Architecture Understanding
@@ -93,7 +93,7 @@ interface FunctionRecord {
 
 ### 1. Index Generation (Core Command)
 ```bash
-npx @akiramei/function-indexer [options]
+npx github:akiramei/function-indexer [options]
 ```
 **Purpose**: Generate comprehensive function index in JSONL format
 **AI Use Cases**: Codebase analysis, function discovery, change tracking
@@ -105,25 +105,25 @@ npx @akiramei/function-indexer [options]
 
 ### 2. Function Search
 ```bash
-npx @akiramei/function-indexer search <query> [options]
+npx github:akiramei/function-indexer search <query> [options]
 ```
 **Purpose**: Natural language and pattern-based function discovery
 **AI Use Cases**: Code exploration, similar function finding, functionality location
 **Advanced Examples**:
 ```bash
 # Multi-context search
-npx @akiramei/function-indexer search "validation" --context "user input security"
+npx github:akiramei/function-indexer search "validation" --context "user input security"
 
 # Pattern-based search
-npx @akiramei/function-indexer search "handle*Error" --limit 20
+npx github:akiramei/function-indexer search "handle*Error" --limit 20
 
 # Complex functionality search
-npx @akiramei/function-indexer search "database operations" --context "async transactions"
+npx github:akiramei/function-indexer search "database operations" --context "async transactions"
 ```
 
 ### 3. Quality Analysis
 ```bash
-npx @akiramei/function-indexer metrics [--details]
+npx github:akiramei/function-indexer metrics trends
 ```
 **Purpose**: Code quality overview and violation detection
 **AI Use Cases**: Quality assessment, refactoring prioritization, technical debt identification
@@ -136,22 +136,22 @@ npx @akiramei/function-indexer metrics [--details]
 ### 4. Historical Tracking
 ```bash
 # Collect metrics with PR association
-npx @akiramei/function-indexer collect-metrics --root ./src --pr 123 --verbose
+npx github:akiramei/function-indexer metrics collect --root ./src --pr 123 --verbose
 
 # View function evolution
-npx @akiramei/function-indexer show-metrics "src/auth.ts:validateToken" --limit 10
+npx github:akiramei/function-indexer metrics show "src/auth.ts:validateToken" --limit 10
 
 # Trend analysis
-npx @akiramei/function-indexer analyze-trends
+npx github:akiramei/function-indexer metrics trends
 ```
 
 ### 5. Comparative Analysis
 ```bash
 # Branch/commit comparison
-npx @akiramei/function-indexer diff main feature-branch --format markdown --output changes.md
+npx github:akiramei/function-indexer diff main feature-branch --format markdown --output changes.md
 
 # Phase comparison (using tags)
-npx @akiramei/function-indexer diff phase-1-complete phase-2-complete --format json
+npx github:akiramei/function-indexer diff phase-1-complete phase-2-complete --format json
 ```
 
 ### 6. Reporting & Documentation
@@ -212,10 +212,10 @@ npx @akiramei/function-indexer metrics
 npx @akiramei/function-indexer metrics --details
 
 # Step 3: Explore specific domains
-npx @akiramei/function-indexer search "authentication" --context "security patterns"
+npx github:akiramei/function-indexer search "authentication" --context "security patterns"
 
 # Step 4: Identify entry points
-npx @akiramei/function-indexer search "main" --context "application entry"
+npx github:akiramei/function-indexer search "main" --context "application entry"
 ```
 
 **AI Assistant Response Pattern**:
@@ -230,13 +230,13 @@ npx @akiramei/function-indexer search "main" --context "application entry"
 npx @akiramei/function-indexer --root ./src
 
 # Step 2: Compare changes
-npx @akiramei/function-indexer diff main HEAD --format markdown
+npx github:akiramei/function-indexer diff main HEAD --format markdown
 
 # Step 3: Quality assessment
 npx @akiramei/function-indexer ci --base main --format github
 
 # Step 4: Collect metrics
-npx @akiramei/function-indexer collect-metrics --pr $PR_NUMBER
+npx github:akiramei/function-indexer metrics collect --pr $PR_NUMBER
 ```
 
 **AI Assistant Response Pattern**:
@@ -254,23 +254,23 @@ npx @akiramei/function-indexer metrics --details
 npx @akiramei/function-indexer report --format json | jq '.functions[] | select(.metrics.cyclomaticComplexity > 10)'
 
 # Step 3: Find similar patterns
-npx @akiramei/function-indexer search "similar functionality patterns"
+npx github:akiramei/function-indexer search "similar functionality patterns"
 
 # Step 4: Track improvements
-npx @akiramei/function-indexer show-metrics "target-function" --limit 10
+npx github:akiramei/function-indexer metrics show "target-function" --limit 10
 ```
 
 ### Pattern 4: Phase-Based Quality Management
 ```bash
 # Phase baseline establishment
 git tag phase-1-baseline
-npx @akiramei/function-indexer collect-metrics --root ./src
+npx github:akiramei/function-indexer metrics collect --root ./src
 npx @akiramei/function-indexer report --format html --output phase1-quality.html
 
 # Phase comparison and analysis
 git tag phase-2-complete
-npx @akiramei/function-indexer diff phase-1-baseline phase-2-complete --format markdown --output phase-comparison.md
-npx @akiramei/function-indexer analyze-trends
+npx github:akiramei/function-indexer diff phase-1-baseline phase-2-complete --format markdown --output phase-comparison.md
+npx github:akiramei/function-indexer metrics trends
 ```
 
 ## Advanced AI Integration Scenarios
@@ -279,7 +279,7 @@ npx @akiramei/function-indexer analyze-trends
 ```bash
 # Comprehensive debt analysis
 npx @akiramei/function-indexer report --format json --output debt-analysis.json
-npx @akiramei/function-indexer analyze-trends
+npx github:akiramei/function-indexer metrics trends
 
 # AI Processing:
 # - Parse JSON for high-complexity functions
@@ -291,8 +291,8 @@ npx @akiramei/function-indexer analyze-trends
 ### Scenario 2: Code Quality Monitoring
 ```bash
 # Continuous quality tracking
-npx @akiramei/function-indexer collect-metrics --root ./src --pr $PR_NUMBER
-npx @akiramei/function-indexer show-metrics --list | grep "violation"
+npx github:akiramei/function-indexer metrics collect --root ./src --pr $PR_NUMBER
+npx github:akiramei/function-indexer metrics show --list | grep "violation"
 
 # AI Processing:
 # - Track quality trends over time
@@ -305,7 +305,7 @@ npx @akiramei/function-indexer show-metrics --list | grep "violation"
 ```bash
 # Domain-based analysis
 npx @akiramei/function-indexer --root ./src --domain "authentication"
-npx @akiramei/function-indexer search "*" --context "architecture patterns"
+npx github:akiramei/function-indexer search "*" --context "architecture patterns"
 
 # AI Processing:
 # - Identify architectural boundaries
@@ -452,7 +452,7 @@ jobs:
       
       - name: Analyze code quality
         run: |
-          npx @akiramei/function-indexer collect-metrics --root ./src --pr ${{ github.event.number }}
+          npx github:akiramei/function-indexer metrics collect --root ./src --pr ${{ github.event.number }}
           npx @akiramei/function-indexer ci --format github --base main --fail-on-violation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -466,7 +466,7 @@ code-quality:
   before_script:
     - apt-get update && apt-get install -y build-essential python3
   script:
-    - npx @akiramei/function-indexer collect-metrics --root ./src --pr $CI_MERGE_REQUEST_IID
+    - npx github:akiramei/function-indexer metrics collect --root ./src --pr $CI_MERGE_REQUEST_IID
     - npx @akiramei/function-indexer ci --format gitlab --comment --base main
   artifacts:
     reports:
