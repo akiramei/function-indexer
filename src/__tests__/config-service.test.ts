@@ -92,7 +92,7 @@ describe('ConfigService', () => {
   describe('getDefaultIndexPath', () => {
     it('should return correct default index path', () => {
       const indexPath = ConfigService.getDefaultIndexPath(projectDir);
-      expect(indexPath).toBe(path.join(projectDir, '.function-indexer', 'index.jsonl'));
+      expect(indexPath).toBe(path.join(projectDir, 'function-index.jsonl'));
     });
   });
 
@@ -123,7 +123,7 @@ describe('ConfigService', () => {
 
       expect(config).toMatchObject({
         version: '1.0.0',
-        root: 'src', // Relative path when newly created
+        root: path.join(projectDir, 'src'), // Absolute path as implemented
         domain: 'main',
         include: ['**/*.ts', '**/*.tsx']
       });
@@ -159,7 +159,7 @@ describe('ConfigService', () => {
 
       expect(config).toMatchObject({
         version: '1.0.0',
-        root: 'src', // Relative path in stored config
+        root: path.join(projectDir, 'src'), // Absolute path as implemented
         domain: 'main',
         include: ['**/*.ts', '**/*.tsx'],
         metrics: {

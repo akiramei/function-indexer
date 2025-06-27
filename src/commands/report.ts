@@ -3,7 +3,7 @@ import { FunctionInfo, FunctionMetrics, MetricsThresholds } from '../types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import chalk from 'chalk';
-import Handlebars from 'handlebars';
+const Handlebars = require('handlebars');
 import { ConfigService } from '../services/config-service';
 import { ProjectDetector } from '../utils/project-detector';
 import { handle as handleError, validateInput, validatePath, validateJSON, createFileError, withErrorHandling, ValidationError, ConfigurationError, IndexError } from '../utils/error-handler';
