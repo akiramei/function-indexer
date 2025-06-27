@@ -4,7 +4,7 @@ import { GitService, DiffResult } from '../services/git';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import chalk from 'chalk';
-import { FunctionInfo } from '../types';
+import { FunctionInfo, MetricsThresholds } from '../types';
 import { handle as handleError, validateInput, validatePath, validateJSON, createFileError, withErrorHandling, ValidationError, GitError } from '../utils/error-handler';
 
 interface DiffOptions {
@@ -48,7 +48,7 @@ function validateDiffThresholds(value: string): string {
   }
 }
 
-function validateDiffOptions(options: any): void {
+function validateDiffOptions(options: DiffOptions): void {
   if (!options.root || typeof options.root !== 'string') {
     throw new Error('Root directory is required and must be a string');
   }
@@ -133,11 +133,11 @@ async function generateRevisionIndexes(gitService: GitService, options: DiffOpti
   return { baseIndexPath, targetIndexPath };
 }
 
-async function outputDiffResults(diffResult: any, options: DiffOptions): Promise<any> {
+async function outputDiffResults(diffResult: DiffResult, options: DiffOptions): Promise<MetricsThresholds> {
   let thresholds;
   try {
     thresholds = options.thresholds 
-      ? validateJSON(options.thresholds, 'thresholds')
+      ? validateJSON(options.thresholds, 'thresholds') as MetricsThresholds
       : DEFAULT_THRESHOLDS;
   } catch (error) {
     if (error instanceof ValidationError) throw error;
@@ -157,7 +157,7 @@ async function outputDiffResults(diffResult: any, options: DiffOptions): Promise
     console.log(output);
   }
   
-  return thresholds;
+  return thresholds as MetricsThresholds;
 }
 
 async function executeDiff(base: string, target: string, options: DiffOptions) {
@@ -279,7 +279,7 @@ function formatDiffResult(
   }
 }
 
-function formatAddedFunctions(functions: any[], thresholds: any): string[] {
+function formatAddedFunctions(functions: FunctionInfo[], thresholds: MetricsThresholds): string[] {
   const lines: string[] = [];
   if (functions.length > 0) {
     lines.push(chalk.bold.green('\nAdded Functions:'));
@@ -295,7 +295,7 @@ function formatAddedFunctions(functions: any[], thresholds: any): string[] {
   return lines;
 }
 
-function formatModifiedFunctions(functions: any[], thresholds: any): string[] {
+function formatModifiedFunctions(functions: DiffResult['modified'], thresholds: MetricsThresholds): string[] {
   const lines: string[] = [];
   if (functions.length > 0) {
     lines.push(chalk.bold.yellow('\nModified Functions:'));
@@ -304,7 +304,7 @@ function formatModifiedFunctions(functions: any[], thresholds: any): string[] {
       const icon = violations.length > 0 ? '⚠️ ' : '✅ ';
       lines.push(`  ${icon}${after.file}:${after.startLine} - ${after.identifier}()`);
       
-      Object.entries(metricsChanges).forEach(([metric, change]: [string, any]) => {
+      Object.entries(metricsChanges).forEach(([metric, change]: [string, { before: number | boolean; after: number | boolean; change: number | string }]) => {
         const changeStr = typeof change.change === 'number' 
           ? (change.change > 0 ? `+${change.change}` : `${change.change}`)
           : change.change;
@@ -324,7 +324,7 @@ function formatModifiedFunctions(functions: any[], thresholds: any): string[] {
   return lines;
 }
 
-function formatRemovedFunctions(functions: any[]): string[] {
+function formatRemovedFunctions(functions: FunctionInfo[]): string[] {
   const lines: string[] = [];
   if (functions.length > 0) {
     lines.push(chalk.bold.red('\nRemoved Functions:'));

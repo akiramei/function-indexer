@@ -121,16 +121,16 @@ class TestClass {
     expect(stdout).toContain('TestClass.asyncMethod');
   });
 
-  test('list command with --format simple', async () => {
-    const { stdout } = await execAsync(`node ${cliPath} list --format simple`, { cwd: projectDir });
+  test('list command with default format', async () => {
+    const { stdout } = await execAsync(`node ${cliPath} list`, { cwd: projectDir });
     
-    const lines = stdout.trim().split('\n');
-    expect(lines.length).toBe(6);
-    expect(lines[0]).toMatch(/^src\/test\.ts:\d+:publicFunction$/);
+    expect(stdout).toContain('Found 6 functions');
+    expect(stdout).toContain('src/test.ts:');
+    expect(stdout).toContain('publicFunction');
   });
 
-  test('list command with --format json', async () => {
-    const { stdout } = await execAsync(`node ${cliPath} list --format json`, { cwd: projectDir });
+  test('list command with --json format', async () => {
+    const { stdout } = await execAsync(`node ${cliPath} list --json`, { cwd: projectDir });
     
     const functions = JSON.parse(stdout);
     expect(Array.isArray(functions)).toBe(true);
@@ -148,10 +148,10 @@ class TestClass {
   });
 
   test('list command with --sort name', async () => {
-    const { stdout } = await execAsync(`node ${cliPath} list --format simple --sort name`, { cwd: projectDir });
+    const { stdout } = await execAsync(`node ${cliPath} list --json --sort name`, { cwd: projectDir });
     
-    const lines = stdout.trim().split('\n');
-    const functionNames = lines.map(line => line.split(':')[2]);
+    const functions = JSON.parse(stdout);
+    const functionNames = functions.map((f: any) => f.identifier);
     
     // Check that the list is sorted (case-insensitive by default)
     for (let i = 1; i < functionNames.length; i++) {

@@ -1,0 +1,103 @@
+name: Configuration Safety Check
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'tsconfig.json'
+      - '.github/workflows/*.yml'
+      - '*.config.js'
+      - '*.config.ts'
+
+jobs:
+  safety-check:
+    name: Validate Configuration Changes
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Need full history for diff
+
+    - name: Check for high-risk changes
+      run: |
+        echo "🔍 Checking for high-risk configuration changes..."
+
+        # Check if package.json type field was modified
+        if git diff origin/${{ github.base_ref }}...HEAD -- package.json | grep -E '^\+.*"type":|^-.*"type":'; then
+          echo "❌ ERROR: package.json 'type' field was modified!"
+          echo "This is a HIGH RISK change that can break CI/CD."
+          echo "Please review .github/CICD-SAFETY-CHECKLIST.md"
+          exit 1
+        fi
+
+        # Check if tsconfig module setting was changed
+        if git diff origin/${{ github.base_ref }}...HEAD -- tsconfig.json | grep -E '"module":'; then
+          echo "⚠️ WARNING: tsconfig.json module setting was changed!"
+          echo "Ensure this aligns with package.json type setting."
+        fi
+
+        # Check for ESM/CommonJS consistency
+        if [ -f package.json ] && [ -f tsconfig.json ]; then
+          PKG_TYPE=$(grep -o '"type":\s*"[^"]*"' package.json | cut -d'"' -f4 || echo "commonjs")
+          TS_MODULE=$(grep -o '"module":\s*"[^"]*"' tsconfig.json | cut -d'"' -f4)
+
+          if [[ "$PKG_TYPE" == "module" ]] && [[ "$TS_MODULE" == "commonjs" ]]; then
+            echo "❌ ERROR: Mismatch detected!"
+            echo "package.json has type: module but tsconfig.json has module: commonjs"
+            exit 1
+          fi
+
+          if [[ "$PKG_TYPE" != "module" ]] && [[ "$TS_MODULE" =~ ^(ES|es) ]]; then
+            echo "❌ ERROR: Mismatch detected!"
+            echo "package.json is CommonJS but tsconfig.json has module: $TS_MODULE"
+            exit 1
+          fi
+        fi
+
+        echo "✅ Configuration consistency check passed"
+
+    - name: Test build with changes
+      run: |
+        npm ci
+        npm run build
+
+    - name: Verify CLI still works
+      run: |
+        node dist/cli.js --version
+
+    - name: Add safety reminder comment
+      uses: actions/github-script@v6
+      if: always()
+      with:
+        script: |
+          const files = await github.rest.pulls.listFiles({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number
+          });
+
+          const hasConfigChanges = files.data.some(file =>
+            ['package.json', 'tsconfig.json'].includes(file.filename) ||
+            file.filename.endsWith('.config.js') ||
+            file.filename.endsWith('.config.ts')
+          );
+
+          if (hasConfigChanges) {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## ⚠️ Configuration Change Detected
+
+This PR modifies critical configuration files. Please ensure you have:
+
+- [ ] Read and followed \`.github/CICD-SAFETY-CHECKLIST.md\`
+- [ ] Tested locally with full build and runtime verification
+- [ ] Verified module system consistency (ESM vs CommonJS)
+- [ ] Confirmed no breaking changes for existing users
+
+If this change breaks CI/CD, use the emergency rollback procedure immediately.`
+            });
+          }

@@ -279,6 +279,37 @@ See our [detailed roadmap](ROADMAP.md) for more information.
 - 🔄 **[PR Review Automation](docs/templates/pr-review-automation.md)** - Enhance PR reviews with metrics
 - 🏗️ **[Codebase Understanding](docs/templates/codebase-understanding.md)** - Quickly grasp project architecture
 
+## 🔧 Development & Quality Assurance
+
+Function Indexer uses a comprehensive quality assurance system:
+
+### Quality Gates
+- **Pre-commit hooks**: Automatic code quality checks before commits
+- **ESLint**: Strict TypeScript rules with `any` type prohibition
+- **Type checking**: Full TypeScript strict mode validation
+- **Automated tests**: Comprehensive test suite
+
+### Development Commands
+```bash
+# Quality checks
+npm run lint          # ESLint check
+npm run type-check     # TypeScript validation
+npm run precommit      # Full quality check
+
+# Development
+npm run dev           # Development mode
+npm run build         # Production build
+npm test             # Run test suite
+```
+
+### Coding Standards
+- **No `any` types**: Use proper TypeScript types
+- **Type safety**: All functions must have proper type annotations
+- **Test coverage**: New features require tests
+- **ESLint compliance**: All code must pass linting
+
+See [CLAUDE.md](CLAUDE.md) for detailed development guidelines.
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
@@ -290,11 +321,8 @@ git clone https://github.com/akiramei/function-indexer.git
 # Install dependencies
 npm install
 
-# Run in development mode
-npm run dev
-
-# Run tests
-npm test
+# Run quality checks before committing
+npm run precommit
 ```
 
 ## 📄 License

@@ -6,6 +6,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import chalk from 'chalk';
 import { handle as handleError, validateJSON, createFileError, withErrorHandling, ValidationError } from '../utils/error-handler';
+import { FunctionInfo, MetricsThresholds } from '../types';
 
 interface CIOptions {
   root: string;
@@ -72,7 +73,7 @@ function validateThresholds(value: string): string {
   }
 }
 
-function validateOptions(options: any): void {
+function validateOptions(options: CIOptions): void {
   if (!options.root || typeof options.root !== 'string') {
     throw new Error('Root directory is required and must be a string');
   }
@@ -141,10 +142,10 @@ function parseOutputOption(options: CIOptions): void {
   }
 }
 
-function parseThresholds(options: CIOptions): any {
+function parseThresholds(options: CIOptions): MetricsThresholds {
   try {
     return options.thresholds 
-      ? validateJSON(options.thresholds, 'thresholds')
+      ? validateJSON(options.thresholds, 'thresholds') as MetricsThresholds
       : DEFAULT_THRESHOLDS;
   } catch (error) {
     if (error instanceof ValidationError) throw error;
@@ -165,7 +166,7 @@ async function ensureIndexDirectory(): Promise<string> {
   return indexPath;
 }
 
-async function loadIndexedFunctions(indexPath: string): Promise<any[]> {
+async function loadIndexedFunctions(indexPath: string): Promise<FunctionInfo[]> {
   let indexContent;
   try {
     const stats = await fs.stat(indexPath);
@@ -177,7 +178,7 @@ async function loadIndexedFunctions(indexPath: string): Promise<any[]> {
     throw createFileError('read', indexPath, error instanceof Error ? error : undefined);
   }
 
-  const functions: any[] = [];
+  const functions: FunctionInfo[] = [];
   const lines = indexContent.split('\n').filter(line => line.trim());
   
   for (let i = 0; i < lines.length; i++) {
@@ -191,7 +192,7 @@ async function loadIndexedFunctions(indexPath: string): Promise<any[]> {
   return functions;
 }
 
-function checkViolations(functions: any[], thresholds: any): CIResult['violations'] {
+function checkViolations(functions: FunctionInfo[], thresholds: MetricsThresholds): CIResult['violations'] {
   const violations: CIResult['violations'] = [];
   
   functions.forEach(func => {
@@ -229,7 +230,7 @@ function checkViolations(functions: any[], thresholds: any): CIResult['violation
 }
 
 async function getDiffSummary(options: CIOptions): Promise<{added: number, modified: number, removed: number}> {
-  let diffSummary = { added: 0, modified: 0, removed: 0 };
+  const diffSummary = { added: 0, modified: 0, removed: 0 };
   
   if (options.base) {
     try {
@@ -261,7 +262,7 @@ async function collectPRMetrics(options: CIOptions): Promise<void> {
   }
 }
 
-async function outputResults(result: CIResult, options: CIOptions, thresholds: any): Promise<void> {
+async function outputResults(result: CIResult, options: CIOptions, thresholds: MetricsThresholds): Promise<void> {
   if (options.comment) {
     result.comment = generatePRComment(result, thresholds);
   }

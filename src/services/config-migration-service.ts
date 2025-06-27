@@ -124,7 +124,7 @@ export function migrateConfiguration(projectRoot?: string, options: {
     };
     
     // Extract metrics configuration
-    const metricsConfig = MetricsConfigService.migrateLegacyConfig(legacyConfig, projectRoot);
+    const metricsConfig = MetricsConfigService.migrateLegacyConfig(legacyConfig as unknown as Record<string, unknown>, projectRoot);
     
     // Save separated configurations
     CoreConfigService.saveConfig(coreConfig, projectRoot);

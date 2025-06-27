@@ -93,7 +93,7 @@ export class MetricsStorage {
     `;
     
     const rows = this.db.prepare(sql).all(functionId);
-    return rows.map(this.mapRowToMetrics);
+    return rows.map(row => this.mapRowToMetrics(row as Record<string, unknown>));
   }
 
   /**
@@ -106,7 +106,7 @@ export class MetricsStorage {
       ORDER BY function_id
     `).all(commitHash);
     
-    return rows.map(this.mapRowToMetrics);
+    return rows.map(row => this.mapRowToMetrics(row as Record<string, unknown>));
   }
 
   /**
@@ -119,7 +119,7 @@ export class MetricsStorage {
       ORDER BY function_id
     `).all(prNumber);
     
-    return rows.map(this.mapRowToMetrics);
+    return rows.map(row => this.mapRowToMetrics(row as Record<string, unknown>));
   }
 
   /**
@@ -132,7 +132,7 @@ export class MetricsStorage {
       ORDER BY timestamp DESC
     `).all(startDate, endDate);
     
-    return rows.map(this.mapRowToMetrics);
+    return rows.map(row => this.mapRowToMetrics(row as Record<string, unknown>));
   }
 
   /**
@@ -149,7 +149,7 @@ export class MetricsStorage {
       ORDER BY fm1.function_id
     `).all();
     
-    return rows.map(this.mapRowToMetrics);
+    return rows.map(row => this.mapRowToMetrics(row as Record<string, unknown>));
   }
 
   /**
@@ -254,20 +254,20 @@ export class MetricsStorage {
   /**
    * データベース行をメトリクスオブジェクトにマップ
    */
-  private mapRowToMetrics(row: any): FunctionMetricsHistory {
+  private mapRowToMetrics(row: Record<string, unknown>): FunctionMetricsHistory {
     return {
-      commitHash: row.commit_hash,
-      functionId: row.function_id,
-      parentCommit: row.parent_commit,
-      prNumber: row.pr_number,
-      branchName: row.branch_name,
-      changeType: row.change_type,
-      timestamp: row.timestamp,
-      cyclomaticComplexity: row.cyclomatic_complexity,
-      cognitiveComplexity: row.cognitive_complexity,
-      linesOfCode: row.lines_of_code,
-      nestingDepth: row.nesting_depth,
-      parameterCount: row.parameter_count
+      commitHash: String(row.commit_hash),
+      functionId: String(row.function_id),
+      parentCommit: String(row.parent_commit),
+      prNumber: row.pr_number ? Number(row.pr_number) : undefined,
+      branchName: String(row.branch_name),
+      changeType: String(row.change_type) as 'created' | 'modified' | 'refactored',
+      timestamp: String(row.timestamp),
+      cyclomaticComplexity: Number(row.cyclomatic_complexity),
+      cognitiveComplexity: Number(row.cognitive_complexity),
+      linesOfCode: Number(row.lines_of_code),
+      nestingDepth: Number(row.nesting_depth),
+      parameterCount: Number(row.parameter_count)
     };
   }
 
@@ -293,12 +293,15 @@ export class MetricsStorage {
       ORDER BY last_timestamp DESC
     `).all();
     
-    return rows.map((row: any) => ({
-      functionId: row.function_id,
-      recordCount: row.record_count,
-      lastTimestamp: row.last_timestamp,
-      latestComplexity: row.latest_complexity
-    }));
+    return rows.map((row: unknown) => {
+      const r = row as Record<string, unknown>;
+      return {
+        functionId: String(r.function_id),
+        recordCount: Number(r.record_count),
+        lastTimestamp: String(r.last_timestamp),
+        latestComplexity: Number(r.latest_complexity)
+      };
+    });
   }
 
   /**

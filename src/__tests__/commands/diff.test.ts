@@ -1,5 +1,5 @@
 import { createDiffCommand } from '../../commands/diff';
-import { GitService } from '../../services/git';
+import { GitService, DiffResult } from '../../services/git';
 import { FunctionIndexer } from '../../indexer';
 import * as fs from 'fs/promises';
 import chalk from 'chalk';
@@ -12,8 +12,8 @@ jest.mock('fs/promises');
 chalk.level = 0;
 
 describe('diff command', () => {
-  let mockGitService: jest.Mocked<GitService>;
-  let mockIndexer: jest.Mocked<FunctionIndexer>;
+  let mockGitService: jest.Mocked<Partial<GitService>>;
+  let mockIndexer: jest.Mocked<Partial<FunctionIndexer>>;
   let consoleLogSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
   let processExitSpy: jest.SpyInstance;
@@ -27,8 +27,10 @@ describe('diff command', () => {
       getCommitHash: jest.fn(),
       getBranchDiff: jest.fn(),
       getFileAtRevision: jest.fn(),
-      getChangedFiles: jest.fn()
-    } as any;
+      getChangedFiles: jest.fn(),
+      revisionExists: jest.fn().mockResolvedValue(true),
+      getFilesAtRevision: jest.fn().mockResolvedValue(['src/test.ts'])
+    } as jest.Mocked<Partial<GitService>>;
 
     mockIndexer = {
       run: jest.fn().mockResolvedValue({
@@ -37,8 +39,12 @@ describe('diff command', () => {
         processedFiles: [],
         errors: [],
         executionTime: 100
-      })
-    } as any;
+      }),
+      processFile: jest.fn(),
+      writeResults: jest.fn(),
+      generateFunctionHash: jest.fn(),
+      generateFileHash: jest.fn()
+    } as jest.Mocked<Partial<FunctionIndexer>>;
 
     (GitService as jest.Mock).mockImplementation(() => mockGitService);
     (FunctionIndexer as jest.Mock).mockImplementation(() => mockIndexer);
@@ -47,6 +53,7 @@ describe('diff command', () => {
     (fs.mkdir as jest.Mock).mockResolvedValue(undefined);
     (fs.rm as jest.Mock).mockResolvedValue(undefined);
     (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
+    (fs.readFile as jest.Mock).mockResolvedValue('console.log("test");');
     (fs.stat as jest.Mock).mockResolvedValue({ 
       isFile: () => false, 
       isDirectory: () => true 
@@ -60,7 +67,7 @@ describe('diff command', () => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     processExitSpy = jest.spyOn(process, 'exit').mockImplementation(((code?: string | number | null | undefined) => {
       throw new Error(`Process exited with code ${code}`);
-    }) as any);
+    }) as typeof process.exit);
   });
 
   afterEach(() => {
@@ -72,7 +79,7 @@ describe('diff command', () => {
 
   describe('basic functionality', () => {
     it('should detect when not in a git repository', async () => {
-      mockGitService.isGitRepository.mockResolvedValue(false);
+      (mockGitService.isGitRepository as jest.Mock).mockResolvedValue(false);
 
       const command = createDiffCommand();
       
@@ -96,7 +103,7 @@ describe('diff command', () => {
         removed: []
       };
 
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as any);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(diffResult as unknown as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test', 'main', 'feature']);
@@ -108,11 +115,11 @@ describe('diff command', () => {
     });
 
     it('should use default branches when not specified', async () => {
-      mockGitService.compareIndexes.mockResolvedValue({
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue({
         added: [],
         modified: [],
         removed: []
-      } as any);
+      } as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test']);
@@ -161,7 +168,7 @@ describe('diff command', () => {
     });
 
     it('should format terminal output correctly', async () => {
-      mockGitService.compareIndexes.mockResolvedValue(createMockDiffResult() as any);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(createMockDiffResult() as unknown as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test', 'main', 'feature', '--format', 'terminal']);
@@ -183,7 +190,7 @@ describe('diff command', () => {
 
     it('should output JSON format when requested', async () => {
       const diffResult = createMockDiffResult();
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as any);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(diffResult as unknown as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test', 'main', 'feature', '--format', 'json']);
@@ -194,7 +201,7 @@ describe('diff command', () => {
     });
 
     it('should save output to file when specified', async () => {
-      mockGitService.compareIndexes.mockResolvedValue(createMockDiffResult() as any);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(createMockDiffResult() as unknown as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync([
@@ -229,7 +236,7 @@ describe('diff command', () => {
         removed: []
       };
 
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as any);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(diffResult as unknown as DiffResult);
 
       const command = createDiffCommand();
       
@@ -256,7 +263,7 @@ describe('diff command', () => {
         removed: []
       };
 
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as any);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(diffResult as unknown as DiffResult);
 
       const customThresholds = { cyclomaticComplexity: 20 };
       const command = createDiffCommand();
@@ -273,7 +280,7 @@ describe('diff command', () => {
 
   describe('error handling', () => {
     it('should handle indexing errors gracefully', async () => {
-      mockIndexer.run.mockRejectedValue(new Error('Indexing failed'));
+      (mockIndexer.run as jest.Mock).mockRejectedValue(new Error('Indexing failed'));
 
       const command = createDiffCommand();
       

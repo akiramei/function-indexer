@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { FunctionIndexer } from './indexer';
-import { IndexerOptions, FunctionInfo } from './types';
+import type { IndexerOptions } from './types';
 import { SearchService } from './search';
 import { AIService } from './ai-service';
 import { UpdateService } from './services/update-service';
@@ -287,10 +287,10 @@ program
       const searchService = new SearchService();
       searchService.loadFunctionIndex(config.output);
 
-      const determineLimitValue = (options: any): number | undefined => {
+      const determineLimitValue = (options: { all?: boolean; limit?: string }): number | undefined => {
         if (options.all) return undefined;
         
-        const parsed = parseInt(options.limit);
+        const parsed = parseInt(options.limit || '100');
         if (isNaN(parsed) || parsed < 1) {
           console.warn(chalk.yellow(`⚠️  Invalid limit "${options.limit}", using default: 100`));
           return 100;
@@ -654,7 +654,7 @@ program
   .command('metrics-legacy')
   .description('Legacy metrics command (use "metrics" instead)')
   .option('-d, --details', 'show detailed function-level metrics')
-  .action(async (options) => {
+  .action(async () => {
     console.log(chalk.yellow('⚠️  The old metrics command structure is deprecated'));
     console.log(chalk.blue('💡 Use the new structure:'));
     console.log(chalk.gray('   fx metrics           # Show overview'));

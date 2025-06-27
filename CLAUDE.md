@@ -265,6 +265,125 @@ Function Indexer now uses a **separated configuration system** for better modula
 
 **Remember**: "sed made me suffer" - prefer precision over speed.
 
+## 📝 TypeScript開発ガイドライン
+
+### 型安全性の推奨事項
+- **any型は避ける**: 可能な限り具体的な型を使用。不明な場合は`unknown`を使用
+- **段階的な型付け**: 完璧な型定義が難しい場合は、コメントで意図を明記
+- **実用的なアプローチ**: 開発速度と型安全性のバランスを重視
+
+### TypeScript型定義のベストプラクティス
+
+```typescript
+// 推奨: 具体的な型を使用
+interface UserData {
+  id: string;
+  name: string;
+  email?: string;
+}
+
+// 型が不明な場合はunknownを使用
+function processData(data: unknown): void {
+  // 型ガードで安全に処理
+  if (typeof data === 'object' && data !== null) {
+    // 処理を続行
+  }
+}
+
+// 一時的にanyが必要な場合はコメントで理由を明記
+// TODO: 外部ライブラリの型定義が不完全なため一時的にany使用
+const externalData: any = thirdPartyFunction();
+```
+
+### 開発効率を重視したアプローチ
+
+1. **実用性を優先**: 完璧な型定義よりも動作するコードを優先
+2. **段階的改善**: 最初は基本的な型から始めて、後で詳細化
+3. **CIで検証**: 型チェックはCIパイプラインで自動実行
+4. **柔軟な対応**: プロトタイプ段階ではanyも許容、本番前に型を整備
+
+## 🔍 PR作成前セルフチェック - MANDATORY CHECKLIST
+
+### 必須チェック項目
+- [ ] `grep -r "\bany\b" src/` でany型使用がないことを確認
+- [ ] `npm run lint` がエラーなしで完了
+- [ ] `npm run type-check` がエラーなしで完了  
+- [ ] `npm test` が全テスト通過
+- [ ] console.log等のデバッグコードを削除済み
+- [ ] 新機能に対応するテストを追加済み
+
+### 型安全性チェック
+- [ ] 新しいinterfaceまたはtypeを適切に定義
+- [ ] 関数の引数・戻り値に適切な型注釈
+- [ ] 外部ライブラリ使用時に型定義確認
+- [ ] unknownやanyの代替案を検討済み
+
+### 設計チェック  
+- [ ] 単一責任原則に違反していない
+- [ ] 適切な抽象化レベル
+- [ ] テスタブルな設計
+- [ ] エラーハンドリングが適切
+
+### コンフリクト回避チェック
+- [ ] 共有ファイル（package.json、README.md、CLAUDE.md、src/cli.ts）の変更有無を確認
+- [ ] 他の進行中PRとの重複変更がないことを確認
+- [ ] 基盤変更は他のPRより優先して完了
+
+## 🛠️ 開発ツール設定
+
+### ESLint設定（.eslintrc.json）
+```json
+{
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unsafe-assignment": "error",
+    "@typescript-eslint/no-unsafe-member-access": "error",
+    "@typescript-eslint/no-unsafe-call": "error",
+    "@typescript-eslint/no-unsafe-return": "error"
+  }
+}
+```
+
+### 推奨コマンド
+```bash
+# コミット前の品質チェック
+npm run precommit
+
+# 個別チェック
+npm run lint          # ESLintチェック
+npm run type-check     # TypeScript型チェック
+npm run test          # テスト実行
+
+# any型の検出
+grep -r "\bany\b" src/ --include="*.ts" --exclude="*.test.ts"
+```
+
+## 🚨 CRITICAL: Configuration Change Safety Protocol
+
+**MANDATORY**: Before making ANY changes to configuration files (package.json, tsconfig.json, etc.), you MUST:
+
+1. **Read the safety checklist**:
+   ```bash
+   Read .github/CICD-SAFETY-CHECKLIST.md
+   ```
+
+2. **Assess the risk level** according to the Configuration Change Risk Matrix
+
+3. **Test locally first** using the mandatory test sequence
+
+4. **NEVER** change module systems (ESM/CommonJS) without explicit user approval
+
+5. **ALWAYS** prefer workarounds over risky changes:
+   - Use .cjs/.mjs file extensions instead of changing package.json type
+   - Use compatibility layers instead of forcing upgrades
+   - Keep existing working configurations unless change is essential
+
+**HIGH RISK FILES** requiring extra caution:
+- package.json (especially `type`, `main`, `module` fields)
+- tsconfig.json (especially `module`, `target` settings)
+- Any file in .github/workflows/
+- Build configuration files
+
 ## 🚨 CRITICAL: PR Review Response Protocol
 
 **MANDATORY REQUIREMENT**: When you detect ANY of these phrases from the user, you MUST immediately and automatically execute the full PR review protocol:

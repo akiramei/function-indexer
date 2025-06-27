@@ -378,19 +378,22 @@ export class FileSystemStorage implements IndexStorage {
     }
   }
 
-  private isValidFunction(obj: any): boolean {
-    return obj &&
-      typeof obj.file === 'string' &&
-      typeof obj.identifier === 'string' &&
-      typeof obj.signature === 'string' &&
-      typeof obj.startLine === 'number' &&
-      typeof obj.endLine === 'number' &&
-      typeof obj.hash_function === 'string' &&
-      typeof obj.hash_file === 'string' &&
-      typeof obj.exported === 'boolean' &&
-      typeof obj.async === 'boolean' &&
-      obj.metrics &&
-      typeof obj.domain === 'string';
+  private isValidFunction(obj: unknown): obj is FunctionInfo {
+    if (!obj || typeof obj !== 'object') return false;
+    
+    const record = obj as Record<string, unknown>;
+    return typeof record.file === 'string' &&
+      typeof record.identifier === 'string' &&
+      typeof record.signature === 'string' &&
+      typeof record.startLine === 'number' &&
+      typeof record.endLine === 'number' &&
+      typeof record.hash_function === 'string' &&
+      typeof record.hash_file === 'string' &&
+      typeof record.exported === 'boolean' &&
+      typeof record.async === 'boolean' &&
+      record.metrics !== null &&
+      typeof record.metrics === 'object' &&
+      typeof record.domain === 'string';
   }
 
   private convertToCSV(functions: FunctionInfo[]): string {
