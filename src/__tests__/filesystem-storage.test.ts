@@ -241,6 +241,8 @@ describe('FileSystemStorage', () => {
 
     it('should list backups', async () => {
       await storage.createBackup('backup-test.jsonl');
+      // Add small delay to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 10));
       await storage.createBackup('backup-test.jsonl');
       
       const backups = await storage.listBackups();
