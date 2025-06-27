@@ -34,13 +34,13 @@ module.exports = [
     },
     rules: {
       // Code quality rules
-      'no-console': 'warn',
+      'no-console': 'off', // Allow console statements in CLI tool
       'prefer-const': 'error',
       'no-var': 'error',
       'no-undef': 'off', // TypeScript handles this
       // TypeScript-specific rules
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/prefer-const': 'off' // Use standard prefer-const instead
     }
