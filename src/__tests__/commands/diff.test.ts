@@ -27,7 +27,9 @@ describe('diff command', () => {
       getCommitHash: jest.fn(),
       getBranchDiff: jest.fn(),
       getFileAtRevision: jest.fn(),
-      getChangedFiles: jest.fn()
+      getChangedFiles: jest.fn(),
+      revisionExists: jest.fn().mockResolvedValue(true),
+      getFilesAtRevision: jest.fn().mockResolvedValue(['src/test.ts'])
     } as any;
 
     mockIndexer = {
@@ -47,6 +49,7 @@ describe('diff command', () => {
     (fs.mkdir as jest.Mock).mockResolvedValue(undefined);
     (fs.rm as jest.Mock).mockResolvedValue(undefined);
     (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
+    (fs.readFile as jest.Mock).mockResolvedValue('console.log("test");');
     (fs.stat as jest.Mock).mockResolvedValue({ 
       isFile: () => false, 
       isDirectory: () => true 
