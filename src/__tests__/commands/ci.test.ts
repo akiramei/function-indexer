@@ -62,12 +62,24 @@ describe('ci command', () => {
     } as jest.Mocked<Partial<FunctionIndexer>>;
 
     mockGitService = {
-      getChangedFiles: jest.fn().mockResolvedValue(['src/test.ts'])
+      getChangedFiles: jest.fn().mockResolvedValue(['src/test.ts']),
+      isGitRepository: jest.fn().mockResolvedValue(true),
+      compareIndexes: jest.fn(),
+      getCurrentBranch: jest.fn(),
+      getCommitHash: jest.fn(),
+      getBranchDiff: jest.fn(),
+      getFileAtRevision: jest.fn(),
+      revisionExists: jest.fn().mockResolvedValue(true),
+      getFilesAtRevision: jest.fn().mockResolvedValue(['src/test.ts'])
     } as jest.Mocked<Partial<GitService>>;
 
     mockMetricsService = {
       collectMetrics: jest.fn().mockResolvedValue(undefined),
-      close: jest.fn()
+      close: jest.fn(),
+      getMetrics: jest.fn(),
+      showMetrics: jest.fn(),
+      analyzeTrends: jest.fn(),
+      getPRMetrics: jest.fn()
     } as jest.Mocked<Partial<MetricsService>>;
 
     (FunctionIndexer as jest.Mock).mockImplementation(() => mockIndexer);
@@ -487,7 +499,7 @@ describe('ci command', () => {
     });
 
     it('should handle git service errors gracefully', async () => {
-      mockGitService.getChangedFiles.mockRejectedValue(new Error('Git error'));
+      (mockGitService.getChangedFiles as jest.Mock).mockRejectedValue(new Error('Git error'));
 
       const command = createCICommand();
       await command.parseAsync(['node', 'test', '--base', 'main', '--no-fail-on-violation']);
@@ -579,7 +591,7 @@ describe('ci command', () => {
 
   describe('error handling', () => {
     it('should handle indexing errors gracefully', async () => {
-      mockIndexer.run.mockRejectedValue(new Error('Indexing failed'));
+      (mockIndexer.run as jest.Mock).mockRejectedValue(new Error('Indexing failed'));
 
       const command = createCICommand();
       
@@ -590,7 +602,7 @@ describe('ci command', () => {
 
     it('should handle metrics collection errors gracefully', async () => {
       process.env.GITHUB_PR_NUMBER = '123';
-      mockMetricsService.collectMetrics.mockRejectedValue(new Error('Metrics failed'));
+      (mockMetricsService.collectMetrics as jest.Mock).mockRejectedValue(new Error('Metrics failed'));
 
       const command = createCICommand();
       await command.parseAsync(['node', 'test', '--no-fail-on-violation']);

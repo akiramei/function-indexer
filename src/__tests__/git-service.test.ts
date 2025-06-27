@@ -137,7 +137,7 @@ describe('GitService', () => {
       ];
 
       // Mock the readIndexFile method by spying on it
-      const spy = jest.spyOn(gitService as GitService & { readIndexFile: () => Promise<FunctionInfo[]> }, 'readIndexFile')
+      const spy = jest.spyOn(gitService as any, 'readIndexFile')
         .mockResolvedValueOnce(baseIndex)
         .mockResolvedValueOnce(targetIndex);
 
@@ -161,7 +161,7 @@ describe('GitService', () => {
       const baseIndex = [baseFunc];
       const targetIndex = [targetFunc];
 
-      const spy = jest.spyOn(gitService as GitService & { readIndexFile: () => Promise<FunctionInfo[]> }, 'readIndexFile')
+      const spy = jest.spyOn(gitService as any, 'readIndexFile')
         .mockResolvedValueOnce(baseIndex)
         .mockResolvedValueOnce(targetIndex);
 
@@ -188,7 +188,7 @@ describe('GitService', () => {
         createMockFunction('src/file1.ts', 'func1')
       ];
 
-      const spy = jest.spyOn(gitService as GitService & { readIndexFile: () => Promise<FunctionInfo[]> }, 'readIndexFile')
+      const spy = jest.spyOn(gitService as any, 'readIndexFile')
         .mockResolvedValueOnce(baseIndex)
         .mockResolvedValueOnce(targetIndex);
 

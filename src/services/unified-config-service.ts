@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as fs from 'fs';
 import { CoreConfigService, CoreConfig } from './core-config-service';
 import { MetricsConfigService, MetricsConfig } from './metrics-config-service';
 import { ConfigMigrationService } from './config-migration-service';
@@ -183,21 +184,51 @@ export function migrate(projectRoot?: string, verbose: boolean = true) {
 }
 
 /**
- * Check if migration is needed (alias for ConfigMigrationService.isMigrationNeeded)
+ * Check if migration is needed (checks both config format and index file migration)
  */
 export function needsMigration(projectRoot?: string): boolean {
-  return ConfigMigrationService.isMigrationNeeded(projectRoot);
+  // Check for config format migration
+  const needsConfigMigration = ConfigMigrationService.isMigrationNeeded(projectRoot);
+  
+  // Check for index file migration (legacy index exists but new doesn't)
+  const legacyIndexPath = getLegacyIndexPath(projectRoot);
+  const newIndexPath = getDefaultIndexPath(projectRoot);
+  const needsIndexMigration = fs.existsSync(legacyIndexPath) && !fs.existsSync(newIndexPath);
+  
+  return needsConfigMigration || needsIndexMigration;
 }
 
 /**
- * Migrate index file if needed (placeholder for compatibility)
+ * Migrate index file if needed (handles both config and index file migration)
  */
 export function migrateIndexFile(projectRoot?: string): boolean {
-  // Index file migration is handled by the main migrate function
-  if (needsMigration(projectRoot)) {
+  // Check for config format migration first
+  if (ConfigMigrationService.isMigrationNeeded(projectRoot)) {
     const result = migrate(projectRoot, false);
     return result.migrated;
   }
+  
+  // Handle pure index file migration (no config format change needed)
+  const legacyIndexPath = getLegacyIndexPath(projectRoot);
+  const newIndexPath = getDefaultIndexPath(projectRoot);
+  
+  if (fs.existsSync(legacyIndexPath) && !fs.existsSync(newIndexPath)) {
+    try {
+      console.log('📦 Migrating index file to project root...');
+      fs.copyFileSync(legacyIndexPath, newIndexPath);
+      
+      // Remove the legacy file
+      fs.unlinkSync(legacyIndexPath);
+      
+      console.log('✅ Index file migrated to', path.basename(newIndexPath));
+      console.log('📝 Index metadata will be regenerated automatically');
+      return true;
+    } catch (error) {
+      console.error('❌ Migration failed:', error instanceof Error ? error.message : error);
+      return false;
+    }
+  }
+  
   return false;
 }
 

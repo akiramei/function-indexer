@@ -39,7 +39,11 @@ describe('diff command', () => {
         processedFiles: [],
         errors: [],
         executionTime: 100
-      })
+      }),
+      processFile: jest.fn(),
+      writeResults: jest.fn(),
+      generateFunctionHash: jest.fn(),
+      generateFileHash: jest.fn()
     } as jest.Mocked<Partial<FunctionIndexer>>;
 
     (GitService as jest.Mock).mockImplementation(() => mockGitService);
@@ -75,7 +79,7 @@ describe('diff command', () => {
 
   describe('basic functionality', () => {
     it('should detect when not in a git repository', async () => {
-      mockGitService.isGitRepository.mockResolvedValue(false);
+      (mockGitService.isGitRepository as jest.Mock).mockResolvedValue(false);
 
       const command = createDiffCommand();
       
@@ -99,7 +103,7 @@ describe('diff command', () => {
         removed: []
       };
 
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as DiffResult);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(diffResult as unknown as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test', 'main', 'feature']);
@@ -111,7 +115,7 @@ describe('diff command', () => {
     });
 
     it('should use default branches when not specified', async () => {
-      mockGitService.compareIndexes.mockResolvedValue({
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue({
         added: [],
         modified: [],
         removed: []
@@ -164,7 +168,7 @@ describe('diff command', () => {
     });
 
     it('should format terminal output correctly', async () => {
-      mockGitService.compareIndexes.mockResolvedValue(createMockDiffResult() as DiffResult);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(createMockDiffResult() as unknown as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test', 'main', 'feature', '--format', 'terminal']);
@@ -186,7 +190,7 @@ describe('diff command', () => {
 
     it('should output JSON format when requested', async () => {
       const diffResult = createMockDiffResult();
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as DiffResult);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(diffResult as unknown as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync(['node', 'test', 'main', 'feature', '--format', 'json']);
@@ -197,7 +201,7 @@ describe('diff command', () => {
     });
 
     it('should save output to file when specified', async () => {
-      mockGitService.compareIndexes.mockResolvedValue(createMockDiffResult() as DiffResult);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(createMockDiffResult() as unknown as DiffResult);
 
       const command = createDiffCommand();
       await command.parseAsync([
@@ -232,7 +236,7 @@ describe('diff command', () => {
         removed: []
       };
 
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as DiffResult);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(diffResult as unknown as DiffResult);
 
       const command = createDiffCommand();
       
@@ -259,7 +263,7 @@ describe('diff command', () => {
         removed: []
       };
 
-      mockGitService.compareIndexes.mockResolvedValue(diffResult as DiffResult);
+      (mockGitService.compareIndexes as jest.Mock).mockResolvedValue(diffResult as unknown as DiffResult);
 
       const customThresholds = { cyclomaticComplexity: 20 };
       const command = createDiffCommand();
@@ -276,7 +280,7 @@ describe('diff command', () => {
 
   describe('error handling', () => {
     it('should handle indexing errors gracefully', async () => {
-      mockIndexer.run.mockRejectedValue(new Error('Indexing failed'));
+      (mockIndexer.run as jest.Mock).mockRejectedValue(new Error('Indexing failed'));
 
       const command = createDiffCommand();
       
