@@ -329,6 +329,76 @@ const externalData: any = thirdPartyFunction();
 - [ ] 他の進行中PRとの重複変更がないことを確認
 - [ ] 基盤変更は他のPRより優先して完了
 
+## 🎓 型安全性改善時のテスト同期ガイドライン
+
+### 背景
+型定義を厳格化する際、プロダクションコードの変更だけでなく、テストコードも同時に更新する必要があります。これを怠ると、型安全性の改善がかえってテストの破壊を引き起こします。
+
+### 必須の手順
+1. **変更前のテスト実行**: 現在のテストがグリーンであることを確認
+   ```bash
+   npm test
+   ```
+
+2. **型定義の変更とテストの同時更新**:
+   - プロダクションコードの型を変更する際、影響を受けるテストファイルを特定
+   - モックオブジェクトの型定義も同時に更新
+   - 例：
+   ```typescript
+   // プロダクションコード変更
+   function processData(data: string): void { ... }  // any → string
+   
+   // テストコードも同時に更新
+   const mockData: string = 'test';  // any → string
+   mockService.processData = jest.fn<void, [string]>();  // 型パラメータも更新
+   ```
+
+3. **段階的な変更**: 大規模な型変更は小さなステップに分割
+   - 1つのサービス/モジュールずつ変更
+   - 各ステップでテストを実行して確認
+
+4. **モックの完全性確保**:
+   ```typescript
+   // ❌ 不完全なモック（型エラーの原因）
+   const mockService = {
+     method1: jest.fn()
+   } as ServiceType;
+   
+   // ✅ 完全なモック（Partialを使用）
+   const mockService = {
+     method1: jest.fn(),
+     method2: jest.fn(),
+     // 必要なメソッドをすべて含める
+   } as jest.Mocked<Partial<ServiceType>>;
+   ```
+
+5. **型キャストの適切な使用**:
+   ```typescript
+   // モックメソッドへのアクセス時
+   (mockService.method as jest.Mock).mockResolvedValue(result);
+   ```
+
+### よくある問題と解決策
+
+#### 問題1: 不完全なモックオブジェクト
+**症状**: `Type 'X' is missing the following properties from type 'Y'`
+**解決策**: `jest.Mocked<Partial<T>>`を使用するか、すべての必須メソッドを実装
+
+#### 問題2: モックメソッドの型エラー
+**症状**: `Property 'mockResolvedValue' does not exist on type`
+**解決策**: `(mock.method as jest.Mock)`でキャスト
+
+#### 問題3: 移行ロジックの考慮漏れ
+**症状**: 特定のテストケースで期待した動作をしない
+**解決策**: すべての移行パターンをカバーするようにロジックを更新
+
+### チェックリスト
+- [ ] 型変更前にテストが通ることを確認
+- [ ] プロダクションコードとテストコードを同時に更新
+- [ ] モックオブジェクトの型定義を適切に設定
+- [ ] 変更後にすべてのテストが通ることを確認
+- [ ] CIでもテストが通ることを確認
+
 ## 🛠️ 開発ツール設定
 
 ### ESLint設定（.eslintrc.json）
