@@ -15,20 +15,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup project
+        uses: ./.github/actions/setup-project
         with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential python3-dev
-          npm ci
+          node-version: '20'
+          install-system-deps: 'true'  # Need python3 for some dependencies
 
       - name: Generate function index
-        run: npm run build && node dist/cli.js --root ./src
+        run: node dist/cli.js --root ./src
 
       - name: Generate report
         run: |

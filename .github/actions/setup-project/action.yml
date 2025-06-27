@@ -1,0 +1,35 @@
+name: 'Setup Function Indexer Project'
+description: 'Common setup steps for Function Indexer workflows'
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+  install-system-deps:
+    description: 'Install system dependencies (build-essential, python3)'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+    
+    - name: Install system dependencies
+      if: ${{ inputs.install-system-deps == 'true' }}
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential python3-dev
+    
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+    
+    - name: Build project
+      shell: bash
+      run: npm run build

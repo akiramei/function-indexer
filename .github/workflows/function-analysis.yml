@@ -1,4 +1,4 @@
-name: Code Quality Check
+name: Code Quality Analysis
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   analyze:
-    name: Check Code Quality
+    name: Function Analysis
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -24,23 +24,16 @@ jobs:
         with:
           fetch-depth: 0  # Full history for accurate diff
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup project
+        uses: ./.github/actions/setup-project
         with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build function-indexer
-        run: npm run build
+          node-version: '20'
+          install-system-deps: 'false'
       
       - name: Run function analysis
         id: analysis
         run: |
-          echo "Running function analysis with verbose output..."
-          ls -la src/
+          echo "Running function analysis..."
           npx ts-node src/cli.ts ci \
             --base origin/${{ github.base_ref }} \
             --format github \

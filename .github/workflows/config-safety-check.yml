@@ -58,17 +58,18 @@ jobs:
 
         echo "✅ Configuration consistency check passed"
 
-    - name: Test build with changes
-      run: |
-        npm ci
-        npm run build
+    - name: Setup project and test build
+      uses: ./.github/actions/setup-project
+      with:
+        node-version: '20'
+        install-system-deps: 'false'
 
     - name: Verify CLI still works
       run: |
         node dist/cli.js --version
 
     - name: Add safety reminder comment
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       if: always()
       with:
         script: |
@@ -89,16 +90,15 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: |
-                ## ⚠️ Configuration Change Detected
+              body: `## ⚠️ Configuration Change Detected
 
-                This PR modifies critical configuration files. Please ensure you have:
+This PR modifies critical configuration files. Please ensure you have:
 
-                - [ ] Read and followed `.github/CICD-SAFETY-CHECKLIST.md`
-                - [ ] Tested locally with full build and runtime verification
-                - [ ] Verified module system consistency (ESM vs CommonJS)
-                - [ ] Confirmed no breaking changes for existing users
+- [ ] Read and followed \`.github/CICD-SAFETY-CHECKLIST.md\`
+- [ ] Tested locally with full build and runtime verification
+- [ ] Verified module system consistency (ESM vs CommonJS)
+- [ ] Confirmed no breaking changes for existing users
 
-                If this change breaks CI/CD, use the emergency rollback procedure immediately.
+If this change breaks CI/CD, use the emergency rollback procedure immediately.`
             });
           }

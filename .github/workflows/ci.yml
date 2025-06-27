@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
@@ -7,84 +7,94 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    name: Test
+  # Single job that runs all checks in parallel where possible
+  quality-checks:
+    name: Quality Checks & Tests
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - name: Setup project
+      uses: ./.github/actions/setup-project
       with:
-        node-version: '18'
-        cache: 'npm'
+        node-version: '20'
+        install-system-deps: 'false'
+    
+    # Run all checks in parallel using matrix strategy
+    - name: Check for 'any' type usage
+      run: |
+        echo "🔍 Checking for 'any' type usage in source code..."
+        if grep -rE ":\s*any\b|<any>|\bany\[]|any\s*\||\|\s*any\b" src/ --include="*.ts" --exclude="*.test.ts" --exclude="*.spec.ts" --exclude="*.d.ts"; then
+          echo "❌ 'any' type found in source code"
+          echo "💡 Use proper TypeScript types instead of 'any'"
+          exit 1
+        else
+          echo "✅ No 'any' types found"
+        fi
+    
+    - name: Run quality checks
+      run: |
+        echo "🔍 Running all quality checks..."
         
-    - name: Install dependencies
-      run: npm ci
-      
+        # Run checks in parallel
+        npm run lint &
+        LINT_PID=$!
+        
+        npm run type-check &
+        TYPE_PID=$!
+        
+        # Wait for all checks to complete
+        FAILED=0
+        
+        if ! wait $LINT_PID; then
+          echo "❌ ESLint failed"
+          FAILED=1
+        else
+          echo "✅ ESLint passed"
+        fi
+        
+        if ! wait $TYPE_PID; then
+          echo "❌ TypeScript type check failed"
+          FAILED=1
+        else
+          echo "✅ TypeScript type check passed"
+        fi
+        
+        exit $FAILED
+    
     - name: Run tests
-      run: npm test || echo "⚠️ Tests failed - continuing with build check"
-      
-  build:
-    name: Build
-    runs-on: ubuntu-latest
+      run: npm test
     
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Build project
-      run: npm run build
-      
-    - name: Verify CLI works
+    - name: Verify CLI functionality
       run: |
-        node dist/cli.js --help
-        
-  quality:
-    name: Code Quality
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run type check
-      run: npx tsc --noEmit
-      
-    - name: Test function indexer on itself
-      run: |
-        npm run build
+        echo "🔍 Testing Function Indexer on itself..."
         node dist/cli.js --root ./src --output test-output.jsonl
-        echo "✅ Successfully indexed $(wc -l < test-output.jsonl) functions"
         
-    - name: Verify output quality
-      run: |
         if [ ! -f test-output.jsonl ]; then
           echo "❌ Output file not created"
           exit 1
         fi
-        if [ $(wc -l < test-output.jsonl) -lt 50 ]; then
-          echo "❌ Too few functions found (expected 50+)"
+        
+        FUNCTION_COUNT=$(wc -l < test-output.jsonl)
+        echo "✅ Successfully indexed $FUNCTION_COUNT functions"
+        
+        if [ $FUNCTION_COUNT -lt 50 ]; then
+          echo "❌ Too few functions found (expected 50+, got $FUNCTION_COUNT)"
           exit 1
         fi
+        
         echo "✅ Output quality check passed"
+    
+    - name: Quality summary
+      if: success()
+      run: |
+        echo "✅ All quality checks passed!"
+        echo "📊 Quality metrics:"
+        echo "  - No 'any' types found"
+        echo "  - ESLint: passed"
+        echo "  - TypeScript: passed" 
+        echo "  - Tests: passed"
+        echo "  - Build: passed"
+        echo "  - CLI verification: passed"
