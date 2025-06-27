@@ -120,7 +120,7 @@ The enhanced metrics system tracks code quality over time using commit-based his
 ### Supported Metrics
 1. **Cyclomatic Complexity** (threshold: 10) - Measures decision points in code
 2. **Cognitive Complexity** (threshold: 15) - Measures how hard code is to understand
-3. **Lines of Code** (threshold: 40) - Counts effective lines excluding braces/comments
+3. **Lines of Code** (threshold: 50) - Counts effective lines excluding braces/comments
 4. **Nesting Depth** (threshold: 3) - Maximum depth of control structures
 5. **Parameter Count** (threshold: 4) - Number of function parameters
 
@@ -189,7 +189,7 @@ Function Indexer now uses a **separated configuration system** for better modula
     "cyclomaticComplexity": 10,
     "cognitiveComplexity": 15,
     "linesOfCode": 50,
-    "nestingDepth": 4,
+    "nestingDepth": 3,
     "parameterCount": 4
   },
   "collection": {

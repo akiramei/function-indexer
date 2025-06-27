@@ -91,7 +91,7 @@ export function createDefaultConfig(projectRoot?: string): MetricsConfig {
       cyclomaticComplexity: 10,
       cognitiveComplexity: 15,
       linesOfCode: 50,
-      nestingDepth: 4,
+      nestingDepth: 3,
       parameterCount: 4
     },
     collection: {

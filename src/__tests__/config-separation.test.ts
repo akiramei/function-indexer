@@ -93,7 +93,7 @@ describe('Configuration Separation', () => {
       expect(config.thresholds.cyclomaticComplexity).toBe(10);
       expect(config.thresholds.cognitiveComplexity).toBe(15);
       expect(config.thresholds.linesOfCode).toBe(50);
-      expect(config.thresholds.nestingDepth).toBe(4);
+      expect(config.thresholds.nestingDepth).toBe(3);
       expect(config.thresholds.parameterCount).toBe(4);
       expect(config.collection.trackTrends).toBe(true);
       expect(config.reporting.defaultFormat).toBe('summary');
