@@ -121,7 +121,7 @@ program
         console.log('');
         console.log(chalk.yellow('   📊 Check code quality:'));
         console.log(chalk.gray('      fx metrics                  # Quality overview'));
-        console.log(chalk.gray('      fx metrics --details        # Detailed complexity report'));
+        console.log(chalk.gray('      fx metrics trends           # Find complex functions'));
         console.log('');
         console.log(chalk.yellow('   📚 Learn more:'));
         console.log(chalk.gray('      📖 Getting Started: docs/GETTING-STARTED.md'));

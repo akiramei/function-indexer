@@ -97,8 +97,8 @@ fx s "database connection" # Works with concepts, not just names
 fx metrics
 fx m              # Short alias
 
-# Detailed function-level metrics
-fx m --details
+# Show functions with violations
+fx metrics trends
 ```
 **When to use:** Code reviews, refactoring planning, quality checks
 
@@ -147,7 +147,7 @@ fx s "database"
 fx m
 
 # Find complex functions that might need refactoring
-fx m --details | grep "High complexity"
+fx metrics trends
 
 # Track complexity over time
 fx metrics collect
@@ -190,7 +190,7 @@ fx s "component"
 fx s "useState useEffect"
 
 # Check component complexity
-fx m --details
+fx metrics trends
 ```
 
 ### **Node.js/Backend Projects**
@@ -211,7 +211,7 @@ fx s "database query"
 fx s "export"
 
 # Verify API complexity before publishing
-fx m --details
+fx metrics trends
 
 # Compare versions
 fx d v1.0.0 main

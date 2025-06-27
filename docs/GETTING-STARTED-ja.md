@@ -97,8 +97,8 @@ fx s "データベース接続" # 名前だけでなく概念でも検索可能
 fx metrics
 fx m              # 短縮エイリアス
 
-# 関数レベルの詳細メトリクス
-fx m --details
+# 違反している関数を表示
+fx metrics trends
 ```
 **使用タイミング:** コードレビュー、リファクタリング計画、品質チェック
 
@@ -147,7 +147,7 @@ fx s "データベース"
 fx m
 
 # リファクタリングが必要な複雑な関数を発見
-fx m --details | grep "High complexity"
+fx metrics trends
 
 # 時系列での複雑度追跡
 fx metrics collect
@@ -190,7 +190,7 @@ fx s "component"
 fx s "useState useEffect"
 
 # コンポーネントの複雑度チェック
-fx m --details
+fx metrics trends
 ```
 
 ### **Node.js/バックエンドプロジェクト**
@@ -211,7 +211,7 @@ fx s "database query"
 fx s "export"
 
 # 公開前にAPI複雑度を確認
-fx m --details
+fx metrics trends
 
 # バージョン間の比較
 fx d v1.0.0 main
