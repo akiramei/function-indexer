@@ -7,9 +7,7 @@ import { ConfigService } from '../services/config-service';
 
 const execAsync = promisify(exec);
 
-describe.skip('Move index to project root', () => {
-  // Skip complex migration tests for now - implementation details have changed
-  // TODO: Update migration tests to match current CLI behavior
+describe('Move index to project root', () => {
   let tempDir: string;
   let projectDir: string;
   let cliPath: string;
@@ -119,17 +117,29 @@ describe.skip('Move index to project root', () => {
     // Run function indexer (should trigger migration)
     const { stdout } = await execAsync(`node ${cliPath}`, { cwd: projectDir });
     
-    // Migration happens automatically but may trigger metadata recreation
+    // Migration should happen automatically and indicate successful completion
     expect(stdout).toContain('Updating function index');
     
-    // Check that index was moved to project root
+    // Verify migration-specific behavior through file system checks
     const newIndexPath = path.join(projectDir, 'function-index.jsonl');
     expect(fs.existsSync(newIndexPath)).toBe(true);
     expect(fs.existsSync(legacyIndexPath)).toBe(false);
     
-    // Verify content was preserved
+    // Verify content was preserved during migration
     const migratedContent = fs.readFileSync(newIndexPath, 'utf-8');
     expect(migratedContent).toContain('testFunction');
+    
+    // Verify configuration was updated to point to new location
+    const configPath = path.join(configDir, 'config.json');
+    const updatedConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    expect(updatedConfig.output).toMatch(/function-index\.jsonl$/);
+    
+    // Verify index file structure is valid JSONL
+    const lines = migratedContent.trim().split('\n').filter(line => line);
+    expect(lines.length).toBeGreaterThan(0);
+    lines.forEach(line => {
+      expect(() => JSON.parse(line)).not.toThrow();
+    });
   });
 
   test('ConfigService functions work correctly', () => {
@@ -231,8 +241,26 @@ describe.skip('Move index to project root', () => {
     // Configuration update happens automatically during index update
     expect(stdout).toContain('Updating function index');
     
+    // Verify migration-specific behavior through file system checks
+    const newIndexPath = path.join(projectDir, 'function-index.jsonl');
+    expect(fs.existsSync(newIndexPath)).toBe(true);
+    expect(fs.existsSync(legacyIndexPath)).toBe(false);
+    
     // Check that config was updated (should be stored as relative path)
-    const updatedConfig = JSON.parse(fs.readFileSync(path.join(configDir, 'config.json'), 'utf-8'));
+    const configPath = path.join(configDir, 'config.json');
+    const updatedConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
     expect(updatedConfig.output).toBe('function-index.jsonl');
+    
+    // Verify the new index file has valid content
+    const migratedContent = fs.readFileSync(newIndexPath, 'utf-8');
+    expect(migratedContent.trim().length).toBeGreaterThan(0);
+    
+    // Ensure index file contains function data in proper JSONL format
+    const lines = migratedContent.trim().split('\n').filter(line => line);
+    expect(lines.length).toBeGreaterThan(0);
+    const firstFunction = JSON.parse(lines[0]);
+    expect(firstFunction).toHaveProperty('identifier');
+    expect(firstFunction).toHaveProperty('file');
+    expect(firstFunction).toHaveProperty('startLine');
   });
 });
