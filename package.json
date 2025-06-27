@@ -7,14 +7,13 @@
     "function-indexer": "dist/cli.js",
     "fx": "dist/cli.js"
   },
-  "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/cli.ts",
     "start": "node dist/cli.js",
     "test": "jest",
-    "lint": "ESLINT_USE_FLAT_CONFIG=true npx eslint 'src/**/*.ts'",
-    "lint:fix": "ESLINT_USE_FLAT_CONFIG=true npx eslint 'src/**/*.ts' --fix",
+    "lint": "eslint 'src/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' --fix",
     "type-check": "tsc --noEmit",
     "precommit": "npm run lint && npm run type-check && npm run test",
     "postinstall": "npm run build",
