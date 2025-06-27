@@ -585,7 +585,7 @@ ROOT_DIR=${1:-"./src"}
 echo "🚀 $CORES コアを使用した並列分析"
 
 # 並列処理のためにディレクトリを分割
-find $ROOT_DIR -type d -name "src" -o -name "lib" -o -name "components" | \
+find $ROOT_DIR -type d \( -name "src" -o -name "lib" -o -name "components" \) | \
 head -$CORES | \
 xargs -I {} -P $CORES sh -c '
     DIR={}
@@ -613,7 +613,7 @@ BATCH_SIZE=${2:-50}
 echo "💾 メモリ最適化分析（バッチサイズ: $BATCH_SIZE）"
 
 # ファイルをバッチで処理
-find $ROOT_DIR -name "*.ts" -o -name "*.tsx" | \
+find $ROOT_DIR \( -name "*.ts" -o -name "*.tsx" \) | \
 split -l $BATCH_SIZE - batch-
 
 for batch_file in batch-*; do

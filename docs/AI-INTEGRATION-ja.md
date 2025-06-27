@@ -112,6 +112,17 @@ npx github:akiramei/function-indexer --root ./lib --domain backend --verbose
 - `--verbose`: 詳細ログを有効化
 
 #### 簡略化されたコマンド（v1.1.0+）
+
+**注意**: `fx`エイリアスを使用するには、以下のいずれかの方法でFunction Indexerをインストールしてください：
+```bash
+# グローバルインストール（推奨）
+npm install -g github:akiramei/function-indexer
+
+# または、プロジェクトにローカルインストール後にPATHを追加
+npm install --save-dev github:akiramei/function-indexer
+npx function-indexer install-alias  # エイリアスを設定
+```
+
 ```bash
 # 関数インデックスを初期化または更新
 fx                              # function-indexerの短縮エイリアス

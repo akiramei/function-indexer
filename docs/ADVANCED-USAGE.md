@@ -61,7 +61,9 @@ jobs:
         run: npx github:akiramei/function-indexer --root ./src --output functions.jsonl
         
       - name: Collect metrics
-        run: npx github:akiramei/function-indexer metrics collect --root ./src --pr ${{ github.event.number }}
+        run: |
+          PR_NUMBER="${{ github.event.number || 'main' }}"
+          npx github:akiramei/function-indexer metrics collect --root ./src --pr "$PR_NUMBER"
         
       - name: Check quality gates
         run: |
@@ -585,7 +587,7 @@ ROOT_DIR=${1:-"./src"}
 echo "🚀 Parallel analysis using $CORES cores"
 
 # Split directories for parallel processing
-find $ROOT_DIR -type d -name "src" -o -name "lib" -o -name "components" | \
+find $ROOT_DIR -type d \( -name "src" -o -name "lib" -o -name "components" \) | \
 head -$CORES | \
 xargs -I {} -P $CORES sh -c '
     DIR={}
@@ -613,7 +615,7 @@ BATCH_SIZE=${2:-50}
 echo "💾 Memory-optimized analysis (batch size: $BATCH_SIZE)"
 
 # Process files in batches
-find $ROOT_DIR -name "*.ts" -o -name "*.tsx" | \
+find $ROOT_DIR \( -name "*.ts" -o -name "*.tsx" \) | \
 split -l $BATCH_SIZE - batch-
 
 for batch_file in batch-*; do
