@@ -16,9 +16,9 @@ Function Indexer is a professional TypeScript CLI tool designed for AI-assisted 
 
 When asked to "manage code quality using Function Indexer", follow these steps:
 
-1. **Install Function Indexer globally**
-2. **Run initial scan** to establish baseline
-3. **Set up metrics collection** for tracking
+1. **Run initial scan** to establish baseline
+2. **Update metrics regularly** to track changes
+3. **Review quality reports** for violations
 4. **Configure CI/CD integration** for automated checks
 5. **Create regular reports** for code review
 
@@ -30,17 +30,20 @@ sudo apt update && sudo apt install build-essential python3
 
 ### Immediate Usage
 ```bash
-# Scan current project (zero configuration)
+# Initialize project and create function index (first time)
 npx github:akiramei/function-indexer
 
-# Scan specific directory with output
-npx github:akiramei/function-indexer --root ./src --output functions.jsonl
+# Update metrics after code changes (recommended)
+npx github:akiramei/function-indexer         # Updates both index and metrics
+fx                                           # Short alias for above
 
-# Quality overview
+# Check quality overview
 npx github:akiramei/function-indexer metrics trends
+fx metrics trends
 
 # Search functions
 npx github:akiramei/function-indexer search "authentication" --context "login"
+fx s "authentication"
 ```
 
 ## Core Capabilities
@@ -133,6 +136,16 @@ fx metrics                     # Show code quality overview
 
 Function Indexer includes a comprehensive metrics system for tracking code quality over time:
 
+#### Update/Initialize Metrics
+```bash
+# RECOMMENDED: Update metrics using main command (handles both initial setup and updates)
+fx                                    # Updates function index AND metrics automatically
+npx github:akiramei/function-indexer  # Same as above, updates both index and metrics
+
+# Alternative: Manual metrics update
+fx metrics collect --root ./src       # Updates metrics database only
+```
+
 #### Overview Commands
 ```bash
 # View code quality overview
@@ -144,15 +157,13 @@ npx github:akiramei/function-indexer metrics trends
 fx metrics trends
 ```
 
-#### Collection Commands
+#### Collection Commands (Advanced)
 ```bash
-# Collect metrics for current state
-npx github:akiramei/function-indexer metrics collect --root ./src
-fx metrics collect --root ./src
-
-# Collect metrics with PR tracking
+# Collect metrics for specific tracking (advanced usage)
 npx github:akiramei/function-indexer metrics collect --root ./src --pr 123 --verbose
 fx metrics collect --root ./src --pr 123 --verbose
+
+# Note: For regular updates, simply use 'fx' command instead
 ```
 
 #### Analysis Commands
@@ -252,8 +263,8 @@ fx metrics trends
 
 ### 2. Quality Assessment
 ```bash
-# Step 1: Collect current metrics
-fx metrics collect --root ./src
+# Step 1: Update metrics (recommended approach)
+fx                                        # Updates function index AND metrics
 
 # Step 2: Identify violations
 fx metrics trends
@@ -265,26 +276,32 @@ fx metrics show "src/problematic.ts:complexFunction"
 ### 3. Change Tracking
 ```bash
 # Step 1: Baseline collection (before changes)
-fx metrics collect --root ./src --pr 123
+fx                                        # Establishes current baseline
 
 # Step 2: Make code changes
 # ... development work ...
 
-# Step 3: Compare metrics (after changes)
-fx metrics collect --root ./src --pr 123
-fx metrics pr 123
+# Step 3: Update metrics after changes
+fx                                        # Updates metrics with new changes
+fx metrics trends                         # Shows what changed
+
+# Optional: Track specific PR
+fx metrics collect --root ./src --pr 123  # Advanced PR tracking
+fx metrics pr 123                         # View PR-specific changes
 ```
 
 ### 4. PR Review Automation
 ```bash
 # Pre-review preparation
-fx metrics collect --root ./src --pr 456 --verbose
+fx                                        # Update current metrics
+fx metrics collect --root ./src --pr 456  # Optional: Track specific PR
 
 # Generate review insights
-fx metrics pr 456
+fx metrics trends                         # Show current violations
+fx metrics pr 456                         # Show PR-specific changes (if tracked)
 
 # Focus on quality violations
-fx metrics trends --pr 456
+fx metrics trends                         # Identify all current issues
 ```
 
 ## Configuration System

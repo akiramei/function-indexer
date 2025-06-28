@@ -16,9 +16,9 @@ Function Indexerは、AI支援によるコード品質管理のために設計�
 
 「Function Indexerを使用してコード品質を管理する」よう求められた場合、以下の手順に従ってください：
 
-1. **Function Indexerをグローバルにインストール**
-2. **初期スキャンを実行**してベースラインを確立
-3. **メトリクス収集を設定**して追跡
+1. **初期スキャンを実行**してベースラインを確立
+2. **定期的にメトリクスを更新**して変更を追跡
+3. **品質レポートを確認**して違反をチェック
 4. **CI/CD統合を設定**して自動チェック
 5. **定期レポートを作成**してコードレビュー
 
@@ -30,17 +30,20 @@ sudo apt update && sudo apt install build-essential python3
 
 ### 即座に使用
 ```bash
-# 現在のプロジェクトをスキャン（設定不要）
+# プロジェクト初期化と関数インデックス作成（初回）
 npx github:akiramei/function-indexer
 
-# 特定のディレクトリをスキャンして出力
-npx github:akiramei/function-indexer --root ./src --output functions.jsonl
+# コード変更後のメトリクス更新（推奨）
+npx github:akiramei/function-indexer         # インデックスとメトリクスの両方を更新
+fx                                           # 上記の短縮エイリアス
 
-# 品質概要
+# 品質概要を確認
 npx github:akiramei/function-indexer metrics trends
+fx metrics trends
 
 # 関数を検索
 npx github:akiramei/function-indexer search "authentication" --context "login"
+fx s "authentication"
 ```
 
 ## コア機能
@@ -144,6 +147,16 @@ fx metrics                     # コード品質概要を表示
 
 Function Indexerは、時間経過によるコード品質追跡のための包括的なメトリクスシステムを含みます：
 
+#### メトリクス更新/初期化
+```bash
+# 推奨: メインコマンドでメトリクス更新（初期設定と更新の両方を処理）
+fx                                    # 関数インデックスとメトリクスを自動更新
+npx github:akiramei/function-indexer  # 上記と同じ、両方を更新
+
+# 代替手段: 手動メトリクス更新
+fx metrics collect --root ./src       # メトリクスデータベースのみを更新
+```
+
 #### 概要コマンド
 ```bash
 # コード品質概要を表示
@@ -155,15 +168,13 @@ npx github:akiramei/function-indexer metrics trends
 fx metrics trends
 ```
 
-#### 収集コマンド
+#### 収集コマンド（高度な使用法）
 ```bash
-# 現在の状態のメトリクスを収集
-npx github:akiramei/function-indexer metrics collect --root ./src
-fx metrics collect --root ./src
-
-# PR追跡でメトリクスを収集
+# 特定の追跡のためのメトリクス収集（高度な使用法）
 npx github:akiramei/function-indexer metrics collect --root ./src --pr 123 --verbose
 fx metrics collect --root ./src --pr 123 --verbose
+
+# 注意: 通常の更新には、代わりに 'fx' コマンドを使用してください
 ```
 
 #### 分析コマンド
@@ -263,8 +274,8 @@ fx metrics trends
 
 ### 2. 品質評価
 ```bash
-# ステップ1：現在のメトリクスを収集
-fx metrics collect --root ./src
+# ステップ1：メトリクス更新（推奨アプローチ）
+fx                                        # 関数インデックスとメトリクスを更新
 
 # ステップ2：違反を特定
 fx metrics trends
@@ -276,26 +287,32 @@ fx metrics show "src/problematic.ts:complexFunction"
 ### 3. 変更追跡
 ```bash
 # ステップ1：ベースライン収集（変更前）
-fx metrics collect --root ./src --pr 123
+fx                                        # 現在のベースラインを確立
 
 # ステップ2：コード変更を実施
 # ... 開発作業 ...
 
-# ステップ3：メトリクスを比較（変更後）
-fx metrics collect --root ./src --pr 123
-fx metrics pr 123
+# ステップ3：変更後のメトリクス更新
+fx                                        # 新しい変更でメトリクスを更新
+fx metrics trends                         # 変更内容を表示
+
+# オプション：特定のPRを追跡
+fx metrics collect --root ./src --pr 123  # 高度なPR追跡
+fx metrics pr 123                         # PR固有の変更を表示
 ```
 
 ### 4. PRレビュー自動化
 ```bash
 # レビュー前の準備
-fx metrics collect --root ./src --pr 456 --verbose
+fx                                        # 現在のメトリクスを更新
+fx metrics collect --root ./src --pr 456  # オプション：特定のPRを追跡
 
 # レビューインサイトを生成
-fx metrics pr 456
+fx metrics trends                         # 現在の違反を表示
+fx metrics pr 456                         # PR固有の変更を表示（追跡されている場合）
 
 # 品質違反に焦点を当てる
-fx metrics trends --pr 456
+fx metrics trends                         # すべての現在の問題を特定
 ```
 
 ## 設定システム
