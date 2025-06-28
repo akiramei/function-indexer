@@ -8,25 +8,22 @@ Welcome to the complete documentation for Function Indexer! Whether you're just 
 
 ## 🚀 Getting Started
 
-### For New Users
-1. **[Quick Start Guide](QUICK-START.md)** ⚡  
-   Get Function Indexer running in your specific project type in 60 seconds
+### Progressive Learning Path
+1. **[Getting Started Guide](GETTING-STARTED.md)** 🚀  
+   Complete guide from zero to productive - 60 seconds to mastery
 
-2. **[Complete Tutorial](TUTORIAL.md)** 📚  
-   Step-by-step walkthrough with real-world examples and best practices
-
-3. **[Troubleshooting](TROUBLESHOOTING.md)** 🔧  
+2. **[Troubleshooting](TROUBLESHOOTING.md)** 🔧  
    Common issues and their solutions
 
 ## 🔗 Integration & Automation
 
 ### AI Assistant Integration
-- **[AI Guide](AI-GUIDE.md)** 🤖  
-  Optimized documentation for AI assistants and zero-shot usage
+- **[AI Integration Guide](AI-INTEGRATION.md)** 🤖  
+  Comprehensive AI assistant reference with advanced patterns
 
 ### Development Workflow
-- **[Integration Guide](INTEGRATIONS.md)** 🔗  
-  Complete examples for CI/CD, Git hooks, and development tools
+- **[Advanced Usage Guide](ADVANCED-USAGE.md)** 🔧  
+  Enterprise patterns, CI/CD integration, and team collaboration
 
 ### Platform-Specific Guides
 - **GitHub Actions** - Automated quality checks and PR comments
@@ -89,12 +86,12 @@ Welcome to the complete documentation for Function Indexer! Whether you're just 
 
 | I want to... | Go to... |
 |--------------|----------|
-| Get started quickly | [Quick Start Guide](QUICK-START.md) |
-| Learn thoroughly | [Complete Tutorial](TUTORIAL.md) |
+| Get started quickly | [Getting Started Guide](GETTING-STARTED.md) |
+| Learn AI integration | [AI Integration Guide](AI-INTEGRATION.md) |
 | Fix a problem | [Troubleshooting](TROUBLESHOOTING.md) |
-| Integrate with CI/CD | [Integration Guide](INTEGRATIONS.md) |
-| Understand metrics | [Metrics Guide](#) |
-| Configure settings | [Configuration Guide](#) |
+| Integrate with CI/CD | [Advanced Usage Guide](ADVANCED-USAGE.md) |
+| Understand metrics | [Getting Started Guide](GETTING-STARTED.md#understanding-your-results) |
+| Configure settings | [Getting Started Guide](GETTING-STARTED.md#configuration-setup) |
 | Report a bug | [GitHub Issues](https://github.com/akiramei/function-indexer/issues) |
 | Ask a question | [GitHub Discussions](https://github.com/akiramei/function-indexer/discussions) |
 
