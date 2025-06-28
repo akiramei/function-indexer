@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { MetricsService } from '../services/metrics-service';
 import { ConfigService, FunctionIndexerConfig } from '../services/config-service';
+import { MetricsConfigService } from '../services/metrics-config-service';
 import { ProjectDetector } from '../utils/project-detector';
 import { FunctionInfo, FunctionMetricsHistory } from '../types';
 
@@ -322,18 +323,9 @@ async function showMetricsOverview(options: MetricsOptions): Promise<void> {
 
     const functions = loadFunctionsForMetrics(config.output);
 
-    const defaultThresholds = {
-      cyclomaticComplexity: 10,
-      cognitiveComplexity: 15,
-      linesOfCode: 50,
-      nestingDepth: 4,
-      parameterCount: 4
-    };
-    
-    const thresholds = {
-      ...defaultThresholds,
-      ...(config.metrics?.thresholds || {})
-    };
+    // Load thresholds from metrics configuration
+    const metricsConfig = MetricsConfigService.loadConfig();
+    const thresholds = metricsConfig.thresholds;
 
     const violations = calculateViolations(functions, thresholds);
     const complexityDistribution = calculateComplexityDistribution(functions, violations);
@@ -361,7 +353,7 @@ async function collectMetrics(options: MetricsOptions): Promise<void> {
       process.exit(1);
     }
 
-    metricsService = new MetricsService();
+    metricsService = new MetricsService(undefined, rootPath);
     
     // Validate PR number if provided
     let prNumber: number | undefined;
@@ -409,7 +401,8 @@ async function collectMetrics(options: MetricsOptions): Promise<void> {
  */
 async function showFunctionMetrics(functionId: string | undefined, options: MetricsOptions): Promise<void> {
   try {
-    const metricsService = new MetricsService();
+    const { config } = initializeMetricsProject();
+    const metricsService = new MetricsService(undefined, config.root);
     
     if (!functionId || options.list) {
       displayAvailableFunctions(metricsService);
@@ -435,7 +428,8 @@ async function analyzeTrends(): Promise<void> {
   try {
     console.log(chalk.blue('📊 Analyzing metrics trends...'));
     
-    const metricsService = new MetricsService();
+    const { config } = initializeMetricsProject();
+    const metricsService = new MetricsService(undefined, config.root);
     const analysis = metricsService.analyzeTrends();
     
     if (analysis.length === 0) {
@@ -499,7 +493,8 @@ async function showPRMetrics(prNumber: string): Promise<void> {
     
     console.log(chalk.blue(`📊 Metrics for PR #${prNumber}`));
     
-    const metricsService = new MetricsService();
+    const { config } = initializeMetricsProject();
+    const metricsService = new MetricsService(undefined, config.root);
     const prMetrics = metricsService.getPRMetrics(prNum);
     
     if (prMetrics.length === 0) {

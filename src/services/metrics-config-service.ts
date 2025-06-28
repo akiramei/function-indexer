@@ -55,7 +55,7 @@ export function isInitialized(projectRoot?: string): boolean {
 /**
  * Initialize metrics configuration with defaults
  */
-export function initialize(projectRoot?: string): MetricsConfig {
+export function initialize(projectRoot?: string, customThresholds?: Partial<MetricsConfig['thresholds']>): MetricsConfig {
   const configPath = getMetricsConfigPath(projectRoot);
   
   // Ensure core config directory exists
@@ -65,7 +65,7 @@ export function initialize(projectRoot?: string): MetricsConfig {
   }
   
   if (!fs.existsSync(configPath)) {
-    const config = createDefaultConfig(projectRoot);
+    const config = createDefaultConfig(projectRoot, customThresholds);
     saveConfig(config, projectRoot);
     return config;
   }
@@ -76,7 +76,7 @@ export function initialize(projectRoot?: string): MetricsConfig {
 /**
  * Create default metrics configuration
  */
-export function createDefaultConfig(projectRoot?: string): MetricsConfig {
+export function createDefaultConfig(projectRoot?: string, customThresholds?: Partial<MetricsConfig['thresholds']>): MetricsConfig {
   const root = projectRoot || process.cwd();
   
   return {
@@ -88,11 +88,11 @@ export function createDefaultConfig(projectRoot?: string): MetricsConfig {
       maxHistoryDays: 365
     },
     thresholds: {
-      cyclomaticComplexity: 10,
-      cognitiveComplexity: 15,
-      linesOfCode: 50,
-      nestingDepth: 4,
-      parameterCount: 4
+      cyclomaticComplexity: customThresholds?.cyclomaticComplexity || 10,
+      cognitiveComplexity: customThresholds?.cognitiveComplexity || 15,
+      linesOfCode: customThresholds?.linesOfCode || 50,
+      nestingDepth: customThresholds?.nestingDepth || 4,
+      parameterCount: customThresholds?.parameterCount || 4
     },
     collection: {
       autoCollectOnCommit: false,

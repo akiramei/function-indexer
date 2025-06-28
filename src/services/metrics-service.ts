@@ -5,19 +5,23 @@ import * as fs from 'fs';
 import { FunctionIndexer } from '../indexer';
 import { MetricsStorage } from '../storage/metrics-storage';
 import { FunctionMetricsHistory, MetricsCollectionOptions, MetricsThresholds, MetricsAnalysisResult, IndexerOptions } from '../types';
+import { MetricsConfigService } from './metrics-config-service';
 
 export class MetricsService {
   private storage: MetricsStorage;
-  private defaultThresholds: MetricsThresholds = {
-    cyclomaticComplexity: 10,
-    cognitiveComplexity: 15,
-    linesOfCode: 40,
-    nestingDepth: 3,
-    parameterCount: 4
-  };
+  private projectRoot: string;
 
-  constructor(storageDir?: string) {
+  constructor(storageDir?: string, projectRoot?: string) {
     this.storage = new MetricsStorage(storageDir);
+    this.projectRoot = projectRoot || process.cwd();
+  }
+
+  /**
+   * Get thresholds from metrics configuration file
+   */
+  private getThresholds(): MetricsThresholds {
+    const config = MetricsConfigService.loadConfig(this.projectRoot);
+    return config.thresholds;
   }
 
   /**
@@ -118,7 +122,7 @@ export class MetricsService {
    * トレンド分析を実行
    */
   analyzeTrends(): MetricsAnalysisResult[] {
-    return this.storage.analyzeViolations(this.defaultThresholds);
+    return this.storage.analyzeViolations(this.getThresholds());
   }
 
   /**
@@ -132,7 +136,7 @@ export class MetricsService {
    * メトリクス違反をチェック
    */
   checkViolations(customThresholds?: Partial<MetricsThresholds>): MetricsAnalysisResult[] {
-    const thresholds = { ...this.defaultThresholds, ...customThresholds };
+    const thresholds = { ...this.getThresholds(), ...customThresholds };
     return this.storage.analyzeViolations(thresholds);
   }
 

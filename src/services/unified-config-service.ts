@@ -13,6 +13,19 @@ export interface UnifiedConfig extends CoreConfig {
 }
 
 /**
+ * Options for initialization with custom thresholds
+ */
+export interface InitializationOptions {
+  thresholds?: {
+    cyclomaticComplexity?: number;
+    cognitiveComplexity?: number;
+    linesOfCode?: number;
+    nestingDepth?: number;
+    parameterCount?: number;
+  };
+}
+
+/**
  * Check if the project is initialized (either legacy or separated format)
  */
 export function isInitialized(projectRoot?: string): boolean {
@@ -23,7 +36,7 @@ export function isInitialized(projectRoot?: string): boolean {
 /**
  * Initialize project with separated configurations
  */
-export function initialize(projectRoot?: string): UnifiedConfig {
+export function initialize(projectRoot?: string, options?: InitializationOptions): UnifiedConfig {
   // Check if migration is needed first
   if (ConfigMigrationService.isMigrationNeeded(projectRoot)) {
     console.log(chalk.blue('🔄 Migrating to separated configuration format...'));
@@ -41,7 +54,7 @@ export function initialize(projectRoot?: string): UnifiedConfig {
   
   // Initialize new separated configs
   const coreConfig = CoreConfigService.initialize(projectRoot);
-  const metricsConfig = MetricsConfigService.initialize(projectRoot);
+  const metricsConfig = MetricsConfigService.initialize(projectRoot, options?.thresholds);
   
   return {
     ...coreConfig,

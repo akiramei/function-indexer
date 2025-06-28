@@ -37,6 +37,11 @@ program
   .option('-r, --root <path>', 'root directory to scan')
   .option('-o, --output <file>', 'output file for function index')
   .option('-v, --verbose', 'verbose output', false)
+  .option('--cyclomatic-complexity <number>', 'cyclomatic complexity threshold', '10')
+  .option('--cognitive-complexity <number>', 'cognitive complexity threshold', '15')
+  .option('--lines-of-code <number>', 'lines of code threshold', '50')
+  .option('--nesting-depth <number>', 'nesting depth threshold', '4')
+  .option('--parameter-count <number>', 'parameter count threshold', '4')
   .action(async (options) => {
     try {
       // Project detection with error handling
@@ -71,8 +76,17 @@ program
           console.log(chalk.yellow(`⚠️  No source directories detected, using project root`));
         }
         
-        // Initialize configuration
-        const config = ConfigService.initialize(projectInfo.root);
+        // Extract threshold options from CLI
+        const thresholdOptions = {
+          cyclomaticComplexity: parseInt(options.cyclomaticComplexity) || 10,
+          cognitiveComplexity: parseInt(options.cognitiveComplexity) || 15,
+          linesOfCode: parseInt(options.linesOfCode) || 50,
+          nestingDepth: parseInt(options.nestingDepth) || 4,
+          parameterCount: parseInt(options.parameterCount) || 4
+        };
+
+        // Initialize configuration with threshold options
+        const config = ConfigService.initialize(projectInfo.root, { thresholds: thresholdOptions });
         console.log(chalk.green(`✅ Created configuration in ${ConfigService.getConfigDir(projectInfo.root)}`));
         
         // Use command line options if provided
