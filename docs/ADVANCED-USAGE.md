@@ -776,11 +776,30 @@ app.post('/api/analyze', async (req, res) => {
     
     try {
         const outputFile = `analysis-${Date.now()}.jsonl`;
-        const command = `fx --root "${rootPath}" --output "${outputFile}" ${domain ? `--domain "${domain}"` : ''}`;
         
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                return res.status(500).json({ error: error.message });
+        // Use spawn to prevent command injection
+        const { spawn } = require('child_process');
+        const args = ['--root', rootPath, '--output', outputFile];
+        if (domain) {
+            args.push('--domain', domain);
+        }
+        
+        const fx = spawn('fx', args);
+        
+        let stdout = '';
+        let stderr = '';
+        
+        fx.stdout.on('data', (data) => {
+            stdout += data;
+        });
+        
+        fx.stderr.on('data', (data) => {
+            stderr += data;
+        });
+        
+        fx.on('close', (code) => {
+            if (code !== 0) {
+                return res.status(500).json({ error: stderr || 'Analysis failed' });
             }
             
             // Read and return results
@@ -809,11 +828,32 @@ app.post('/api/search', async (req, res) => {
     const { query, context, rootPath } = req.body;
     
     try {
-        const command = `fx s "${query}" ${context ? `--context "${context}"` : ''} ${rootPath ? `--root "${rootPath}"` : ''} --format json`;
+        // Use spawn to prevent command injection
+        const { spawn } = require('child_process');
+        const args = ['s', query, '--format', 'json'];
+        if (context) {
+            args.push('--context', context);
+        }
+        if (rootPath) {
+            args.push('--root', rootPath);
+        }
         
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                return res.status(500).json({ error: error.message });
+        const fx = spawn('fx', args);
+        
+        let stdout = '';
+        let stderr = '';
+        
+        fx.stdout.on('data', (data) => {
+            stdout += data;
+        });
+        
+        fx.stderr.on('data', (data) => {
+            stderr += data;
+        });
+        
+        fx.on('close', (code) => {
+            if (code !== 0) {
+                return res.status(500).json({ error: stderr || 'Search failed' });
             }
             
             const results = JSON.parse(stdout);
@@ -834,11 +874,26 @@ app.get('/api/metrics/:projectPath', async (req, res) => {
     const { projectPath } = req.params;
     
     try {
-        const command = `fx metrics --root "${projectPath}" --format json`;
+        // Use spawn to prevent command injection
+        const { spawn } = require('child_process');
+        const args = ['metrics', '--root', projectPath, '--format', 'json'];
         
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                return res.status(500).json({ error: error.message });
+        const fx = spawn('fx', args);
+        
+        let stdout = '';
+        let stderr = '';
+        
+        fx.stdout.on('data', (data) => {
+            stdout += data;
+        });
+        
+        fx.stderr.on('data', (data) => {
+            stderr += data;
+        });
+        
+        fx.on('close', (code) => {
+            if (code !== 0) {
+                return res.status(500).json({ error: stderr || 'Metrics collection failed' });
             }
             
             const metrics = JSON.parse(stdout);
